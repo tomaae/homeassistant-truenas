@@ -57,9 +57,11 @@ def update_items(inst, config_entry, truenas_controller, async_add_entities, sen
         # Sensor type name
         [
             "pool",
+            "jail",
         ],
         # Entity function
         [
+            TrueNASBinarySensor,
             TrueNASBinarySensor,
         ],
     ):
@@ -171,7 +173,7 @@ class TrueNASBinarySensor(BinarySensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return a description for device registry."""
         dev_connection = DOMAIN
-        dev_connection_value = self.entity_description.data_reference
+        dev_connection_value = self.entity_description.ha_group
         dev_group = self.entity_description.ha_group
         if self.entity_description.ha_group == "System":
             dev_connection_value = self._ctrl.data["system_info"]["hostname"]

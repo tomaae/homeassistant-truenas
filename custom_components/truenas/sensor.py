@@ -192,7 +192,7 @@ class TrueNASSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return a description for device registry."""
         dev_connection = DOMAIN
-        dev_connection_value = self.entity_description.data_reference
+        dev_connection_value = self.entity_description.ha_group
         dev_group = self.entity_description.ha_group
         if self.entity_description.ha_group == "System":
             dev_connection_value = self._ctrl.data["system_info"]["hostname"]

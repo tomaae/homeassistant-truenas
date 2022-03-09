@@ -16,6 +16,17 @@ DEVICE_ATTRIBUTES_POOL = [
     "is_decrypted",
 ]
 
+DEVICE_ATTRIBUTES_JAIL = [
+    "comment",
+    "jail_zfs_dataset",
+    "last_started",
+    "ip4_addr",
+    "ip6_addr",
+    "release",
+    "type",
+    "plugin_name",
+]
+
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
@@ -49,5 +60,20 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="guid",
         data_attributes_list=DEVICE_ATTRIBUTES_POOL,
+    ),
+    "jail": TrueNASBinarySensorEntityDescription(
+        key="jail",
+        name="",
+        icon_enabled="mdi:pound",
+        icon_disabled="mdi:pound",
+        device_class=None,
+        entity_category=None,
+        ha_group="Jails",
+        data_path="jail",
+        data_is_on="running",
+        data_name="host_hostname",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_JAIL,
     ),
 }

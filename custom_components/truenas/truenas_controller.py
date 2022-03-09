@@ -55,6 +55,7 @@ class TrueNASControllerData(object):
             "pool": {},
             "dataset": {},
             "system_info": {},
+            "jail": {},
         }
 
         self.listeners = []
@@ -129,6 +130,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_pool)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_dataset)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_jail)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -259,3 +262,34 @@ class TrueNASControllerData(object):
         for uid in self.data["disk"]:
             if uid in temps:
                 self.data["disk"][uid]["temperature"] = temps[uid]
+
+    # ---------------------------
+    #   get_jail
+    # ---------------------------
+    def get_jail(self):
+        """Get jails from TrueNAS."""
+        self.data["jail"] = parse_api(
+            data=self.data["jail"],
+            source=self.api.query("jail"),
+            key="id",
+            vals=[
+                {"name": "id", "default": "unknown"},
+                {"name": "comment", "default": "unknown"},
+                {"name": "host_hostname", "default": "unknown"},
+                {"name": "jail_zfs_dataset", "default": "unknown"},
+                {"name": "last_started", "default": "unknown"},
+                {"name": "ip4_addr", "default": "unknown"},
+                {"name": "ip6_addr", "default": "unknown"},
+                {"name": "release", "default": "unknown"},
+                {"name": "state", "default": "unknown"},
+                {"name": "type", "default": "unknown"},
+                {"name": "plugin_name", "default": "unknown"},
+            ],
+            ensure_vals=[
+                {"name": "running", "type": "bool", "default": False},
+            ],
+        )
+
+        for uid in self.data["jail"]:
+            if self.data["jail"][uid]["state"] == "up":
+                self.data["jail"][uid]["running"] = True
