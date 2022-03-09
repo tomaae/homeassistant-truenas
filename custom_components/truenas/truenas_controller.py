@@ -51,6 +51,7 @@ class TrueNASControllerData(object):
         self.host = config_entry.data[CONF_HOST]
 
         self.data = {
+            "disk": {},
             "pool": {},
             "dataset": {},
             "system_info": {},
@@ -122,6 +123,8 @@ class TrueNASControllerData(object):
             return
 
         await self.hass.async_add_executor_job(self.get_systeminfo)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_disk)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_pool)
         if self.api.connected():
@@ -218,3 +221,41 @@ class TrueNASControllerData(object):
             used = self.data["dataset"][uid]["used"]
             total = self.data["dataset"][uid]["available"] + used
             self.data["dataset"][uid]["usage"] = round((total - used) / total * 100, 2)
+
+    # ---------------------------
+    #   get_disk
+    # ---------------------------
+    def get_disk(self):
+        """Get disks from TrueNAS."""
+        self.data["disk"] = parse_api(
+            data=self.data["disk"],
+            source=self.api.query("disk"),
+            key="devname",
+            vals=[
+                {"name": "name", "default": "unknown"},
+                {"name": "devname", "default": "unknown"},
+                {"name": "serial", "default": "unknown"},
+                {"name": "size", "default": "unknown"},
+                {"name": "hddstandby", "default": "unknown"},
+                {"name": "hddstandby_force", "type": "bool", "default": False},
+                {"name": "advpowermgmt", "default": "unknown"},
+                {"name": "acousticlevel", "default": "unknown"},
+                {"name": "togglesmart", "type": "bool", "default": False},
+                {"name": "model", "default": "unknown"},
+                {"name": "rotationrate", "default": "unknown"},
+                {"name": "type", "default": "unknown"},
+            ],
+            ensure_vals=[
+                {"name": "temperature", "default": 0},
+            ],
+        )
+
+        temps = self.api.query(
+            "disk/temperatures",
+            method="post",
+            params={"names": []},
+        )
+
+        for uid in self.data["disk"]:
+            if uid in temps:
+                self.data["disk"][uid]["temperature"] = temps[uid]

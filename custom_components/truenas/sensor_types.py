@@ -30,6 +30,19 @@ DEVICE_ATTRIBUTES_DATASET = [
     "available",
 ]
 
+DEVICE_ATTRIBUTES_DISK = [
+    "serial",
+    "size",
+    "hddstandby",
+    "hddstandby_force",
+    "advpowermgmt",
+    "acousticlevel",
+    "togglesmart",
+    "model",
+    "rotationrate",
+    "type",
+]
+
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
@@ -77,5 +90,21 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_DATASET,
+    ),
+    "disk": TrueNASSensorEntityDescription(
+        key="disk",
+        name="",
+        icon="mdi:harddisk",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=None,
+        ha_group="Disks",
+        data_path="disk",
+        data_attribute="temperature",
+        data_name="name",
+        data_uid="",
+        data_reference="devname",
+        data_attributes_list=DEVICE_ATTRIBUTES_DISK,
     ),
 }
