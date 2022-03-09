@@ -64,7 +64,7 @@ jobs:
       - name: Security check - Bandit
         uses: ioggstream/bandit-report-artifacts@v0.0.2
         with:
-          project_path: custom_components/openmediavault
+          project_path: custom_components/truenas
           config_file: .github/bandit.yaml
           ignore_failure: false
       - name: Security check report artifacts
