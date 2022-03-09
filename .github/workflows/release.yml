@@ -13,17 +13,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Zip openmediavault dir
+      - name: Zip truenas dir
         run: |
-          cd /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/custom_components/openmediavault
-          zip openmediavault.zip -r ./
+          cd /home/runner/work/homeassistant-truenas/homeassistant-truenas/custom_components/truenas
+          zip truenas.zip -r ./
       - name: Upload zip to release
         uses: svenstaro/upload-release-action@v1-release
 
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/custom_components/openmediavault/openmediavault.zip
-          asset_name: openmediavault.zip
+          file: /home/runner/work/homeassistant-truenas/homeassistant-truenas/custom_components/truenas/truenas.zip
+          asset_name: truenas.zip
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -45,4 +45,4 @@ jobs:
 
       - name: Update release notes
         run: |
-          python3 /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/.github/generate_releasenotes.py --token ${{ secrets.GITHUB_TOKEN }} --release yes --tag ${{ github.ref }}
+          python3 /home/runner/work/homeassistant-truenas/homeassistant-truenas/.github/generate_releasenotes.py --token ${{ secrets.GITHUB_TOKEN }} --release yes --tag ${{ github.ref }}
