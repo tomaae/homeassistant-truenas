@@ -119,7 +119,7 @@ if UPDATERELEASE == "yes":
     VERSION = str(sys.argv[6]).replace("refs/tags/", "")
     RELEASE = REPO.get_release(VERSION)
     RELEASE.update_release(
-        name=f"truenas {VERSION}",
+        name=f"TrueNAS {VERSION}",
         message=BODY.format(
             version=VERSION,
             changes=CHANGES.format(
