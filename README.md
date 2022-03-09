@@ -15,8 +15,11 @@
 ![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/truenas-logo-color.webp)
 
 Monitor your TrueNAS device from Home Assistant.
- * Monitor pools
- * Monitor datasets
+ * Monitor Disks
+ * Monitor Pools
+ * Monitor Datasets
+ * Monitor Jails
+ 
 
 ## Features
 ## Pools
@@ -25,9 +28,19 @@ Monitor status for each TrueNAS pool.
 ![Pools](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/pool.png)
 
 ## Datasets
-Monitor usage and attibutes for each TrueNAS dataset.
+Monitor usage and attributes for each TrueNAS dataset.
 
 ![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/dataset.png)
+
+## Disks
+Monitor temperature and attributes for each TrueNAS disk.
+
+![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/disk.png)
+
+## Jail
+Monitor status and attributes for each TrueNAS jail.
+
+![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/jail.png)
 
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).
