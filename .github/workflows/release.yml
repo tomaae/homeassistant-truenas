@@ -13,17 +13,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Zip mikrotik_router dir
+      - name: Zip openmediavault dir
         run: |
-          cd /home/runner/work/homeassistant-mikrotik_router/homeassistant-mikrotik_router/custom_components/mikrotik_router
-          zip mikrotik_router.zip -r ./
+          cd /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/custom_components/openmediavault
+          zip openmediavault.zip -r ./
       - name: Upload zip to release
         uses: svenstaro/upload-release-action@v1-release
 
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: /home/runner/work/homeassistant-mikrotik_router/homeassistant-mikrotik_router/custom_components/mikrotik_router/mikrotik_router.zip
-          asset_name: mikrotik_router.zip
+          file: /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/custom_components/openmediavault/openmediavault.zip
+          asset_name: openmediavault.zip
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -45,4 +45,4 @@ jobs:
 
       - name: Update release notes
         run: |
-          python3 /home/runner/work/homeassistant-mikrotik_router/homeassistant-mikrotik_router/.github/generate_releasenotes.py --token ${{ secrets.GITHUB_TOKEN }} --release yes --tag ${{ github.ref }}
+          python3 /home/runner/work/homeassistant-openmediavault/homeassistant-openmediavault/.github/generate_releasenotes.py --token ${{ secrets.GITHUB_TOKEN }} --release yes --tag ${{ github.ref }}

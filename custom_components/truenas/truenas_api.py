@@ -1,0 +1,92 @@
+"""TrueNAS API."""
+
+import logging
+import requests
+from threading import Lock
+from voluptuous import Optional
+
+_LOGGER = logging.getLogger(__name__)
+
+
+# ---------------------------
+#   TrueNASAPI
+# ---------------------------
+class TrueNASAPI(object):
+    """Handle all communication with TrueNAS."""
+
+    def __init__(self, hass, host, api_key, use_ssl=False, verify_ssl=True):
+        """Initialize the TrueNAS API."""
+        self._hass = hass
+        self._host = host
+        self._use_ssl = use_ssl
+        self._api_key = api_key
+        self._protocol = "https" if self._use_ssl else "http"
+        self._ssl_verify = verify_ssl
+        if not self._use_ssl:
+            self._ssl_verify = True
+        self._url = f"{self._protocol}://{self._host}/api/v2.0/"
+
+        self.lock = Lock()
+        self._connected = False
+
+    # ---------------------------
+    #   connected
+    # ---------------------------
+    def connected(self) -> bool:
+        """Return connected boolean."""
+        return self._connected
+
+    # ---------------------------
+    #   connection_test
+    # ---------------------------
+    def connection_test(self) -> bool:
+        """TrueNAS connection test."""
+        self.query("pool")
+
+        return self._connected
+
+    # ---------------------------
+    #   query
+    # ---------------------------
+    def query(self, service, params=None) -> Optional(list):
+        """Retrieve data from TrueNAS."""
+
+        if not params:
+            params = {}
+
+        self.lock.acquire()
+        try:
+            _LOGGER.debug(
+                "TrueNAS %s query: %s, %s",
+                self._host,
+                service,
+                params,
+            )
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+            }
+            response = requests.get(
+                f"{self._url}{service}",
+                headers=headers,
+                verify=self._ssl_verify,
+            )
+            if response.status_code == 200:
+                data = response.json()
+                _LOGGER.debug("TrueNAS %s query response: %s", self._host, data)
+            else:
+                _LOGGER.warning("TrueNAS %s unable to fetch data", self._host)
+                self._connected = False
+                self.lock.release()
+                return None
+        except:
+            _LOGGER.warning("TrueNAS %s unable to fetch data", self._host)
+            self._connected = False
+            self.lock.release()
+            return None
+
+        self._connected = True
+        self.lock.release()
+
+        return data

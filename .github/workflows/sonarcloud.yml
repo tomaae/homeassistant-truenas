@@ -2,23 +2,18 @@ name: SonarCloud
 
 on:
   push:
-    branches:
-      - master
     paths:
       - 'custom_components/**'
       - 'tests/**'
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
+
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v2"
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: SonarCloud Code Analysis
         uses: sonarsource/sonarcloud-github-action@master
         env:
