@@ -1,0 +1,25 @@
+{
+    "config": {
+        "title": "TrueNAS",
+        "step": {
+            "user": {
+                "title": "TrueNAS",
+                "description": "Set up TrueNAS integration.",
+                "data": {
+                    "name": "Name of the integration",
+                    "host": "Host",
+                    "api_key": "API key",
+                    "ssl": "Use SSL",
+                    "verify_ssl": "Verify SSL certificate"
+                }
+            }
+        },
+        "error": {
+            "name_exists": "Name already exists.",
+            "cannot_connect": "Cannot connect to TrueNAS.",
+            "connection_timeout": "TrueNAS connection timeout.",
+            "wrong_login": "Invalid user name or password.",
+            "ssl_verify_failed": "SSL certificate verify failed."
+        }
+    }
+}
