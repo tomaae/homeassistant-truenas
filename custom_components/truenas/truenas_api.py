@@ -48,18 +48,16 @@ class TrueNASAPI(object):
     # ---------------------------
     #   query
     # ---------------------------
-    def query(self, service, params=None) -> Optional(list):
+    def query(self, service, method="get", params={}) -> Optional(list):
         """Retrieve data from TrueNAS."""
-
-        if not params:
-            params = {}
 
         self.lock.acquire()
         try:
             _LOGGER.debug(
-                "TrueNAS %s query: %s, %s",
+                "TrueNAS %s query: %s, %s, %s",
                 self._host,
                 service,
+                method,
                 params,
             )
 
@@ -67,11 +65,21 @@ class TrueNASAPI(object):
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self._api_key}",
             }
-            response = requests.get(
-                f"{self._url}{service}",
-                headers=headers,
-                verify=self._ssl_verify,
-            )
+            if method == "get":
+                response = requests.get(
+                    f"{self._url}{service}",
+                    headers=headers,
+                    params=params,
+                    verify=self._ssl_verify,
+                )
+            elif method == "post":
+                response = requests.post(
+                    f"{self._url}{service}",
+                    headers=headers,
+                    json=params,
+                    verify=self._ssl_verify,
+                )
+
             if response.status_code == 200:
                 data = response.json()
                 _LOGGER.debug("TrueNAS %s query response: %s", self._host, data)
