@@ -523,13 +523,14 @@ class TrueNASControllerData(object):
                 )
             else:
                 self.data["cloudsync"][uid]["time_finished"] = "unknown"
-            print(self.data["cloudsync"][uid]["job"])
+
             if self.data["cloudsync"][uid]["job"]["time_finished"]:
                 self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
                     self.data["cloudsync"][uid]["job"]["time_finished"]["$date"] / 1000
                 )
             else:
                 self.data["cloudsync"][uid]["time_finished"] = "unknown"
+
             self.data["cloudsync"][uid]["job_percent"] = self.data["cloudsync"][uid][
                 "job"
             ]["progress"]["percent"]

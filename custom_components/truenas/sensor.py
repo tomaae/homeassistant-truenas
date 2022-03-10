@@ -10,7 +10,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers import entity_platform, service
+from homeassistant.helpers import entity_platform
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import callback
 
@@ -269,6 +269,8 @@ class TrueNASSensor(SensorEntity):
 #   TrueNASClousyncSensor
 # ---------------------------
 class TrueNASClousyncSensor(TrueNASSensor):
+    """Define an TrueNAS Cloudsync sensor."""
+
     async def start(self):
         """Run cloudsync job."""
         tmp_job = await self.hass.async_add_executor_job(
