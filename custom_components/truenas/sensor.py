@@ -60,9 +60,10 @@ def update_items(inst, truenas_controller, async_add_entities, sensors):
 
     for sensor, sid_func in zip(
         # Sensor type name
-        ["dataset", "disk"],
+        ["dataset", "disk", "cloudsync"],
         # Entity function
         [
+            TrueNASSensor,
             TrueNASSensor,
             TrueNASSensor,
         ],
@@ -70,7 +71,7 @@ def update_items(inst, truenas_controller, async_add_entities, sensors):
         uid_sensor = SENSOR_TYPES[sensor]
         for uid in truenas_controller.data[uid_sensor.data_path]:
             uid_data = truenas_controller.data[uid_sensor.data_path]
-            item_id = f"{inst}-{sensor}-{uid_data[uid][uid_sensor.data_reference]}"
+            item_id = f"{inst}-{sensor}-{str(uid_data[uid][uid_sensor.data_reference]).lower()}"
             _LOGGER.debug("Updating sensor %s", item_id)
             if item_id in sensors:
                 if sensors[item_id].enabled:
@@ -157,7 +158,7 @@ class TrueNASSensor(SensorEntity):
     def unique_id(self) -> str:
         """Return a unique id for this entity."""
         if self._uid:
-            return f"{self._inst.lower()}-{self.entity_description.key}-{self._data[self.entity_description.data_reference].lower()}"
+            return f"{self._inst.lower()}-{self.entity_description.key}-{str(self._data[self.entity_description.data_reference]).lower()}"
         else:
             return f"{self._inst.lower()}-{self.entity_description.key}"
 

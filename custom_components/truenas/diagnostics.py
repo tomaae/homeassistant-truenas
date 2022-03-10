@@ -12,6 +12,8 @@ from .const import DOMAIN
 TO_REDACT = {
     "username",
     "password",
+    "encryption_password",
+    "encryption_salt",
 }
 
 

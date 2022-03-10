@@ -51,6 +51,18 @@ DEVICE_ATTRIBUTES_CPU = [
     "cpu_idle",
 ]
 
+DEVICE_ATTRIBUTES_CLOUDSYNC = [
+    "direction",
+    "path",
+    "enabled",
+    "transfer_mode",
+    "snapshot",
+    "time_started",
+    "time_finished",
+    "job_percent",
+    "job_description",
+]
+
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
@@ -250,5 +262,21 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="devname",
         data_attributes_list=DEVICE_ATTRIBUTES_DISK,
+    ),
+    "cloudsync": TrueNASSensorEntityDescription(
+        key="cloudsync",
+        name="",
+        icon="mdi:cloud-upload",
+        native_unit_of_measurement=None,
+        device_class=None,
+        state_class=None,
+        entity_category=None,
+        ha_group="Cloudsync",
+        data_path="cloudsync",
+        data_attribute="state",
+        data_name="description",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_CLOUDSYNC,
     ),
 }

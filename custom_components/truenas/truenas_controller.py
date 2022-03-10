@@ -56,6 +56,7 @@ class TrueNASControllerData(object):
             "dataset": {},
             "system_info": {},
             "jail": {},
+            "cloudsync": {},
         }
 
         self.listeners = []
@@ -132,6 +133,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_dataset)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_jail)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_cloudsync)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -428,3 +431,52 @@ class TrueNASControllerData(object):
         for uid in self.data["jail"]:
             if self.data["jail"][uid]["state"] == "up":
                 self.data["jail"][uid]["running"] = True
+
+    # ---------------------------
+    #   get_cloudsync
+    # ---------------------------
+    def get_cloudsync(self):
+        """Get cloudsync from TrueNAS."""
+        self.data["cloudsync"] = parse_api(
+            data=self.data["cloudsync"],
+            source=self.api.query("cloudsync"),
+            key="id",
+            vals=[
+                {"name": "id", "default": "unknown"},
+                {"name": "description", "default": "unknown"},
+                {"name": "direction", "default": "unknown"},
+                {"name": "path", "default": "unknown"},
+                {"name": "enabled", "type": "bool", "default": False},
+                {"name": "transfer_mode", "default": "unknown"},
+                {"name": "snapshot", "type": "bool", "default": False},
+                {"name": "job"},
+            ],
+            ensure_vals=[
+                {"name": "state", "default": "unknown"},
+                {"name": "time_started", "default": "unknown"},
+                {"name": "time_finished", "default": "unknown"},
+                {"name": "job_percent", "default": 0},
+                {"name": "job_description", "default": "unknown"},
+            ],
+        )
+
+        for uid in self.data["cloudsync"]:
+            if not isinstance(self.data["cloudsync"][uid]["job"], dict):
+                continue
+
+            self.data["cloudsync"][uid]["state"] = self.data["cloudsync"][uid]["job"][
+                "state"
+            ]
+            self.data["cloudsync"][uid]["time_started"] = utc_from_timestamp(
+                self.data["cloudsync"][uid]["job"]["time_started"]["$date"] / 1000
+            )
+            self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
+                self.data["cloudsync"][uid]["job"]["time_finished"]["$date"] / 1000
+            )
+            self.data["cloudsync"][uid]["job_percent"] = self.data["cloudsync"][uid][
+                "job"
+            ]["progress"]["percent"]
+            self.data["cloudsync"][uid]["job_description"] = self.data["cloudsync"][
+                uid
+            ]["job"]["progress"]["description"]
+            self.data["cloudsync"][uid].pop("job")
