@@ -1,0 +1,8 @@
+---
+cloudsync_run:
+  name: Cloudsync Run
+  description: Start a Clousync Job
+  target:
+    entity:
+      domain: sensor
+      integration: truenas

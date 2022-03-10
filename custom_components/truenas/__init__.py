@@ -1,7 +1,10 @@
 """The TrueNAS integration."""
 
 from homeassistant.const import CONF_HOST
-from .const import DOMAIN, PLATFORMS
+from .const import (
+    DOMAIN,
+    PLATFORMS,
+)
 from .truenas_controller import TrueNASControllerData
 
 
