@@ -354,14 +354,14 @@ class TrueNASControllerData(object):
                 {"name": "available", "default": 0},
             ],
             ensure_vals=[
-                {"name": "usage", "default": 0},
+                {"name": "used_gb", "default": 0},
             ],
         )
 
         for uid in self.data["dataset"]:
-            used = self.data["dataset"][uid]["used"]
-            total = self.data["dataset"][uid]["available"] + used
-            self.data["dataset"][uid]["usage"] = round((total - used) / total * 100, 2)
+            self.data["dataset"][uid]["used_gb"] = round(
+                self.data["dataset"][uid]["used"] / 1073741824, 2
+            )
 
     # ---------------------------
     #   get_disk

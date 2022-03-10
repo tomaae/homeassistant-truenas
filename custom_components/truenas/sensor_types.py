@@ -7,7 +7,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     SensorEntityDescription,
 )
-from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIGABYTES
+from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES
 
 DEVICE_ATTRIBUTES_DATASET = [
     "type",
@@ -175,7 +175,7 @@ SENSOR_TYPES = {
         key="system_cache_size-arc_value",
         name="ARC Size",
         icon="mdi:memory",
-        native_unit_of_measurement=DATA_GIGABYTES,
+        native_unit_of_measurement=DATA_GIBIBYTES,
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -190,7 +190,7 @@ SENSOR_TYPES = {
         key="system_cache_size-L2_value",
         name="L2ARC Size",
         icon="mdi:memory",
-        native_unit_of_measurement=DATA_GIGABYTES,
+        native_unit_of_measurement=DATA_GIBIBYTES,
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -235,13 +235,13 @@ SENSOR_TYPES = {
         key="dataset",
         name="",
         icon="mdi:database",
-        native_unit_of_measurement=PERCENTAGE,
+        native_unit_of_measurement=DATA_GIBIBYTES,
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=None,
         ha_group="Datasets",
         data_path="dataset",
-        data_attribute="usage",
+        data_attribute="used_gb",
         data_name="name",
         data_uid="",
         data_reference="id",
