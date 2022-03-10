@@ -128,9 +128,9 @@ class TrueNASControllerData(object):
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_disk)
         if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_pool)
-        if self.api.connected():
             await self.hass.async_add_executor_job(self.get_dataset)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_pool)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_jail)
         if self.api.connected():
@@ -325,12 +325,24 @@ class TrueNASControllerData(object):
                 {"name": "scrub_state", "default": "unknown"},
                 {"name": "scrub_start", "default": "unknown"},
                 {"name": "scrub_end", "default": "unknown"},
-                {"name": "scrub_secs_left", "default": "unknown"},
+                {"name": "scrub_secs_left", "default": 0},
+                {"name": "available_gib", "default": 0.0},
             ],
         )
 
         # Process pools
+        tmp_dataset = {}
+        for uid in self.data["dataset"]:
+            tmp_dataset[self.data["dataset"][uid]["mountpoint"]] = round(
+                self.data["dataset"][uid]["available"] / 1073741824, 2
+            )
+
         for uid in self.data["pool"]:
+            if self.data["pool"][uid]["path"] in tmp_dataset:
+                self.data["pool"][uid]["available_gib"] = tmp_dataset[
+                    self.data["pool"][uid]["path"]
+                ]
+
             if not isinstance(self.data["pool"][uid]["scan"], dict):
                 continue
 

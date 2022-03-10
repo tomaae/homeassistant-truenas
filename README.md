@@ -27,7 +27,8 @@ Monitor your TrueNAS device from Home Assistant.
 ## Pools
 Monitor status for each TrueNAS pool.
 
-![Pools](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/pool.png)
+![Pools Health](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/pool_healthy.png)
+![Pools Free Space](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/pool_free.png)
 
 ## Datasets
 Monitor usage and attributes for each TrueNAS dataset.

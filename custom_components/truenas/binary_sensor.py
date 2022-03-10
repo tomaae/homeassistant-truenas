@@ -56,7 +56,7 @@ def update_items(inst, config_entry, truenas_controller, async_add_entities, sen
     for sensor, sid_func in zip(
         # Sensor type name
         [
-            "pool",
+            "pool_healthy",
             "jail",
         ],
         # Entity function

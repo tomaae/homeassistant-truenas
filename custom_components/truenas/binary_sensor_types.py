@@ -19,6 +19,7 @@ DEVICE_ATTRIBUTES_POOL = [
     "scrub_start",
     "scrub_end",
     "scrub_secs_left",
+    "available_gib",
 ]
 
 DEVICE_ATTRIBUTES_JAIL = [
@@ -51,9 +52,9 @@ class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
 
 
 SENSOR_TYPES = {
-    "pool": TrueNASBinarySensorEntityDescription(
-        key="pool",
-        name="Pool",
+    "pool_healthy": TrueNASBinarySensorEntityDescription(
+        key="pool_healthy",
+        name="healthy",
         icon_enabled="mdi:database-settings",
         icon_disabled="mdi:database-settings",
         device_class=None,

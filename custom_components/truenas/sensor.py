@@ -60,9 +60,10 @@ def update_items(inst, truenas_controller, async_add_entities, sensors):
 
     for sensor, sid_func in zip(
         # Sensor type name
-        ["dataset", "disk", "cloudsync"],
+        ["dataset", "disk", "pool_free", "cloudsync"],
         # Entity function
         [
+            TrueNASSensor,
             TrueNASSensor,
             TrueNASSensor,
             TrueNASSensor,

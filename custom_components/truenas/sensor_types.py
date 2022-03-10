@@ -9,6 +9,19 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES
 
+DEVICE_ATTRIBUTES_POOL = [
+    "path",
+    "status",
+    "healthy",
+    "is_decrypted",
+    "autotrim",
+    "scrub_state",
+    "scrub_start",
+    "scrub_end",
+    "scrub_secs_left",
+    "healthy",
+]
+
 DEVICE_ATTRIBUTES_DATASET = [
     "type",
     "pool",
@@ -262,6 +275,22 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="devname",
         data_attributes_list=DEVICE_ATTRIBUTES_DISK,
+    ),
+    "pool_free": TrueNASSensorEntityDescription(
+        key="pool_free",
+        name="free",
+        icon="mdi:database-settings",
+        native_unit_of_measurement=DATA_GIBIBYTES,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=None,
+        ha_group="System",
+        data_path="pool",
+        data_attribute="available_gib",
+        data_name="name",
+        data_uid="",
+        data_reference="guid",
+        data_attributes_list=DEVICE_ATTRIBUTES_POOL,
     ),
     "cloudsync": TrueNASSensorEntityDescription(
         key="cloudsync",
