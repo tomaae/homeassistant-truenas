@@ -14,6 +14,11 @@ DEVICE_ATTRIBUTES_POOL = [
     "status",
     "healthy",
     "is_decrypted",
+    "autotrim",
+    "scrub_state",
+    "scrub_start",
+    "scrub_end",
+    "scrub_secs_left",
 ]
 
 DEVICE_ATTRIBUTES_JAIL = [

@@ -318,8 +318,38 @@ class TrueNASControllerData(object):
                 {"name": "status", "default": "unknown"},
                 {"name": "healthy", "type": "bool", "default": False},
                 {"name": "is_decrypted", "type": "bool", "default": False},
+                {"name": "autotrim", "default": "unknown"},
+                {"name": "scan"},
+            ],
+            ensure_vals=[
+                {"name": "scrub_state", "default": "unknown"},
+                {"name": "scrub_start", "default": "unknown"},
+                {"name": "scrub_end", "default": "unknown"},
+                {"name": "scrub_secs_left", "default": "unknown"},
             ],
         )
+
+        # Process pools
+        for uid in self.data["pool"]:
+            if not isinstance(self.data["pool"][uid]["scan"], dict):
+                continue
+
+            if self.data["pool"][uid]["scan"]["function"] != "SCRUB":
+                continue
+
+            self.data["pool"][uid]["scrub_state"] = self.data["pool"][uid]["scan"][
+                "state"
+            ]
+            self.data["pool"][uid]["scrub_start"] = utc_from_timestamp(
+                self.data["pool"][uid]["scan"]["start_time"]["$date"] / 1000
+            )
+            self.data["pool"][uid]["scrub_end"] = utc_from_timestamp(
+                self.data["pool"][uid]["scan"]["end_time"]["$date"] / 1000
+            )
+            self.data["pool"][uid]["scrub_secs_left"] = self.data["pool"][uid]["scan"][
+                "total_secs_left"
+            ]
+            self.data["pool"][uid].pop("scan")
 
     # ---------------------------
     #   get_dataset
