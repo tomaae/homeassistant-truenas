@@ -2,7 +2,7 @@
     "name": "TrueNAS",
     "homeassistant": "2022.2.0",
     "iot_class": "local_poll",
-    "domains": ["sensor"],
+    "domains": ["sensor", "binary_sensor"],
     "render_readme": false,
     "zip_release": true,
     "filename": "truenas.zip"
