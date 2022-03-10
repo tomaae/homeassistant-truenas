@@ -352,12 +352,20 @@ class TrueNASControllerData(object):
             self.data["pool"][uid]["scrub_state"] = self.data["pool"][uid]["scan"][
                 "state"
             ]
-            self.data["pool"][uid]["scrub_start"] = utc_from_timestamp(
-                self.data["pool"][uid]["scan"]["start_time"]["$date"] / 1000
-            )
-            self.data["pool"][uid]["scrub_end"] = utc_from_timestamp(
-                self.data["pool"][uid]["scan"]["end_time"]["$date"] / 1000
-            )
+            if self.data["pool"][uid]["scan"]["start_time"]:
+                self.data["pool"][uid]["scrub_start"] = utc_from_timestamp(
+                    self.data["pool"][uid]["scan"]["start_time"]["$date"] / 1000
+                )
+            else:
+                self.data["pool"][uid]["start_time"] = "unknown"
+
+            if self.data["pool"][uid]["scan"]["end_time"]:
+                self.data["pool"][uid]["scrub_end"] = utc_from_timestamp(
+                    self.data["pool"][uid]["scan"]["end_time"]["$date"] / 1000
+                )
+            else:
+                self.data["pool"][uid]["scrub_end"] = "unknown"
+
             self.data["pool"][uid]["scrub_secs_left"] = self.data["pool"][uid]["scan"][
                 "total_secs_left"
             ]
@@ -509,12 +517,19 @@ class TrueNASControllerData(object):
             self.data["cloudsync"][uid]["state"] = self.data["cloudsync"][uid]["job"][
                 "state"
             ]
-            self.data["cloudsync"][uid]["time_started"] = utc_from_timestamp(
-                self.data["cloudsync"][uid]["job"]["time_started"]["$date"] / 1000
-            )
-            self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
-                self.data["cloudsync"][uid]["job"]["time_finished"]["$date"] / 1000
-            )
+            if self.data["cloudsync"][uid]["job"]["time_started"]:
+                self.data["cloudsync"][uid]["time_started"] = utc_from_timestamp(
+                    self.data["cloudsync"][uid]["job"]["time_started"]["$date"] / 1000
+                )
+            else:
+                self.data["cloudsync"][uid]["time_finished"] = "unknown"
+            print(self.data["cloudsync"][uid]["job"])
+            if self.data["cloudsync"][uid]["job"]["time_finished"]:
+                self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
+                    self.data["cloudsync"][uid]["job"]["time_finished"]["$date"] / 1000
+                )
+            else:
+                self.data["cloudsync"][uid]["time_finished"] = "unknown"
             self.data["cloudsync"][uid]["job_percent"] = self.data["cloudsync"][uid][
                 "job"
             ]["progress"]["percent"]
