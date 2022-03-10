@@ -1,10 +1,12 @@
 ![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/truenas-logo-color.webp)
 
 Monitor your TrueNAS device from Home Assistant.
+ * Monitor System (Cpu, Load, Temperature, ARC/L2ARC, Uptime)
  * Monitor Disks
  * Monitor Pools
  * Monitor Datasets
  * Monitor Jails
+ * Monitor Cloudsync
 
 ## Links
 - [Documentation](https://github.com/tomaae/homeassistant-truenas/tree/master)
