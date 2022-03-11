@@ -19,6 +19,7 @@ Monitor your TrueNAS device from Home Assistant.
  * Monitor Disks
  * Monitor Pools
  * Monitor Datasets
+ * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync
  
@@ -38,19 +39,26 @@ Monitor usage and attributes for each TrueNAS dataset.
 ## Disks
 Monitor temperature and attributes for each TrueNAS disk.
 
-![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/disk.png)
+![Disks](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/disk.png)
+
+## Virtual Machines
+Control and monitor status and attributes for each TrueNAS Virtual Machines.
+Virtual Machines control is available through services.
+
+![Virtual Machines](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/vm.png)
+
 
 ## Jail
 Control and monitor status and attributes for each TrueNAS jail.
 Jail control is available through services.
 
-![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/jail.png)
+![Jails](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/jail.png)
 
 ## Cloudsync
 Contril and monitor status and attributes for each TrueNAS cloudsync task.
 Jail control is available through services.
 
-![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/cloudsync.png)
+![Cloudsync](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/cloudsync.png)
 
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).
