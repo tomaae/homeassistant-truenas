@@ -19,8 +19,8 @@ Monitor your TrueNAS device from Home Assistant.
  * Monitor Disks
  * Monitor Pools
  * Monitor Datasets
- * Monitor Jails
- * Monitor Cloudsync
+ * Control and Monitor Jails
+ * Control and Monitor Cloudsync
  
 
 ## Features
@@ -41,12 +41,14 @@ Monitor temperature and attributes for each TrueNAS disk.
 ![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/disk.png)
 
 ## Jail
-Monitor status and attributes for each TrueNAS jail.
+Control and monitor status and attributes for each TrueNAS jail.
+Jail control is available through services.
 
 ![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/jail.png)
 
 ## Cloudsync
-Monitor status and attributes for each TrueNAS cloudsync task.
+Contril and monitor status and attributes for each TrueNAS cloudsync task.
+Jail control is available through services.
 
 ![Datasets](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/cloudsync.png)
 

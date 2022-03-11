@@ -5,8 +5,8 @@ Monitor your TrueNAS device from Home Assistant.
  * Monitor Disks
  * Monitor Pools
  * Monitor Datasets
- * Monitor Jails
- * Monitor Cloudsync
+ * Control and Monitor Jails
+ * Control and Monitor Cloudsync
 
 ## Links
 - [Documentation](https://github.com/tomaae/homeassistant-truenas/tree/master)
