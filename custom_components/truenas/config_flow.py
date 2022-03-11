@@ -69,9 +69,12 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
                 user_input[CONF_VERIFY_SSL],
             )
 
-            if not await self.hass.async_add_executor_job(api.connection_test):
-                _LOGGER.error("TrueNAS connection error")
-                errors[CONF_HOST] = "Connection error"
+            conn, errorcode = await self.hass.async_add_executor_job(
+                api.connection_test
+            )
+            if not conn:
+                errors[CONF_HOST] = errorcode
+                _LOGGER.error("TrueNAS connection error (%s)", errorcode)
 
             # Save instance
             if not errors:

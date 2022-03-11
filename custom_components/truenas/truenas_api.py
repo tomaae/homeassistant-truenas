@@ -28,6 +28,7 @@ class TrueNASAPI(object):
 
         self.lock = Lock()
         self._connected = False
+        self._error = ""
 
     # ---------------------------
     #   connected
@@ -39,11 +40,11 @@ class TrueNASAPI(object):
     # ---------------------------
     #   connection_test
     # ---------------------------
-    def connection_test(self) -> bool:
+    def connection_test(self):
         """TrueNAS connection test."""
         self.query("pool")
 
-        return self._connected
+        return self._connected, self._error
 
     # ---------------------------
     #   query
@@ -52,6 +53,7 @@ class TrueNASAPI(object):
         """Retrieve data from TrueNAS."""
 
         self.lock.acquire()
+        error = False
         try:
             _LOGGER.debug(
                 "TrueNAS %s query: %s, %s, %s",
@@ -84,17 +86,27 @@ class TrueNASAPI(object):
                 data = response.json()
                 _LOGGER.debug("TrueNAS %s query response: %s", self._host, data)
             else:
-                _LOGGER.warning("TrueNAS %s unable to fetch data", self._host)
-                self._connected = False
-                self.lock.release()
-                return None
+                error = True
         except:
-            _LOGGER.warning("TrueNAS %s unable to fetch data", self._host)
+            error = True
+
+        if error:
+            try:
+                errorcode = response.status_code
+            except:
+                errorcode = "no_respose"
+
+            _LOGGER.warning(
+                "TrueNAS %s unable to fetch data (%s)", self._host, errorcode
+            )
+
+            self._error = errorcode
             self._connected = False
             self.lock.release()
             return None
 
         self._connected = True
+        self._error = ""
         self.lock.release()
 
         return data
