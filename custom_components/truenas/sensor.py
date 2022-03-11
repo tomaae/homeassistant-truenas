@@ -40,7 +40,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     sensors = {}
 
     platform = entity_platform.async_get_current_platform()
-    assert platform is not None
     platform.async_register_entity_service(
         SERVICE_CLOUDSYNC_RUN,
         SCHEMA_SERVICE_CLOUDSYNC_RUN,
