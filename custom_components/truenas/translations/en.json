@@ -1,6 +1,5 @@
 {
     "config": {
-        "title": "TrueNAS",
         "step": {
             "user": {
                 "title": "TrueNAS",
@@ -16,10 +15,10 @@
         },
         "error": {
             "name_exists": "Name already exists.",
-            "cannot_connect": "Cannot connect to TrueNAS.",
-            "connection_timeout": "TrueNAS connection timeout.",
-            "wrong_login": "Invalid user name or password.",
-            "ssl_verify_failed": "SSL certificate verify failed."
+            "no_respose": "No response from host.",
+            "401": "No authorization for this endpoint.",
+            "404": "API not found on this host.",
+            "500": "Internal error."
         }
     }
 }
