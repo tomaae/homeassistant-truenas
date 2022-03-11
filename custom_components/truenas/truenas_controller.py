@@ -336,43 +336,37 @@ class TrueNASControllerData(object):
 
         # Process pools
         tmp_dataset = {}
-        for uid in self.data["dataset"]:
+        for uid, vals in self.data["dataset"].items():
             tmp_dataset[self.data["dataset"][uid]["mountpoint"]] = round(
-                self.data["dataset"][uid]["available"] / 1073741824, 2
+                vals["available"] / 1073741824, 2
             )
 
-        for uid in self.data["pool"]:
-            if self.data["pool"][uid]["path"] in tmp_dataset:
-                self.data["pool"][uid]["available_gib"] = tmp_dataset[
-                    self.data["pool"][uid]["path"]
-                ]
+        for uid, vals in self.data["pool"].items():
+            if vals["path"] in tmp_dataset:
+                self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
 
-            if not isinstance(self.data["pool"][uid]["scan"], dict):
+            if not isinstance(vals["scan"], dict):
                 continue
 
-            if self.data["pool"][uid]["scan"]["function"] != "SCRUB":
+            if vals["scan"]["function"] != "SCRUB":
                 continue
 
-            self.data["pool"][uid]["scrub_state"] = self.data["pool"][uid]["scan"][
-                "state"
-            ]
-            if self.data["pool"][uid]["scan"]["start_time"]:
+            self.data["pool"][uid]["scrub_state"] = vals["scan"]["state"]
+            if vals["scan"]["start_time"]:
                 self.data["pool"][uid]["scrub_start"] = utc_from_timestamp(
-                    self.data["pool"][uid]["scan"]["start_time"]["$date"] / 1000
+                    vals["scan"]["start_time"]["$date"] / 1000
                 )
             else:
                 self.data["pool"][uid]["start_time"] = "unknown"
 
-            if self.data["pool"][uid]["scan"]["end_time"]:
+            if vals["scan"]["end_time"]:
                 self.data["pool"][uid]["scrub_end"] = utc_from_timestamp(
-                    self.data["pool"][uid]["scan"]["end_time"]["$date"] / 1000
+                    vals["scan"]["end_time"]["$date"] / 1000
                 )
             else:
                 self.data["pool"][uid]["scrub_end"] = "unknown"
 
-            self.data["pool"][uid]["scrub_secs_left"] = self.data["pool"][uid]["scan"][
-                "total_secs_left"
-            ]
+            self.data["pool"][uid]["scrub_secs_left"] = vals["scan"]["total_secs_left"]
             self.data["pool"][uid].pop("scan")
 
     # ---------------------------
@@ -412,10 +406,8 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid in self.data["dataset"]:
-            self.data["dataset"][uid]["used_gb"] = round(
-                self.data["dataset"][uid]["used"] / 1073741824, 2
-            )
+        for uid, vals in self.data["dataset"].items():
+            self.data["dataset"][uid]["used_gb"] = round(vals["used"] / 1073741824, 2)
 
     # ---------------------------
     #   get_disk
@@ -445,12 +437,12 @@ class TrueNASControllerData(object):
             ],
         )
 
+        # Get disk temperatures
         temps = self.api.query(
             "disk/temperatures",
             method="post",
             params={"names": []},
         )
-
         for uid in self.data["disk"]:
             if uid in temps:
                 self.data["disk"][uid]["temperature"] = temps[uid]
@@ -482,8 +474,8 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid in self.data["jail"]:
-            if self.data["jail"][uid]["state"] == "up":
+        for uid, vals in self.data["jail"].items():
+            if vals["state"] == "up":
                 self.data["jail"][uid]["running"] = True
 
     # ---------------------------
@@ -514,31 +506,30 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid in self.data["cloudsync"]:
-            if not isinstance(self.data["cloudsync"][uid]["job"], dict):
+        # Process job dict from API
+        for uid, vals in self.data["cloudsync"].items():
+            if not isinstance(vals["job"], dict):
                 continue
 
-            self.data["cloudsync"][uid]["state"] = self.data["cloudsync"][uid]["job"][
-                "state"
-            ]
-            if self.data["cloudsync"][uid]["job"]["time_started"]:
+            self.data["cloudsync"][uid]["state"] = vals["job"]["state"]
+            if vals["job"]["time_started"]:
                 self.data["cloudsync"][uid]["time_started"] = utc_from_timestamp(
-                    self.data["cloudsync"][uid]["job"]["time_started"]["$date"] / 1000
+                    vals["job"]["time_started"]["$date"] / 1000
                 )
             else:
                 self.data["cloudsync"][uid]["time_finished"] = "unknown"
 
-            if self.data["cloudsync"][uid]["job"]["time_finished"]:
+            if vals["job"]["time_finished"]:
                 self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
-                    self.data["cloudsync"][uid]["job"]["time_finished"]["$date"] / 1000
+                    vals["job"]["time_finished"]["$date"] / 1000
                 )
             else:
                 self.data["cloudsync"][uid]["time_finished"] = "unknown"
 
-            self.data["cloudsync"][uid]["job_percent"] = self.data["cloudsync"][uid][
-                "job"
-            ]["progress"]["percent"]
-            self.data["cloudsync"][uid]["job_description"] = self.data["cloudsync"][
-                uid
-            ]["job"]["progress"]["description"]
+            self.data["cloudsync"][uid]["job_percent"] = vals["job"]["progress"][
+                "percent"
+            ]
+            self.data["cloudsync"][uid]["job_description"] = vals["job"]["progress"][
+                "description"
+            ]
             self.data["cloudsync"][uid].pop("job")
