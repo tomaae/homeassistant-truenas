@@ -4,14 +4,21 @@ import logging
 from typing import Any
 from collections.abc import Mapping
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers import entity_platform
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import ATTR_ATTRIBUTION, CONF_NAME, CONF_HOST
 from homeassistant.core import callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .const import (
     ATTRIBUTION,
     DOMAIN,
+    SERVICE_JAIL_START,
+    SCHEMA_SERVICE_JAIL_START,
+    SERVICE_JAIL_STOP,
+    SCHEMA_SERVICE_JAIL_STOP,
+    SERVICE_JAIL_RESTART,
+    SCHEMA_SERVICE_JAIL_RESTART,
 )
 from .binary_sensor_types import (
     TrueNASBinarySensorEntityDescription,
@@ -29,6 +36,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     inst = config_entry.data[CONF_NAME]
     truenas_controller = hass.data[DOMAIN][config_entry.entry_id]
     sensors = {}
+
+    platform = entity_platform.async_get_current_platform()
+    assert platform is not None
+    platform.async_register_entity_service(
+        SERVICE_JAIL_START, SCHEMA_SERVICE_JAIL_START, "start"
+    )
+    platform.async_register_entity_service(
+        SERVICE_JAIL_STOP, SCHEMA_SERVICE_JAIL_STOP, "stop"
+    )
+    platform.async_register_entity_service(
+        SERVICE_JAIL_RESTART, SCHEMA_SERVICE_JAIL_RESTART, "restart"
+    )
 
     @callback
     def update_controller():
@@ -62,7 +81,7 @@ def update_items(inst, config_entry, truenas_controller, async_add_entities, sen
         # Entity function
         [
             TrueNASBinarySensor,
-            TrueNASBinarySensor,
+            TrueNASJailBinarySensor,
         ],
     ):
         uid_sensor = SENSOR_TYPES[sensor]
@@ -219,3 +238,100 @@ class TrueNASBinarySensor(BinarySensorEntity):
     async def async_added_to_hass(self):
         """Run when entity about to be added to hass."""
         _LOGGER.debug("New binary sensor %s (%s)", self._inst, self.unique_id)
+
+    async def start(self):
+        """Dummy run function."""
+        _LOGGER.error("Start functionality does not exist for %s", self.entity_id)
+
+    async def stop(self):
+        """Dummy stop function."""
+        _LOGGER.error("Stop functionality does not exist for %s", self.entity_id)
+
+    async def restart(self):
+        """Dummy restart function."""
+        _LOGGER.error("Restart functionality does not exist for %s", self.entity_id)
+
+
+# ---------------------------
+#   TrueNASJailBinarySensor
+# ---------------------------
+class TrueNASJailBinarySensor(TrueNASBinarySensor):
+    """Define a TrueNAS Jail Binary Sensor."""
+
+    async def start(self):
+        """Start a Jail."""
+        tmp_jail = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"jail/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_jail:
+            _LOGGER.error(
+                "Jail %s (%s) invalid",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_jail["state"] != "down":
+            _LOGGER.warning(
+                "Jail %s (%s) is not down",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query, "jail/start", "post", self._data["id"]
+        )
+
+    async def stop(self):
+        """Stop a Jail."""
+        tmp_jail = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"jail/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_jail:
+            _LOGGER.error(
+                "Jail %s (%s) invalid",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_jail["state"] != "up":
+            _LOGGER.warning(
+                "Jail %s (%s) is not up",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query, "jail/stop", "post", {"jail": self._data["id"]}
+        )
+
+    async def restart(self):
+        """Restart a Jail."""
+        tmp_jail = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"jail/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_jail:
+            _LOGGER.error(
+                "Jail %s (%s) invalid",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_jail["state"] != "up":
+            _LOGGER.warning(
+                "Jail %s (%s) is not up",
+                self._data["comment"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query, "jail/restart", "post", self._data["id"]
+        )

@@ -6,3 +6,27 @@ cloudsync_run:
     entity:
       domain: sensor
       integration: truenas
+
+jail_start:
+  name: Jail Start
+  description: Start a Jail
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+jail_stop:
+  name: Jail Stop
+  description: Stop a Jail
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+jail_restart:
+  name: Jail Restart
+  description: Restart a Jail
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
