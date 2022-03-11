@@ -1,8 +1,6 @@
 name: SonarCloud
 on:
   push:
-    branches:
-      - master
     paths:
       - 'custom_components/**'
   pull_request:
