@@ -100,7 +100,7 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_NAME, default=user_input[CONF_NAME]): str,
                     vol.Required(CONF_HOST, default=user_input[CONF_HOST]): str,
-                    vol.Required(CONF_API_KEY, default=""): str,
+                    vol.Required(CONF_API_KEY, default=user_input[CONF_API_KEY]): str,
                     vol.Optional(CONF_SSL, default=user_input[CONF_SSL]): bool,
                     vol.Optional(
                         CONF_VERIFY_SSL, default=user_input[CONF_VERIFY_SSL]
