@@ -5,6 +5,7 @@ Monitor your TrueNAS device from Home Assistant.
  * Monitor Disks
  * Monitor Pools
  * Monitor Datasets
+ * Monitor Replication Tasks
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync

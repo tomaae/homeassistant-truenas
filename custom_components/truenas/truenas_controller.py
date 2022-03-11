@@ -58,6 +58,7 @@ class TrueNASControllerData(object):
             "jail": {},
             "vm": {},
             "cloudsync": {},
+            "replication": {},
         }
 
         self.listeners = []
@@ -138,6 +139,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_vm)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_cloudsync)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_replication)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -565,3 +568,62 @@ class TrueNASControllerData(object):
                 "description"
             ]
             self.data["cloudsync"][uid].pop("job")
+
+    # ---------------------------
+    #   get_replication
+    # ---------------------------
+    def get_replication(self):
+        """Get replication from TrueNAS."""
+        self.data["replication"] = parse_api(
+            data=self.data["replication"],
+            source=self.api.query("replication"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "name", "default": "unknown"},
+                {"name": "source_datasets", "default": "unknown"},
+                {"name": "target_dataset", "default": "unknown"},
+                {"name": "recursive", "type": "bool", "default": False},
+                {"name": "enabled", "type": "bool", "default": False},
+                {"name": "direction", "default": "unknown"},
+                {"name": "transport", "default": "unknown"},
+                {"name": "auto", "type": "bool", "default": False},
+                {"name": "retention_policy", "default": "unknown"},
+                {"name": "job"},
+            ],
+            ensure_vals=[
+                {"name": "state", "default": "unknown"},
+                {"name": "time_started", "default": "unknown"},
+                {"name": "time_finished", "default": "unknown"},
+                {"name": "job_percent", "default": 0},
+                {"name": "job_description", "default": "unknown"},
+            ],
+        )
+
+        # Process job dict from API
+        for uid, vals in self.data["replication"].items():
+            if not isinstance(vals["job"], dict):
+                continue
+
+            self.data["replication"][uid]["state"] = vals["job"]["state"]
+            if vals["job"]["time_started"]:
+                self.data["replication"][uid]["time_started"] = utc_from_timestamp(
+                    vals["job"]["time_started"]["$date"] / 1000
+                )
+            else:
+                self.data["replication"][uid]["time_finished"] = "unknown"
+
+            if vals["job"]["time_finished"]:
+                self.data["replication"][uid]["time_finished"] = utc_from_timestamp(
+                    vals["job"]["time_finished"]["$date"] / 1000
+                )
+            else:
+                self.data["replication"][uid]["time_finished"] = "unknown"
+
+            self.data["replication"][uid]["job_percent"] = vals["job"]["progress"][
+                "percent"
+            ]
+            self.data["replication"][uid]["job_description"] = vals["job"]["progress"][
+                "description"
+            ]
+            self.data["replication"][uid].pop("job")

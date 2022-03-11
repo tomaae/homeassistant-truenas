@@ -76,6 +76,22 @@ DEVICE_ATTRIBUTES_CLOUDSYNC = [
     "job_description",
 ]
 
+DEVICE_ATTRIBUTES_REPLICATION = [
+    "source_datasets",
+    "target_dataset",
+    "recursive",
+    "enabled",
+    "direction",
+    "transport",
+    "auto",
+    "retention_policy",
+    "state",
+    "time_started",
+    "time_finished",
+    "job_percent",
+    "job_description",
+]
+
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
@@ -307,5 +323,21 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_CLOUDSYNC,
+    ),
+    "replication": TrueNASSensorEntityDescription(
+        key="replication",
+        name="",
+        icon="mdi:transfer",
+        native_unit_of_measurement=None,
+        device_class=None,
+        state_class=None,
+        entity_category=None,
+        ha_group="Replication",
+        data_path="replication",
+        data_attribute="state",
+        data_name="name",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_REPLICATION,
     ),
 }
