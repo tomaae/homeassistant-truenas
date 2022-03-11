@@ -214,6 +214,9 @@ class TrueNASControllerData(object):
                 if "aggregations" in tmp_graph[i]:
                     tmp_list = {}
                     for e in range(len(tmp_graph[i]["legend"])):
+                        if not tmp_graph[i]["aggregations"]["mean"][e]:
+                            tmp_graph[i]["aggregations"]["mean"][e] = 0
+
                         tmp_list[tmp_graph[i]["legend"][e]] = tmp_graph[i][
                             "aggregations"
                         ]["mean"][e]
