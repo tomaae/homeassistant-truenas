@@ -2,6 +2,7 @@
 import logging
 from typing import Any, Optional
 from collections.abc import Mapping
+from datetime import datetime
 
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
@@ -20,6 +21,8 @@ from .const import (
     ATTRIBUTION,
     SERVICE_CLOUDSYNC_RUN,
     SCHEMA_SERVICE_CLOUDSYNC_RUN,
+    SERVICE_DATASET_SNAPSHOT,
+    SCHEMA_SERVICE_DATASET_SNAPSHOT,
 )
 
 from .sensor_types import (
@@ -41,9 +44,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
-        SERVICE_CLOUDSYNC_RUN,
-        SCHEMA_SERVICE_CLOUDSYNC_RUN,
-        "start",
+        SERVICE_CLOUDSYNC_RUN, SCHEMA_SERVICE_CLOUDSYNC_RUN, "start"
+    )
+    platform.async_register_entity_service(
+        SERVICE_DATASET_SNAPSHOT, SCHEMA_SERVICE_DATASET_SNAPSHOT, "snapshot"
     )
 
     @callback
@@ -73,7 +77,7 @@ def update_items(inst, truenas_controller, async_add_entities, sensors):
         ["dataset", "disk", "pool_free", "cloudsync"],
         # Entity function
         [
-            TrueNASSensor,
+            TrueNASDatasetSensor,
             TrueNASSensor,
             TrueNASSensor,
             TrueNASClousyncSensor,
@@ -262,6 +266,27 @@ class TrueNASSensor(SensorEntity):
     async def restart(self):
         """Dummy restart function."""
         _LOGGER.error("Restart functionality does not exist for %s", self.entity_id)
+
+    async def snapshot(self):
+        """Dummy snapshot function."""
+        _LOGGER.error("Snapshot functionality does not exist for %s", self.entity_id)
+
+
+# ---------------------------
+#   TrueNASDatasetSensor
+# ---------------------------
+class TrueNASDatasetSensor(TrueNASSensor):
+    """Define an TrueNAS Dataset sensor."""
+
+    async def snapshot(self):
+        """Create dataset snapshot."""
+        ts = datetime.now().isoformat(sep="_", timespec="microseconds")
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "zfs/snapshot",
+            "post",
+            {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
+        )
 
 
 # ---------------------------

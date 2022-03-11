@@ -7,6 +7,14 @@ cloudsync_run:
       domain: sensor
       integration: truenas
 
+dataset_snapshot:
+  name: Dataset Snapshot
+  description: Create a Dataset Snapshot
+  target:
+    entity:
+      domain: sensor
+      integration: truenas
+
 jail_start:
   name: Jail Start
   description: Start a Jail

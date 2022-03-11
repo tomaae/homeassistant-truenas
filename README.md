@@ -22,6 +22,7 @@ Monitor your TrueNAS device from Home Assistant.
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync
+ * Create a Dataset Snapshot
  
 
 ## Features
@@ -55,10 +56,18 @@ Jail control is available through services.
 ![Jails](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/jail.png)
 
 ## Cloudsync
-Contril and monitor status and attributes for each TrueNAS cloudsync task.
+Control and monitor status and attributes for each TrueNAS cloudsync task.
 Jail control is available through services.
 
 ![Cloudsync](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/cloudsync.png)
+
+## Dataset Snapshot
+Create a Dataset Snapshot using Homeassistant service.
+Snapshot name will be automatically generated using datetime iso format with microseconds and "custom" prefix. 
+Examples:
+
+![Snapshot UI](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/snapshot_ui.png)
+![Snapshot YAML](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/snapshot_yaml.png)
 
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).

@@ -8,6 +8,7 @@ Monitor your TrueNAS device from Home Assistant.
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync
+ * Create a Dataset Snapshot
 
 ## Links
 - [Documentation](https://github.com/tomaae/homeassistant-truenas/tree/master)
