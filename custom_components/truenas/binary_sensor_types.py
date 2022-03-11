@@ -33,6 +33,15 @@ DEVICE_ATTRIBUTES_JAIL = [
     "plugin_name",
 ]
 
+DEVICE_ATTRIBUTES_VM = [
+    "description",
+    "vcpus",
+    "memory",
+    "autostart",
+    "cores",
+    "threads",
+]
+
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
@@ -55,8 +64,8 @@ SENSOR_TYPES = {
     "pool_healthy": TrueNASBinarySensorEntityDescription(
         key="pool_healthy",
         name="healthy",
-        icon_enabled="mdi:database-settings",
-        icon_disabled="mdi:database-settings",
+        icon_enabled="mdi:database",
+        icon_disabled="mdi:database-off",
         device_class=None,
         entity_category=None,
         ha_group="System",
@@ -70,8 +79,8 @@ SENSOR_TYPES = {
     "jail": TrueNASBinarySensorEntityDescription(
         key="jail",
         name="",
-        icon_enabled="mdi:pound",
-        icon_disabled="mdi:pound",
+        icon_enabled="mdi:layers",
+        icon_disabled="mdi:layers-off",
         device_class=None,
         entity_category=None,
         ha_group="Jails",
@@ -81,5 +90,20 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_JAIL,
+    ),
+    "vm": TrueNASBinarySensorEntityDescription(
+        key="vm",
+        name="",
+        icon_enabled="mdi:server",
+        icon_disabled="mdi:server-off",
+        device_class=None,
+        entity_category=None,
+        ha_group="VMs",
+        data_path="vm",
+        data_is_on="running",
+        data_name="name",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_VM,
     ),
 }

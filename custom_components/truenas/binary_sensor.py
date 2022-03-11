@@ -19,6 +19,10 @@ from .const import (
     SCHEMA_SERVICE_JAIL_STOP,
     SERVICE_JAIL_RESTART,
     SCHEMA_SERVICE_JAIL_RESTART,
+    SERVICE_VM_START,
+    SCHEMA_SERVICE_VM_START,
+    SERVICE_VM_STOP,
+    SCHEMA_SERVICE_VM_STOP,
 )
 from .binary_sensor_types import (
     TrueNASBinarySensorEntityDescription,
@@ -46,6 +50,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
     platform.async_register_entity_service(
         SERVICE_JAIL_RESTART, SCHEMA_SERVICE_JAIL_RESTART, "restart"
+    )
+    platform.async_register_entity_service(
+        SERVICE_VM_START, SCHEMA_SERVICE_VM_START, "start"
+    )
+    platform.async_register_entity_service(
+        SERVICE_VM_STOP, SCHEMA_SERVICE_VM_STOP, "stop"
     )
 
     @callback
@@ -76,17 +86,19 @@ def update_items(inst, config_entry, truenas_controller, async_add_entities, sen
         [
             "pool_healthy",
             "jail",
+            "vm",
         ],
         # Entity function
         [
             TrueNASBinarySensor,
             TrueNASJailBinarySensor,
+            TrueNASVMBinarySensor,
         ],
     ):
         uid_sensor = SENSOR_TYPES[sensor]
         for uid in truenas_controller.data[uid_sensor.data_path]:
             uid_data = truenas_controller.data[uid_sensor.data_path]
-            item_id = f"{inst}-{sensor}-{uid_data[uid][uid_sensor.data_reference]}"
+            item_id = f"{inst}-{sensor}-{str(uid_data[uid][uid_sensor.data_reference]).lower()}"
             _LOGGER.debug("Updating sensor %s", item_id)
             if item_id in sensors:
                 if sensors[item_id].enabled:
@@ -164,7 +176,7 @@ class TrueNASBinarySensor(BinarySensorEntity):
     def unique_id(self) -> str:
         """Return a unique id for this entity."""
         if self._uid:
-            return f"{self._inst.lower()}-{self.entity_description.key}-{self._data[self.entity_description.data_reference].lower()}"
+            return f"{self._inst.lower()}-{self.entity_description.key}-{str(self._data[self.entity_description.data_reference]).lower()}"
         else:
             return f"{self._inst.lower()}-{self.entity_description.key}"
 
@@ -333,4 +345,63 @@ class TrueNASJailBinarySensor(TrueNASBinarySensor):
 
         await self.hass.async_add_executor_job(
             self._ctrl.api.query, "jail/restart", "post", self._data["id"]
+        )
+
+
+# ---------------------------
+#   TrueNASVMBinarySensor
+# ---------------------------
+class TrueNASVMBinarySensor(TrueNASBinarySensor):
+    """Define a TrueNAS VM Binary Sensor."""
+
+    async def start(self):
+        """Start a VM."""
+        tmp_vm = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"vm/id/{self._data['id']}"
+        )
+
+        if "status" not in tmp_vm:
+            _LOGGER.error(
+                "VM %s (%s) invalid",
+                self._data["name"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_vm["status"]["state"] != "STOPPED":
+            _LOGGER.warning(
+                "VM %s (%s) is not down",
+                self._data["name"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"vm/id/{self._data['id']}/start", "post"
+        )
+
+    async def stop(self):
+        """Stop a VM."""
+        tmp_vm = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"vm/id/{self._data['id']}"
+        )
+
+        if "status" not in tmp_vm:
+            _LOGGER.error(
+                "VM %s (%s) invalid",
+                self._data["name"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_vm["status"]["state"] != "RUNNING":
+            _LOGGER.warning(
+                "VM %s (%s) is not up",
+                self._data["name"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"vm/id/{self._data['id']}/stop", "post"
         )

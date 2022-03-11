@@ -56,6 +56,7 @@ class TrueNASControllerData(object):
             "dataset": {},
             "system_info": {},
             "jail": {},
+            "vm": {},
             "cloudsync": {},
         }
 
@@ -133,6 +134,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_pool)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_jail)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_vm)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_cloudsync)
 
@@ -477,6 +480,35 @@ class TrueNASControllerData(object):
         for uid, vals in self.data["jail"].items():
             if vals["state"] == "up":
                 self.data["jail"][uid]["running"] = True
+
+    # ---------------------------
+    #   get_vm
+    # ---------------------------
+    def get_vm(self):
+        """Get VMs from TrueNAS."""
+        self.data["vm"] = parse_api(
+            data=self.data["vm"],
+            source=self.api.query("vm"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "name", "default": "unknown"},
+                {"name": "description", "default": "unknown"},
+                {"name": "vcpus", "default": 0},
+                {"name": "memory", "default": 0},
+                {"name": "autostart", "type": "bool", "default": False},
+                {"name": "cores", "default": 0},
+                {"name": "threads", "default": 0},
+                {"name": "status"},
+            ],
+            ensure_vals=[
+                {"name": "running", "type": "bool", "default": False},
+            ],
+        )
+
+        for uid, vals in self.data["vm"].items():
+            if vals["status"]["state"] == "RUNNING":
+                self.data["vm"][uid]["running"] = True
 
     # ---------------------------
     #   get_cloudsync

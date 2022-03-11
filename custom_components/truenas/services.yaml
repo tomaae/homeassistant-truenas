@@ -30,3 +30,19 @@ jail_restart:
     entity:
       domain: binary_sensor
       integration: truenas
+      
+vm_start:
+  name: VM Start
+  description: Start a VM
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+vm_stop:
+  name: VM Stop
+  description: Stop a VM
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
