@@ -174,13 +174,14 @@ class TrueNASControllerData(object):
             ],
         )
 
-        now = datetime.now().replace(microsecond=0)
-        uptime_tm = datetime.timestamp(
-            now - timedelta(seconds=int(self.data["system_info"]["uptime_seconds"]))
-        )
-        self.data["system_info"]["uptimeEpoch"] = str(
-            as_local(utc_from_timestamp(uptime_tm)).isoformat()
-        )
+        if self.data["system_info"]["uptime_seconds"] > 0:
+            now = datetime.now().replace(microsecond=0)
+            uptime_tm = datetime.timestamp(
+                now - timedelta(seconds=int(self.data["system_info"]["uptime_seconds"]))
+            )
+            self.data["system_info"]["uptimeEpoch"] = str(
+                as_local(utc_from_timestamp(uptime_tm)).isoformat()
+            )
 
         # Get graphs
         tmp_graph = self.api.query(
