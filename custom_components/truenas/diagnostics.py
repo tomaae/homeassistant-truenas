@@ -7,14 +7,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
-
-TO_REDACT = {
-    "username",
-    "password",
-    "encryption_password",
-    "encryption_salt",
-}
+from .const import DOMAIN, TO_REDACT
 
 
 async def async_get_config_entry_diagnostics(

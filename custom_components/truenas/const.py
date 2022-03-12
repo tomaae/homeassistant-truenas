@@ -17,6 +17,13 @@ DEFAULT_DEVICE_NAME = "TrueNAS"
 DEFAULT_SSL = False
 DEFAULT_SSL_VERIFY = True
 
+TO_REDACT = {
+    "username",
+    "password",
+    "encryption_password",
+    "encryption_salt",
+}
+
 SERVICE_CLOUDSYNC_RUN = "cloudsync_run"
 SCHEMA_SERVICE_CLOUDSYNC_RUN = {}
 
