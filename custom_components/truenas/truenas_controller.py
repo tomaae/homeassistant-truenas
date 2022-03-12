@@ -16,15 +16,10 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN
-from .apiparser import parse_api
+from .apiparser import parse_api, utc_from_timestamp
 from .truenas_api import TrueNASAPI
 
 DEFAULT_TIME_ZONE = None
-
-
-def utc_from_timestamp(timestamp: float) -> datetime:
-    """Return a UTC time from a timestamp."""
-    return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))
 
 
 def as_local(dattim: datetime) -> datetime:
