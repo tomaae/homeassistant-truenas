@@ -251,7 +251,6 @@ class TrueNASSensor(SensorEntity):
             if variable in self._data:
                 attributes[format_attribute(variable)] = self._data[variable]
 
-        print(attributes)
         return attributes
 
     async def async_added_to_hass(self):
