@@ -41,6 +41,13 @@ All fields in this sections are required.
  - TrueNAS integration version: <!-- e.g. v1.0.0 -->
  - TrueNAS version: <!-- e.g. core 12.0-U1.1 -->
 
+
+## Diagnostics data
+<!--
+  If you are seing incorrect data through the integration, please upload integration diagnostics data.
+-->
+
+
 ## Traceback/Error logs
 <!--
   If you come across any trace or error logs, please provide them.
