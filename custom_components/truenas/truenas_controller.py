@@ -16,7 +16,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN
-from .helper import parse_api
+from .apiparser import parse_api
 from .truenas_api import TrueNASAPI
 
 DEFAULT_TIME_ZONE = None
