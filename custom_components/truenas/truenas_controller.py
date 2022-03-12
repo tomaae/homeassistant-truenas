@@ -203,7 +203,7 @@ class TrueNASControllerData(object):
                     {"name": "arcratio"},
                 ],
                 "reporting_query": {
-                    "start": "now-60s",
+                    "start": "now-90s",
                     "end": "now-30s",
                     "aggregate": True,
                 },
