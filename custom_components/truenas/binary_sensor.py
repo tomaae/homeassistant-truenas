@@ -10,6 +10,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import ATTR_ATTRIBUTION, CONF_NAME, CONF_HOST
 from homeassistant.core import callback
 
+from .helper import format_attribute
 from .const import (
     ATTRIBUTION,
     DOMAIN,
@@ -265,7 +266,7 @@ class TrueNASBinarySensor(BinarySensorEntity):
         attributes = super().extra_state_attributes
         for variable in self.entity_description.data_attributes_list:
             if variable in self._data:
-                attributes[variable] = self._data[variable]
+                attributes[format_attribute(variable)] = self._data[variable]
 
         return attributes
 
