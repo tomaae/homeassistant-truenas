@@ -92,6 +92,18 @@ DEVICE_ATTRIBUTES_REPLICATION = [
     "job_description",
 ]
 
+DEVICE_ATTRIBUTES_SNAPSHOTTASK = [
+    "recursive",
+    "lifetime_value",
+    "lifetime_unit",
+    "enabled",
+    "naming_schema",
+    "allow_empty",
+    "vmware_sync",
+    "state",
+    "datetime",
+]
+
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
@@ -339,5 +351,21 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_REPLICATION,
+    ),
+    "snapshottask": TrueNASSensorEntityDescription(
+        key="snapshottask",
+        name="",
+        icon="mdi:checkbox-marked-circle-plus-outline",
+        native_unit_of_measurement=None,
+        device_class=None,
+        state_class=None,
+        entity_category=None,
+        ha_group="Snapshot tasks",
+        data_path="snapshottask",
+        data_attribute="state",
+        data_name="dataset",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_SNAPSHOTTASK,
     ),
 }

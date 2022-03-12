@@ -59,6 +59,7 @@ class TrueNASControllerData(object):
             "vm": {},
             "cloudsync": {},
             "replication": {},
+            "snapshottask": {},
         }
 
         self.listeners = []
@@ -141,6 +142,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_cloudsync)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_replication)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_snapshottask)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -660,3 +663,43 @@ class TrueNASControllerData(object):
                 "description"
             ]
             self.data["replication"][uid].pop("job")
+
+    # ---------------------------
+    #   get_snapshottask
+    # ---------------------------
+    def get_snapshottask(self):
+        """Get replication from TrueNAS."""
+        self.data["snapshottask"] = parse_api(
+            data=self.data["snapshottask"],
+            source=self.api.query("pool/snapshottask"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "dataset", "default": "unknown"},
+                {"name": "recursive", "type": "bool", "default": False},
+                {"name": "lifetime_value", "default": 0},
+                {"name": "lifetime_unit", "default": "unknown"},
+                {"name": "enabled", "type": "bool", "default": False},
+                {"name": "naming_schema", "default": "unknown"},
+                {"name": "allow_empty", "type": "bool", "default": False},
+                {"name": "vmware_sync", "type": "bool", "default": False},
+                {"name": "state_tmp", "source": "state"},
+            ],
+            ensure_vals=[
+                {"name": "state", "default": "unknown"},
+                {"name": "datetime", "default": "unknown"},
+            ],
+        )
+
+        # Process state_tmp dict from API
+        for uid, vals in self.data["snapshottask"].items():
+            if not isinstance(vals["state_tmp"], dict):
+                continue
+
+            self.data["snapshottask"][uid]["state"] = vals["state_tmp"]["state"]
+            if vals["state_tmp"]["datetime"]:
+                self.data["snapshottask"][uid]["datetime"] = utc_from_timestamp(
+                    vals["state_tmp"]["datetime"]["$date"] / 1000
+                )
+            else:
+                self.data["snapshottask"][uid]["datetime"] = "unknown"
