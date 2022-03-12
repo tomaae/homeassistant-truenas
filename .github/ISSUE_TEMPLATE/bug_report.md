@@ -37,7 +37,7 @@ If applicable, add screenshots to help explain your problem.
 <!--
 All fields in this sections are required.
 -->
- - Home Assistant version: <!-- e.g. HA v0.108.3 -->
+ - Home Assistant version: <!-- e.g. HA 2022.2.0 -->
  - TrueNAS integration version: <!-- e.g. v1.0.0 -->
  - TrueNAS version: <!-- e.g. core 12.0-U1.1 -->
 
