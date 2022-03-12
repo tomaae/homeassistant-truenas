@@ -21,7 +21,7 @@ Monitor and control your TrueNAS device from Home Assistant.
  * Monitor Datasets
  * Monitor Replication Tasks
  * Monitor Snapshot Tasks
- * Monitor Services
+ * Control and Monitor Services
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync
@@ -81,9 +81,10 @@ Snapshot name will be automatically generated using datetime iso format with mic
 ![Snapshot YAML](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/snapshot_yaml.png)
 
 ## Services
-Monitor status and attributes for each TrueNAS service.
+Control and monitor status and attributes for each TrueNAS service.
+Service control is available through services.
 
-![Snapshot Tasks](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/service.png)
+![Services](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/service.png)
 
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).

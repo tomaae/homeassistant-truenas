@@ -15,6 +15,38 @@ dataset_snapshot:
       domain: sensor
       integration: truenas
 
+service_start:
+  name: Service Start
+  description: Start a Service
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+service_stop:
+  name: Service Stop
+  description: Stop a Service
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+service_restart:
+  name: Service Restart
+  description: Restart a Service
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
+service_reload:
+  name: Service Reload
+  description: Reload a Service
+  target:
+    entity:
+      domain: binary_sensor
+      integration: truenas
+
 jail_start:
   name: Jail Start
   description: Start a Jail

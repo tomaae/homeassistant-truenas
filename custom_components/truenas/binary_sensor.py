@@ -19,6 +19,14 @@ from .const import (
     SCHEMA_SERVICE_JAIL_STOP,
     SERVICE_JAIL_RESTART,
     SCHEMA_SERVICE_JAIL_RESTART,
+    SERVICE_SERVICE_START,
+    SCHEMA_SERVICE_SERVICE_START,
+    SERVICE_SERVICE_STOP,
+    SCHEMA_SERVICE_SERVICE_STOP,
+    SERVICE_SERVICE_RESTART,
+    SCHEMA_SERVICE_SERVICE_RESTART,
+    SERVICE_SERVICE_RELOAD,
+    SCHEMA_SERVICE_SERVICE_RELOAD,
     SERVICE_VM_START,
     SCHEMA_SERVICE_VM_START,
     SERVICE_VM_STOP,
@@ -56,6 +64,19 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
     platform.async_register_entity_service(
         SERVICE_VM_STOP, SCHEMA_SERVICE_VM_STOP, "stop"
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SERVICE_START, SCHEMA_SERVICE_SERVICE_START, "start"
+    )
+    platform.async_register_entity_service(
+        SERVICE_SERVICE_STOP, SCHEMA_SERVICE_SERVICE_STOP, "stop"
+    )
+    platform.async_register_entity_service(
+        SERVICE_SERVICE_RESTART, SCHEMA_SERVICE_SERVICE_RESTART, "restart"
+    )
+    platform.async_register_entity_service(
+        SERVICE_SERVICE_RELOAD, SCHEMA_SERVICE_SERVICE_RELOAD, "reload"
     )
 
     @callback
@@ -264,6 +285,10 @@ class TrueNASBinarySensor(BinarySensorEntity):
         """Dummy restart function."""
         _LOGGER.error("Restart functionality does not exist for %s", self.entity_id)
 
+    async def reload(self):
+        """Dummy reload function."""
+        _LOGGER.error("Reload functionality does not exist for %s", self.entity_id)
+
 
 # ---------------------------
 #   TrueNASJailBinarySensor
@@ -414,3 +439,123 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
 # ---------------------------
 class TrueNASServiceBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS Service Binary Sensor."""
+
+    async def start(self):
+        """Start a Service."""
+        tmp_service = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"service/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_service:
+            _LOGGER.error(
+                "Service %s (%s) invalid",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_service["state"] != "STOPPED":
+            _LOGGER.warning(
+                "Service %s (%s) is not stopped",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "service/start",
+            "post",
+            {"service": self._data["service"]},
+        )
+        await self._ctrl.async_update()
+
+    async def stop(self):
+        """Stop a Service."""
+        tmp_service = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"service/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_service:
+            _LOGGER.error(
+                "Service %s (%s) invalid",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_service["state"] == "STOPPED":
+            _LOGGER.warning(
+                "Service %s (%s) is not running",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "service/stop",
+            "post",
+            {"service": self._data["service"]},
+        )
+        await self._ctrl.async_update()
+
+    async def restart(self):
+        """Restart a Service."""
+        tmp_service = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"service/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_service:
+            _LOGGER.error(
+                "Service %s (%s) invalid",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_service["state"] == "STOPPED":
+            _LOGGER.warning(
+                "Service %s (%s) is not running",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "service/restart",
+            "post",
+            {"service": self._data["service"]},
+        )
+        await self._ctrl.async_update()
+
+    async def reload(self):
+        """Reload a Service."""
+        tmp_service = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"service/id/{self._data['id']}"
+        )
+
+        if "state" not in tmp_service:
+            _LOGGER.error(
+                "Service %s (%s) invalid",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        if tmp_service["state"] == "STOPPED":
+            _LOGGER.warning(
+                "Service %s (%s) is not running",
+                self._data["service"],
+                self._data["id"],
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "service/reload",
+            "post",
+            {"service": self._data["service"]},
+        )
+        await self._ctrl.async_update()

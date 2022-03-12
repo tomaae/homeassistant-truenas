@@ -340,6 +340,8 @@ class TrueNASControllerData(object):
         for uid, vals in self.data["service"].items():
             if vals["state"] == "RUNNING":
                 self.data["service"][uid]["running"] = True
+            else:
+                self.data["service"][uid]["running"] = False
 
     # ---------------------------
     #   get_pool
@@ -546,6 +548,8 @@ class TrueNASControllerData(object):
         for uid, vals in self.data["jail"].items():
             if vals["state"] == "up":
                 self.data["jail"][uid]["running"] = True
+            else:
+                self.data["jail"][uid]["running"] = False
 
     # ---------------------------
     #   get_vm
@@ -575,6 +579,8 @@ class TrueNASControllerData(object):
         for uid, vals in self.data["vm"].items():
             if vals["status"]["state"] == "RUNNING":
                 self.data["vm"][uid]["running"] = True
+            else:
+                self.data["vm"][uid]["running"] = False
 
     # ---------------------------
     #   get_cloudsync
