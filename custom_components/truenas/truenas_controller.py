@@ -32,6 +32,10 @@ def as_local(dattim: datetime) -> datetime:
     return dattim.astimezone(DEFAULT_TIME_ZONE)
 
 
+def b2gib(b: int) -> float:
+    return round(b / 1073741824, 2)
+
+
 # ---------------------------
 #   TrueNASControllerData
 # ---------------------------
@@ -284,8 +288,8 @@ class TrueNASControllerData(object):
                             if not tmp_list[tmp_load]:
                                 tmp_list[tmp_load] = 0
 
-                            self.data["system_info"][tmp_load] = round(
-                                tmp_list[tmp_load] / 1073741824, 2
+                            self.data["system_info"][tmp_load] = b2gib(
+                                tmp_list[tmp_load]
                             )
                 else:
                     for tmp_load in ("cache_size-arc_value", "cache_size-L2_value"):
@@ -444,8 +448,8 @@ class TrueNASControllerData(object):
         # Process pools
         tmp_dataset = {}
         for uid, vals in self.data["dataset"].items():
-            tmp_dataset[self.data["dataset"][uid]["mountpoint"]] = round(
-                vals["available"] / 1073741824, 2
+            tmp_dataset[self.data["dataset"][uid]["mountpoint"]] = b2gib(
+                vals["available"]
             )
 
         for uid, vals in self.data["pool"].items():
@@ -453,9 +457,8 @@ class TrueNASControllerData(object):
                 self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
 
             if vals["name"] == "boot-pool":
-                self.data["pool"][uid]["available_gib"] = round(
-                    vals["root_dataset_available"] / 1073741824,
-                    2,
+                self.data["pool"][uid]["available_gib"] = b2gib(
+                    vals["root_dataset_available"]
                 )
                 self.data["pool"][uid].pop("root_dataset")
 
@@ -533,7 +536,7 @@ class TrueNASControllerData(object):
         )
 
         for uid, vals in self.data["dataset"].items():
-            self.data["dataset"][uid]["used_gb"] = round(vals["used"] / 1073741824, 2)
+            self.data["dataset"][uid]["used_gb"] = b2gib(vals["used"])
 
     # ---------------------------
     #   get_disk
