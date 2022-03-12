@@ -340,6 +340,31 @@ class TrueNASControllerData(object):
             ],
         )
 
+        self.data["pool"] = parse_api(
+            data=self.data["pool"],
+            source=self.api.query("boot/get_state"),
+            key="guid",
+            vals=[
+                {"name": "guid", "default": 0},
+                {"name": "id", "default": 0},
+                {"name": "name", "default": "unknown"},
+                {"name": "path", "default": "unknown"},
+                {"name": "status", "default": "unknown"},
+                {"name": "healthy", "type": "bool", "default": False},
+                {"name": "is_decrypted", "type": "bool", "default": False},
+                {"name": "autotrim", "default": "unknown"},
+                {"name": "scan"},
+                {"name": "root_dataset"},
+            ],
+            ensure_vals=[
+                {"name": "scrub_state", "default": "unknown"},
+                {"name": "scrub_start", "default": "unknown"},
+                {"name": "scrub_end", "default": "unknown"},
+                {"name": "scrub_secs_left", "default": 0},
+                {"name": "available_gib", "default": 0.0},
+            ],
+        )
+
         # Process pools
         tmp_dataset = {}
         for uid, vals in self.data["dataset"].items():
@@ -350,6 +375,14 @@ class TrueNASControllerData(object):
         for uid, vals in self.data["pool"].items():
             if vals["path"] in tmp_dataset:
                 self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
+
+            if vals["name"] == "boot-pool":
+                self.data["pool"][uid]["available_gib"] = round(
+                    vals["root_dataset"]["properties"]["available"]["parsed"]
+                    / 1073741824,
+                    2,
+                )
+                self.data["pool"][uid].pop("root_dataset")
 
             if not isinstance(vals["scan"], dict):
                 continue
