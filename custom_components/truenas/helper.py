@@ -1,33 +1,43 @@
-"""Helper functions for TrueNAS."""
+"""API parser for JSON APIs"""
+
 
 import logging
 
 from voluptuous import Optional
+from homeassistant.components.diagnostics import async_redact_data
+from .const import TO_REDACT
 
 _LOGGER = logging.getLogger(__name__)
+
 
 # ---------------------------
 #   from_entry
 # ---------------------------
 def from_entry(entry, param, default="") -> str:
-    """Validate and return str value from TrueNAS API dict"""
+    """Validate and return str value an API dict"""
     if param not in entry:
         return default
 
+    # TEMP
     if isinstance(entry[param], dict) and "parsed" in entry[param]:
         entry[param] = entry[param]["parsed"]
 
-    return entry[param]
+    return (
+        entry[param][:255]
+        if isinstance(entry[param], str) and len(entry[param]) > 255
+        else entry[param]
+    )
 
 
 # ---------------------------
 #   from_entry_bool
 # ---------------------------
 def from_entry_bool(entry, param, default=False, reverse=False) -> bool:
-    """Validate and return a bool value from a TrueNAS API dict"""
+    """Validate and return a bool value from an API dict"""
     if param not in entry:
         return default
 
+    # TEMP
     if isinstance(entry[param], dict) and "parsed" in entry[param]:
         entry[param] = entry[param]["parsed"]
 
@@ -58,6 +68,10 @@ def parse_api(
     skip=None,
 ) -> dict:
     """Get data from API."""
+    debug = False
+    if _LOGGER.getEffectiveLevel() == 10:
+        debug = True
+
     if type(source) == dict:
         tmp = source
         source = [tmp]
@@ -67,7 +81,8 @@ def parse_api(
             data = fill_defaults(data, vals)
         return data
 
-    _LOGGER.debug("Processing source %s", source)
+    if debug:
+        _LOGGER.debug("Processing source %s", async_redact_data(source, TO_REDACT))
 
     keymap = generate_keymap(data, key_search)
     for entry in source:
@@ -81,16 +96,14 @@ def parse_api(
         if key or key_search:
             uid = get_uid(entry, key, key_secondary, key_search, keymap)
             if not uid:
-                # ZFS filesystems don't have a UUID, so use devicefile instead.
-                if entry["type"] == "zfs":
-                    uid = entry["devicefile"]
-                    entry["uuid"] = uid
-                else:
-                    continue
+                continue
+
             if uid not in data:
                 data[uid] = {}
 
-        _LOGGER.debug("Processing entry %s", entry)
+        if debug:
+            _LOGGER.debug("Processing entry %s", async_redact_data(entry, TO_REDACT))
+
         if vals:
             data = fill_vals(data, entry, uid, vals)
 
@@ -178,6 +191,10 @@ def can_skip(entry, skip) -> bool:
     ret = False
     for val in skip:
         if val["name"] in entry and entry[val["name"]] == val["value"]:
+            ret = True
+            break
+
+        if val["value"] == "" and val["name"] not in entry:
             ret = True
             break
 
