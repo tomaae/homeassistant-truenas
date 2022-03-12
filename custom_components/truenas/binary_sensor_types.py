@@ -42,6 +42,11 @@ DEVICE_ATTRIBUTES_VM = [
     "threads",
 ]
 
+DEVICE_ATTRIBUTES_SERVICE = [
+    "enable",
+    "state",
+]
+
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
@@ -105,5 +110,20 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_VM,
+    ),
+    "service": TrueNASBinarySensorEntityDescription(
+        key="service",
+        name=" service",
+        icon_enabled="mdi:cog",
+        icon_disabled="mdi:cog-off",
+        device_class=None,
+        entity_category=None,
+        ha_group="Services",
+        data_path="service",
+        data_is_on="running",
+        data_name="service",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_SERVICE,
     ),
 }

@@ -87,12 +87,14 @@ def update_items(inst, config_entry, truenas_controller, async_add_entities, sen
             "pool_healthy",
             "jail",
             "vm",
+            "service",
         ],
         # Entity function
         [
             TrueNASBinarySensor,
             TrueNASJailBinarySensor,
             TrueNASVMBinarySensor,
+            TrueNASServiceBinarySensor,
         ],
     ):
         uid_sensor = SENSOR_TYPES[sensor]
@@ -405,3 +407,10 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self._ctrl.api.query, f"vm/id/{self._data['id']}/stop", "post"
         )
+
+
+# ---------------------------
+#   TrueNASServiceBinarySensor
+# ---------------------------
+class TrueNASServiceBinarySensor(TrueNASBinarySensor):
+    """Define a TrueNAS Service Binary Sensor."""

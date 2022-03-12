@@ -55,6 +55,7 @@ class TrueNASControllerData(object):
             "pool": {},
             "dataset": {},
             "system_info": {},
+            "service": {},
             "jail": {},
             "vm": {},
             "cloudsync": {},
@@ -128,6 +129,8 @@ class TrueNASControllerData(object):
             return
 
         await self.hass.async_add_executor_job(self.get_systeminfo)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_service)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_disk)
         if self.api.connected():
@@ -313,6 +316,30 @@ class TrueNASControllerData(object):
                 else:
                     for tmp_load in ("cache_ratio-arc_value", "cache_ratio-L2_value"):
                         self.data["system_info"][tmp_load] = 0.0
+
+    # ---------------------------
+    #   get_service
+    # ---------------------------
+    def get_service(self):
+        """Get service info from TrueNAS."""
+        self.data["service"] = parse_api(
+            data=self.data["service"],
+            source=self.api.query("service"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "service", "default": "unknown"},
+                {"name": "enable", "type": "bool", "default": False},
+                {"name": "state", "default": "unknown"},
+            ],
+            ensure_vals=[
+                {"name": "running", "type": "bool", "default": False},
+            ],
+        )
+
+        for uid, vals in self.data["service"].items():
+            if vals["state"] == "RUNNING":
+                self.data["service"][uid]["running"] = True
 
     # ---------------------------
     #   get_pool
