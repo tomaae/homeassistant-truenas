@@ -44,7 +44,7 @@ class TrueNASControllerData(object):
     """TrueNASControllerData Class."""
 
     def __init__(self, hass, config_entry):
-        """Initialize OMVController."""
+        """Initialize TrueNASController."""
         self.hass = hass
         self.config_entry = config_entry
         self.name = config_entry.data[CONF_NAME]
@@ -360,14 +360,35 @@ class TrueNASControllerData(object):
                 {"name": "status", "default": "unknown"},
                 {"name": "healthy", "type": "bool", "default": False},
                 {"name": "is_decrypted", "type": "bool", "default": False},
-                {"name": "autotrim", "default": "unknown"},
-                {"name": "scan"},
+                {
+                    "name": "autotrim",
+                    "source": "autotrim/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
+                {
+                    "name": "scan_function",
+                    "source": "scan/function",
+                    "default": "unknown",
+                },
+                {"name": "scrub_state", "source": "scan/state", "default": "unknown"},
+                {
+                    "name": "scrub_start",
+                    "source": "scan/start_time/$date",
+                    "default": 0,
+                },
+                {
+                    "name": "scrub_end",
+                    "source": "scan/end_time/$date",
+                    "default": 0,
+                },
+                {
+                    "name": "scrub_secs_left",
+                    "source": "scan/total_secs_left",
+                    "default": 0,
+                },
             ],
             ensure_vals=[
-                {"name": "scrub_state", "default": "unknown"},
-                {"name": "scrub_start", "default": "unknown"},
-                {"name": "scrub_end", "default": "unknown"},
-                {"name": "scrub_secs_left", "default": 0},
                 {"name": "available_gib", "default": 0.0},
             ],
         )
@@ -384,15 +405,43 @@ class TrueNASControllerData(object):
                 {"name": "status", "default": "unknown"},
                 {"name": "healthy", "type": "bool", "default": False},
                 {"name": "is_decrypted", "type": "bool", "default": False},
-                {"name": "autotrim", "default": "unknown"},
-                {"name": "scan"},
+                {
+                    "name": "autotrim",
+                    "source": "autotrim/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
                 {"name": "root_dataset"},
+                {
+                    "name": "root_dataset_available",
+                    "source": "root_dataset/properties/available/parsed",
+                    "default": 0,
+                },
+                {
+                    "name": "scan_function",
+                    "source": "scan/function",
+                    "default": "unknown",
+                },
+                {"name": "scrub_state", "source": "scan/state", "default": "unknown"},
+                {
+                    "name": "scrub_start",
+                    "source": "scan/start_time/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {
+                    "name": "scrub_end",
+                    "source": "scan/end_time/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {
+                    "name": "scrub_secs_left",
+                    "source": "scan/total_secs_left",
+                    "default": 0,
+                },
             ],
             ensure_vals=[
-                {"name": "scrub_state", "default": "unknown"},
-                {"name": "scrub_start", "default": "unknown"},
-                {"name": "scrub_end", "default": "unknown"},
-                {"name": "scrub_secs_left", "default": 0},
                 {"name": "available_gib", "default": 0.0},
             ],
         )
@@ -410,35 +459,10 @@ class TrueNASControllerData(object):
 
             if vals["name"] == "boot-pool":
                 self.data["pool"][uid]["available_gib"] = round(
-                    vals["root_dataset"]["properties"]["available"]["parsed"]
-                    / 1073741824,
+                    vals["root_dataset_available"] / 1073741824,
                     2,
                 )
                 self.data["pool"][uid].pop("root_dataset")
-
-            if not isinstance(vals["scan"], dict):
-                continue
-
-            if vals["scan"]["function"] != "SCRUB":
-                continue
-
-            self.data["pool"][uid]["scrub_state"] = vals["scan"]["state"]
-            if vals["scan"]["start_time"]:
-                self.data["pool"][uid]["scrub_start"] = utc_from_timestamp(
-                    vals["scan"]["start_time"]["$date"] / 1000
-                )
-            else:
-                self.data["pool"][uid]["start_time"] = "unknown"
-
-            if vals["scan"]["end_time"]:
-                self.data["pool"][uid]["scrub_end"] = utc_from_timestamp(
-                    vals["scan"]["end_time"]["$date"] / 1000
-                )
-            else:
-                self.data["pool"][uid]["scrub_end"] = "unknown"
-
-            self.data["pool"][uid]["scrub_secs_left"] = vals["scan"]["total_secs_left"]
-            self.data["pool"][uid].pop("scan")
 
     # ---------------------------
     #   get_dataset
@@ -455,22 +479,58 @@ class TrueNASControllerData(object):
                 {"name": "name", "default": "unknown"},
                 {"name": "pool", "default": "unknown"},
                 {"name": "mountpoint", "default": "unknown"},
-                {"name": "comments", "default": ""},
-                {"name": "deduplication", "default": "unknown"},
-                {"name": "atime", "type": "bool", "default": False},
-                {"name": "casesensitivity", "default": "unknown"},
-                {"name": "checksum", "default": "unknown"},
-                {"name": "exec", "type": "bool", "default": False},
-                {"name": "sync", "default": "unknown"},
-                {"name": "compression", "default": "unknown"},
-                {"name": "compressratio", "default": "unknown"},
-                {"name": "quota", "default": "unknown"},
-                {"name": "copies", "default": 0},
-                {"name": "readonly", "type": "bool", "default": False},
-                {"name": "recordsize", "default": 0},
-                {"name": "encryption_algorithm", "default": "unknown"},
-                {"name": "used", "default": 0},
-                {"name": "available", "default": 0},
+                {"name": "comments", "source": "comments/parsed", "default": ""},
+                {
+                    "name": "deduplication",
+                    "source": "deduplication/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
+                {
+                    "name": "atime",
+                    "source": "atime/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
+                {
+                    "name": "casesensitivity",
+                    "source": "casesensitivity/parsed",
+                    "default": "unknown",
+                },
+                {"name": "checksum", "source": "checksum/parsed", "default": "unknown"},
+                {
+                    "name": "exec",
+                    "source": "exec/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
+                {"name": "sync", "source": "sync/parsed", "default": "unknown"},
+                {
+                    "name": "compression",
+                    "source": "compression/parsed",
+                    "default": "unknown",
+                },
+                {
+                    "name": "compressratio",
+                    "source": "compressratio/parsed",
+                    "default": "unknown",
+                },
+                {"name": "quota", "source": "quota/parsed", "default": "unknown"},
+                {"name": "copies", "source": "copies/parsed", "default": 0},
+                {
+                    "name": "readonly",
+                    "source": "readonly/parsed",
+                    "type": "bool",
+                    "default": False,
+                },
+                {"name": "recordsize", "source": "recordsize/parsed", "default": 0},
+                {
+                    "name": "encryption_algorithm",
+                    "source": "encryption_algorithm/parsed",
+                    "default": "unknown",
+                },
+                {"name": "used", "source": "used/parsed", "default": 0},
+                {"name": "available", "source": "available/parsed", "default": 0},
             ],
             ensure_vals=[
                 {"name": "used_gb", "default": 0},
@@ -536,20 +596,11 @@ class TrueNASControllerData(object):
                 {"name": "ip4_addr", "default": "unknown"},
                 {"name": "ip6_addr", "default": "unknown"},
                 {"name": "release", "default": "unknown"},
-                {"name": "state", "default": "unknown"},
+                {"name": "state", "type": "bool", "default": False},
                 {"name": "type", "default": "unknown"},
                 {"name": "plugin_name", "default": "unknown"},
             ],
-            ensure_vals=[
-                {"name": "running", "type": "bool", "default": False},
-            ],
         )
-
-        for uid, vals in self.data["jail"].items():
-            if vals["state"] == "up":
-                self.data["jail"][uid]["running"] = True
-            else:
-                self.data["jail"][uid]["running"] = False
 
     # ---------------------------
     #   get_vm
@@ -569,7 +620,7 @@ class TrueNASControllerData(object):
                 {"name": "autostart", "type": "bool", "default": False},
                 {"name": "cores", "default": 0},
                 {"name": "threads", "default": 0},
-                {"name": "status"},
+                {"name": "state", "source": "status/state", "default": "unknown"},
             ],
             ensure_vals=[
                 {"name": "running", "type": "bool", "default": False},
@@ -577,7 +628,7 @@ class TrueNASControllerData(object):
         )
 
         for uid, vals in self.data["vm"].items():
-            if vals["status"]["state"] == "RUNNING":
+            if vals["state"] == "RUNNING":
                 self.data["vm"][uid]["running"] = True
             else:
                 self.data["vm"][uid]["running"] = False
@@ -599,44 +650,27 @@ class TrueNASControllerData(object):
                 {"name": "enabled", "type": "bool", "default": False},
                 {"name": "transfer_mode", "default": "unknown"},
                 {"name": "snapshot", "type": "bool", "default": False},
-                {"name": "job"},
-            ],
-            ensure_vals=[
-                {"name": "state", "default": "unknown"},
-                {"name": "time_started", "default": "unknown"},
-                {"name": "time_finished", "default": "unknown"},
-                {"name": "job_percent", "default": 0},
-                {"name": "job_description", "default": "unknown"},
+                {"name": "state", "source": "job/state", "default": "unknown"},
+                {
+                    "name": "time_started",
+                    "source": "job/time_started/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {
+                    "name": "time_finished",
+                    "source": "job/time_finished/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {"name": "job_percent", "source": "job/progress/percent", "default": 0},
+                {
+                    "name": "job_description",
+                    "source": "job/progress/description",
+                    "default": "unknown",
+                },
             ],
         )
-
-        # Process job dict from API
-        for uid, vals in self.data["cloudsync"].items():
-            if not isinstance(vals["job"], dict):
-                continue
-
-            self.data["cloudsync"][uid]["state"] = vals["job"]["state"]
-            if vals["job"]["time_started"]:
-                self.data["cloudsync"][uid]["time_started"] = utc_from_timestamp(
-                    vals["job"]["time_started"]["$date"] / 1000
-                )
-            else:
-                self.data["cloudsync"][uid]["time_finished"] = "unknown"
-
-            if vals["job"]["time_finished"]:
-                self.data["cloudsync"][uid]["time_finished"] = utc_from_timestamp(
-                    vals["job"]["time_finished"]["$date"] / 1000
-                )
-            else:
-                self.data["cloudsync"][uid]["time_finished"] = "unknown"
-
-            self.data["cloudsync"][uid]["job_percent"] = vals["job"]["progress"][
-                "percent"
-            ]
-            self.data["cloudsync"][uid]["job_description"] = vals["job"]["progress"][
-                "description"
-            ]
-            self.data["cloudsync"][uid].pop("job")
 
     # ---------------------------
     #   get_replication
@@ -658,44 +692,27 @@ class TrueNASControllerData(object):
                 {"name": "transport", "default": "unknown"},
                 {"name": "auto", "type": "bool", "default": False},
                 {"name": "retention_policy", "default": "unknown"},
-                {"name": "job"},
-            ],
-            ensure_vals=[
-                {"name": "state", "default": "unknown"},
-                {"name": "time_started", "default": "unknown"},
-                {"name": "time_finished", "default": "unknown"},
-                {"name": "job_percent", "default": 0},
-                {"name": "job_description", "default": "unknown"},
+                {"name": "state", "source": "job/state", "default": "unknown"},
+                {
+                    "name": "time_started",
+                    "source": "job/time_started/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {
+                    "name": "time_finished",
+                    "source": "job/time_finished/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
+                {"name": "job_percent", "source": "job/progress/percent", "default": 0},
+                {
+                    "name": "job_description",
+                    "source": "job/progress/description",
+                    "default": "unknown",
+                },
             ],
         )
-
-        # Process job dict from API
-        for uid, vals in self.data["replication"].items():
-            if not isinstance(vals["job"], dict):
-                continue
-
-            self.data["replication"][uid]["state"] = vals["job"]["state"]
-            if vals["job"]["time_started"]:
-                self.data["replication"][uid]["time_started"] = utc_from_timestamp(
-                    vals["job"]["time_started"]["$date"] / 1000
-                )
-            else:
-                self.data["replication"][uid]["time_finished"] = "unknown"
-
-            if vals["job"]["time_finished"]:
-                self.data["replication"][uid]["time_finished"] = utc_from_timestamp(
-                    vals["job"]["time_finished"]["$date"] / 1000
-                )
-            else:
-                self.data["replication"][uid]["time_finished"] = "unknown"
-
-            self.data["replication"][uid]["job_percent"] = vals["job"]["progress"][
-                "percent"
-            ]
-            self.data["replication"][uid]["job_description"] = vals["job"]["progress"][
-                "description"
-            ]
-            self.data["replication"][uid].pop("job")
 
     # ---------------------------
     #   get_snapshottask
@@ -716,23 +733,12 @@ class TrueNASControllerData(object):
                 {"name": "naming_schema", "default": "unknown"},
                 {"name": "allow_empty", "type": "bool", "default": False},
                 {"name": "vmware_sync", "type": "bool", "default": False},
-                {"name": "state_tmp", "source": "state"},
-            ],
-            ensure_vals=[
-                {"name": "state", "default": "unknown"},
-                {"name": "datetime", "default": "unknown"},
+                {"name": "state", "source": "state/state", "default": "unknown"},
+                {
+                    "name": "datetime",
+                    "source": "state/datetime/$date",
+                    "default": 0,
+                    "convert": "utc_from_timestamp",
+                },
             ],
         )
-
-        # Process state_tmp dict from API
-        for uid, vals in self.data["snapshottask"].items():
-            if not isinstance(vals["state_tmp"], dict):
-                continue
-
-            self.data["snapshottask"][uid]["state"] = vals["state_tmp"]["state"]
-            if vals["state_tmp"]["datetime"]:
-                self.data["snapshottask"][uid]["datetime"] = utc_from_timestamp(
-                    vals["state_tmp"]["datetime"]["$date"] / 1000
-                )
-            else:
-                self.data["snapshottask"][uid]["datetime"] = "unknown"
