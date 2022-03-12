@@ -17,9 +17,10 @@
 Monitor and control your TrueNAS device from Home Assistant.
  * Monitor System (Cpu, Load, Temperature, ARC/L2ARC, Uptime)
  * Monitor Disks
- * Monitor Pools
+ * Monitor Pools (including boot-pool)
  * Monitor Datasets
  * Monitor Replication Tasks
+ * Monitor Snapshot Tasks
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails
  * Control and Monitor Cloudsync
@@ -65,6 +66,11 @@ Jail control is available through services.
 Monitor status and attributes for each TrueNAS replication task.
 
 ![Replication Tasks](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/replication.png)
+
+## Snapshot Tasks
+Monitor status and attributes for each TrueNAS snapshot task.
+
+![Snapshot Tasks](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/snapshottask.png)
 
 ## Dataset Snapshot
 Create a Dataset Snapshot using Homeassistant service.
