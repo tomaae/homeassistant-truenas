@@ -21,7 +21,7 @@ jobs:
           github-token: ${{ github.token }}
           exclude-any-issue-labels: 'planned, help-wanted'
           exclude-any-pr-labels: 'wip'
-          issue-lock-inactive-days: "30"
-          issue-lock-reason: ""
-          pr-lock-inactive-days: "7"
-          pr-lock-reason: ""
+          issue-inactive-days: "30"
+          issue-reason: ""
+          pr-inactive-days: "7"
+          pr-reason: ""
