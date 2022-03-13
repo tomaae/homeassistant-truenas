@@ -22,6 +22,6 @@ jobs:
           exclude-any-issue-labels: 'planned, help-wanted'
           exclude-any-pr-labels: 'wip'
           issue-inactive-days: "30"
-          issue-reason: ""
+          issue-lock-reason: ""
           pr-inactive-days: "7"
-          pr-reason: ""
+          pr-lock-reason: ""
