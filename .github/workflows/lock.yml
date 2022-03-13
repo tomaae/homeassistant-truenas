@@ -3,6 +3,14 @@ name: Lock
 on:
   schedule:
     - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: lock
 
 jobs:
   lock:
@@ -11,6 +19,8 @@ jobs:
       - uses: dessant/lock-threads@v3.0.0
         with:
           github-token: ${{ github.token }}
+          exclude-any-issue-labels: 'planned, help-wanted'
+          exclude-any-pr-labels: 'wip'
           issue-lock-inactive-days: "30"
           issue-lock-reason: ""
           pr-lock-inactive-days: "7"
