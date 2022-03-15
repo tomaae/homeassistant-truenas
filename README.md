@@ -12,7 +12,7 @@
 
 ![English](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/flags/us.png)
 
-![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/truenas-logo-color.webp)
+![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/header.png)
 
 Monitor and control your TrueNAS device from Home Assistant.
  * Monitor System (Cpu, Load, Temperature, ARC/L2ARC, Uptime)
