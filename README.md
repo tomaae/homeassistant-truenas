@@ -100,6 +100,11 @@ If you are using development branch for TrueNAS, some features may stop working.
 
 ## Setup integration
 1. Create an API key for Home Assistant on your TrueNAS system.
+
+![Setup step 1](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/setup_1.png)
+![Setup step 2](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/setup_2.png)
+![Setup step 3](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/setup_3.png)
+
 2. Setup this integration for your TrueNAS device in Home Assistant via `Configuration -> Integrations -> Add -> TrueNAS`.
 You can add this integration several times for different devices.
 
