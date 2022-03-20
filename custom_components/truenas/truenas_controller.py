@@ -337,10 +337,7 @@ class TrueNASControllerData(object):
         )
 
         for uid, vals in self.data["service"].items():
-            if vals["state"] == "RUNNING":
-                self.data["service"][uid]["running"] = True
-            else:
-                self.data["service"][uid]["running"] = False
+            self.data["service"][uid]["running"] = vals["state"] == "RUNNING"
 
     # ---------------------------
     #   get_pool
@@ -446,12 +443,9 @@ class TrueNASControllerData(object):
         )
 
         # Process pools
-        tmp_dataset = {}
-        for uid, vals in self.data["dataset"].items():
-            tmp_dataset[self.data["dataset"][uid]["mountpoint"]] = b2gib(
+        tmp_dataset = {self.data["dataset"][uid]["mountpoint"]: b2gib(
                 vals["available"]
-            )
-
+            ) for uid, vals in self.data["dataset"].items()}
         for uid, vals in self.data["pool"].items():
             if vals["path"] in tmp_dataset:
                 self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
@@ -626,10 +620,7 @@ class TrueNASControllerData(object):
         )
 
         for uid, vals in self.data["vm"].items():
-            if vals["state"] == "RUNNING":
-                self.data["vm"][uid]["running"] = True
-            else:
-                self.data["vm"][uid]["running"] = False
+            self.data["vm"][uid]["running"] = vals["state"] == "RUNNING"
 
     # ---------------------------
     #   get_cloudsync

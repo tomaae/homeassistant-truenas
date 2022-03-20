@@ -30,9 +30,10 @@ from .truenas_api import TrueNASAPI
 @callback
 def configured_instances(hass):
     """Return a set of configured instances."""
-    return set(
-        entry.data[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)
-    )
+    return {
+        entry.data[CONF_NAME]
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    }
 
 
 # ---------------------------
