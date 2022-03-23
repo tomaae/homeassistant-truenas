@@ -14,12 +14,12 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, config_entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    controller = hass.data[DOMAIN][config_entry.entry_id]
-    diag: dict[str, Any] = {}
-    diag["entry"]: dict[str, Any] = {}
-
-    diag["entry"]["data"] = async_redact_data(config_entry.data, TO_REDACT)
-    diag["entry"]["options"] = async_redact_data(config_entry.options, TO_REDACT)
-    diag["data"] = async_redact_data(controller.data, TO_REDACT)
-
-    return diag
+    return {
+        "entry": {
+            "data": async_redact_data(config_entry.data, TO_REDACT),
+            "options": async_redact_data(config_entry.options, TO_REDACT),
+        },
+        "data": async_redact_data(
+            hass.data[DOMAIN][config_entry.entry_id].data, TO_REDACT
+        ),
+    }

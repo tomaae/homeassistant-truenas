@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def utc_from_timestamp(timestamp: float) -> datetime:
-    """Return a UTC time from a timestamp."""
+    """Return a UTC time from a timestamp"""
     return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))
 
 
@@ -94,11 +94,8 @@ def parse_api(
     only=None,
     skip=None,
 ) -> dict:
-    """Get data from API."""
-    debug = False
-    if _LOGGER.getEffectiveLevel() == 10:
-        debug = True
-
+    """Get data from API"""
+    debug = _LOGGER.getEffectiveLevel() == 10
     if type(source) == dict:
         tmp = source
         source = [tmp]
@@ -150,10 +147,7 @@ def get_uid(entry, key, key_secondary, key_search, keymap) -> Optional(str):
     """Get UID for data list"""
     uid = None
     if not key_search:
-        key_primary_found = True
-        if key not in entry:
-            key_primary_found = False
-
+        key_primary_found = key in entry
         if key_primary_found and key not in entry and not entry[key]:
             return None
 
@@ -167,38 +161,31 @@ def get_uid(entry, key, key_secondary, key_search, keymap) -> Optional(str):
                 return None
 
             uid = entry[key_secondary]
+    elif keymap and key_search in entry and entry[key_search] in keymap:
+        uid = keymap[entry[key_search]]
     else:
-        if keymap and key_search in entry and entry[key_search] in keymap:
-            uid = keymap[entry[key_search]]
-        else:
-            return None
+        return None
 
-    return uid if uid else None
+    return uid or None
 
 
 # ---------------------------
 #   generate_keymap
 # ---------------------------
 def generate_keymap(data, key_search) -> Optional(dict):
-    """Generate keymap."""
-    if not key_search:
-        return None
-
-    keymap = {}
-    for uid in data:
-        if key_search not in data[uid]:
-            continue
-
-        keymap[data[uid][key_search]] = uid
-
-    return keymap
+    """Generate keymap"""
+    return (
+        {data[uid][key_search]: uid for uid in data if key_search in data[uid]}
+        if key_search
+        else None
+    )
 
 
 # ---------------------------
 #   matches_only
 # ---------------------------
 def matches_only(entry, only) -> bool:
-    """Return True if all variables are matched."""
+    """Return True if all variables are matched"""
     ret = False
     for val in only:
         if val["key"] in entry and entry[val["key"]] == val["value"]:
@@ -214,7 +201,7 @@ def matches_only(entry, only) -> bool:
 #   can_skip
 # ---------------------------
 def can_skip(entry, skip) -> bool:
-    """Return True if at least one variable matches."""
+    """Return True if at least one variable matches"""
     ret = False
     for val in skip:
         if val["name"] in entry and entry[val["name"]] == val["value"]:
@@ -232,7 +219,7 @@ def can_skip(entry, skip) -> bool:
 #   fill_defaults
 # ---------------------------
 def fill_defaults(data, vals) -> dict:
-    """Fill defaults if source is not present."""
+    """Fill defaults if source is not present"""
     for val in vals:
         _name = val["name"]
         _type = val["type"] if "type" in val else "str"
@@ -298,12 +285,11 @@ def fill_vals(data, entry, uid, vals) -> dict:
                         data[uid][_name] = data[uid][_name] / 1000
 
                     data[uid][_name] = utc_from_timestamp(data[uid][_name])
-            else:
-                if isinstance(data[_name], int) and data[_name] > 0:
-                    if data[_name] > 100000000000:
-                        data[_name] = data[_name] / 1000
+            elif isinstance(data[_name], int) and data[_name] > 0:
+                if data[_name] > 100000000000:
+                    data[_name] = data[_name] / 1000
 
-                    data[_name] = utc_from_timestamp(data[_name])
+                data[_name] = utc_from_timestamp(data[_name])
 
     return data
 
@@ -312,16 +298,16 @@ def fill_vals(data, entry, uid, vals) -> dict:
 #   fill_ensure_vals
 # ---------------------------
 def fill_ensure_vals(data, uid, ensure_vals) -> dict:
-    """Add required keys which are not available in data."""
+    """Add required keys which are not available in data"""
     for val in ensure_vals:
         if uid:
             if val["name"] not in data[uid]:
                 _default = val["default"] if "default" in val else ""
                 data[uid][val["name"]] = _default
-        else:
-            if val["name"] not in data:
-                _default = val["default"] if "default" in val else ""
-                data[val["name"]] = _default
+
+        elif val["name"] not in data:
+            _default = val["default"] if "default" in val else ""
+            data[val["name"]] = _default
 
     return data
 
@@ -330,7 +316,7 @@ def fill_ensure_vals(data, uid, ensure_vals) -> dict:
 #   fill_vals_proc
 # ---------------------------
 def fill_vals_proc(data, uid, vals_proc) -> dict:
-    """Add custom keys."""
+    """Add custom keys"""
     _data = data[uid] if uid else data
     for val_sub in vals_proc:
         _name = None
@@ -351,17 +337,11 @@ def fill_vals_proc(data, uid, vals_proc) -> dict:
             if _action == "combine":
                 if "key" in val:
                     tmp = _data[val["key"]] if val["key"] in _data else "unknown"
-                    if not _value:
-                        _value = tmp
-                    else:
-                        _value = f"{_value}{tmp}"
+                    _value = f"{_value}{tmp}" if _value else tmp
 
                 if "text" in val:
                     tmp = val["text"]
-                    if not _value:
-                        _value = tmp
-                    else:
-                        _value = f"{_value}{tmp}"
+                    _value = f"{_value}{tmp}" if _value else tmp
 
         if _name and _value:
             if uid:

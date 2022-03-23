@@ -1,4 +1,4 @@
-"""Definitions for TrueNAS sensor entities."""
+"""Definitions for TrueNAS sensor entities"""
 from dataclasses import dataclass, field
 from typing import List
 from homeassistant.helpers.entity import EntityCategory
@@ -8,6 +8,13 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES
+from .const import (
+    SERVICE_CLOUDSYNC_RUN,
+    SCHEMA_SERVICE_CLOUDSYNC_RUN,
+    SERVICE_DATASET_SNAPSHOT,
+    SCHEMA_SERVICE_DATASET_SNAPSHOT,
+)
+
 
 DEVICE_ATTRIBUTES_POOL = [
     "path",
@@ -107,7 +114,7 @@ DEVICE_ATTRIBUTES_SNAPSHOTTASK = [
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
-    """Class describing mikrotik entities."""
+    """Class describing mikrotik entities"""
 
     ha_group: str = ""
     ha_connection: str = ""
@@ -118,6 +125,7 @@ class TrueNASSensorEntityDescription(SensorEntityDescription):
     data_uid: str = ""
     data_reference: str = ""
     data_attributes_list: List = field(default_factory=lambda: [])
+    func: str = "TrueNASSensor"
 
 
 SENSOR_TYPES = {
@@ -287,6 +295,7 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_DATASET,
+        func="TrueNASDatasetSensor",
     ),
     "disk": TrueNASSensorEntityDescription(
         key="disk",
@@ -335,6 +344,7 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_CLOUDSYNC,
+        func="TrueNASClousyncSensor",
     ),
     "replication": TrueNASSensorEntityDescription(
         key="replication",
@@ -369,3 +379,8 @@ SENSOR_TYPES = {
         data_attributes_list=DEVICE_ATTRIBUTES_SNAPSHOTTASK,
     ),
 }
+
+SENSOR_SERVICES = [
+    [SERVICE_CLOUDSYNC_RUN, SCHEMA_SERVICE_CLOUDSYNC_RUN, "start"],
+    [SERVICE_DATASET_SNAPSHOT, SCHEMA_SERVICE_DATASET_SNAPSHOT, "snapshot"],
+]

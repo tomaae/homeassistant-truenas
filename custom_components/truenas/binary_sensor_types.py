@@ -1,13 +1,29 @@
-"""Definitions for TrueNAS binary sensor entities."""
+"""Definitions for TrueNAS binary sensor entities"""
 from dataclasses import dataclass, field
 from typing import List
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
     BinarySensorEntityDescription,
 )
-
-from .const import DOMAIN
+from .const import (
+    SERVICE_JAIL_START,
+    SCHEMA_SERVICE_JAIL_START,
+    SERVICE_JAIL_STOP,
+    SCHEMA_SERVICE_JAIL_STOP,
+    SERVICE_JAIL_RESTART,
+    SCHEMA_SERVICE_JAIL_RESTART,
+    SERVICE_SERVICE_START,
+    SCHEMA_SERVICE_SERVICE_START,
+    SERVICE_SERVICE_STOP,
+    SCHEMA_SERVICE_SERVICE_STOP,
+    SERVICE_SERVICE_RESTART,
+    SCHEMA_SERVICE_SERVICE_RESTART,
+    SERVICE_SERVICE_RELOAD,
+    SCHEMA_SERVICE_SERVICE_RELOAD,
+    SERVICE_VM_START,
+    SCHEMA_SERVICE_VM_START,
+    SERVICE_VM_STOP,
+    SCHEMA_SERVICE_VM_STOP,
+)
 
 DEVICE_ATTRIBUTES_POOL = [
     "path",
@@ -50,7 +66,7 @@ DEVICE_ATTRIBUTES_SERVICE = [
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
-    """Class describing mikrotik entities."""
+    """Class describing mikrotik entities"""
 
     icon_enabled: str = ""
     icon_disabled: str = ""
@@ -63,6 +79,7 @@ class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
     data_uid: str = ""
     data_reference: str = ""
     data_attributes_list: List = field(default_factory=lambda: [])
+    func: str = "TrueNASBinarySensor"
 
 
 SENSOR_TYPES = {
@@ -95,6 +112,7 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_JAIL,
+        func="TrueNASJailBinarySensor",
     ),
     "vm": TrueNASBinarySensorEntityDescription(
         key="vm",
@@ -110,6 +128,7 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_VM,
+        func="TrueNASVMBinarySensor",
     ),
     "service": TrueNASBinarySensorEntityDescription(
         key="service",
@@ -125,5 +144,18 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_SERVICE,
+        func="TrueNASServiceBinarySensor",
     ),
 }
+
+SENSOR_SERVICES = [
+    [SERVICE_JAIL_START, SCHEMA_SERVICE_JAIL_START, "start"],
+    [SERVICE_JAIL_STOP, SCHEMA_SERVICE_JAIL_STOP, "stop"],
+    [SERVICE_JAIL_RESTART, SCHEMA_SERVICE_JAIL_RESTART, "restart"],
+    [SERVICE_VM_START, SCHEMA_SERVICE_VM_START, "start"],
+    [SERVICE_VM_STOP, SCHEMA_SERVICE_VM_STOP, "stop"],
+    [SERVICE_SERVICE_START, SCHEMA_SERVICE_SERVICE_START, "start"],
+    [SERVICE_SERVICE_STOP, SCHEMA_SERVICE_SERVICE_STOP, "stop"],
+    [SERVICE_SERVICE_RESTART, SCHEMA_SERVICE_SERVICE_RESTART, "restart"],
+    [SERVICE_SERVICE_RELOAD, SCHEMA_SERVICE_SERVICE_RELOAD, "reload"],
+]

@@ -1,4 +1,4 @@
-"""TrueNAS API."""
+"""TrueNAS API"""
 
 import logging
 import requests
@@ -12,10 +12,10 @@ _LOGGER = logging.getLogger(__name__)
 #   TrueNASAPI
 # ---------------------------
 class TrueNASAPI(object):
-    """Handle all communication with TrueNAS."""
+    """Handle all communication with TrueNAS"""
 
     def __init__(self, hass, host, api_key, use_ssl=False, verify_ssl=True):
-        """Initialize the TrueNAS API."""
+        """Initialize the TrueNAS API"""
         self._hass = hass
         self._host = host
         self._use_ssl = use_ssl
@@ -34,14 +34,14 @@ class TrueNASAPI(object):
     #   connected
     # ---------------------------
     def connected(self) -> bool:
-        """Return connected boolean."""
+        """Return connected boolean"""
         return self._connected
 
     # ---------------------------
     #   connection_test
     # ---------------------------
     def connection_test(self):
-        """TrueNAS connection test."""
+        """TrueNAS connection test"""
         self.query("pool")
 
         return self._connected, self._error
@@ -50,7 +50,7 @@ class TrueNASAPI(object):
     #   query
     # ---------------------------
     def query(self, service, method="get", params={}) -> Optional(list):
-        """Retrieve data from TrueNAS."""
+        """Retrieve data from TrueNAS"""
 
         self.lock.acquire()
         error = False

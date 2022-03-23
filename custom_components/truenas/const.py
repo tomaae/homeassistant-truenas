@@ -1,4 +1,4 @@
-"""Constants used by the TrueNAS integration."""
+"""Constants used by the TrueNAS integration"""
 from homeassistant.const import Platform
 
 PLATFORMS = [
@@ -22,6 +22,12 @@ TO_REDACT = {
     "password",
     "encryption_password",
     "encryption_salt",
+    "host",
+    "api_key",
+    "serial",
+    "system_serial",
+    "ip4_addr",
+    "ip6_addr",
 }
 
 SERVICE_CLOUDSYNC_RUN = "cloudsync_run"

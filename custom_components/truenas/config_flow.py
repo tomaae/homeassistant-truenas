@@ -1,4 +1,4 @@
-"""Config flow to configure TrueNAS."""
+"""Config flow to configure TrueNAS"""
 
 import voluptuous as vol
 import logging
@@ -29,7 +29,7 @@ from .truenas_api import TrueNASAPI
 # ---------------------------
 @callback
 def configured_instances(hass):
-    """Return a set of configured instances."""
+    """Return a set of configured instances"""
     return set(
         entry.data[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)
     )
@@ -39,20 +39,20 @@ def configured_instances(hass):
 #   TrueNASConfigFlow
 # ---------------------------
 class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
-    """TrueNASConfigFlow class."""
+    """TrueNASConfigFlow class"""
 
     VERSION = 1
     CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
     def __init__(self):
-        """Initialize TrueNASConfigFlow."""
+        """Initialize TrueNASConfigFlow"""
 
     async def async_step_import(self, user_input=None):
-        """Occurs when a previous entry setup fails and is re-initiated."""
+        """Occurs when a previous entry setup fails and is re-initiated"""
         return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input=None):
-        """Handle a flow initialized by the user."""
+        """Handle a flow initialized by the user"""
         errors = {}
         if user_input is not None:
             # Check if instance with this name already exists
@@ -96,7 +96,7 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     def _show_config_form(self, user_input, errors=None):
-        """Show the configuration form."""
+        """Show the configuration form"""
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
