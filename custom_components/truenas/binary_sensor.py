@@ -1,14 +1,10 @@
 """TrueNAS binary sensor platform"""
-
-import logging
+from logging import getLogger
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from .model import model_async_setup_entry, TrueNASEntity
-from .binary_sensor_types import (
-    SENSOR_TYPES,
-    SENSOR_SERVICES,
-)
+from .binary_sensor_types import SENSOR_TYPES, SENSOR_SERVICES
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 # ---------------------------

@@ -1,16 +1,12 @@
 """TrueNAS sensor platform"""
-import logging
+from logging import getLogger
 from typing import Optional
 from datetime import datetime
-
 from homeassistant.components.sensor import SensorEntity
 from .model import model_async_setup_entry, TrueNASEntity
-from .sensor_types import (
-    SENSOR_TYPES,
-    SENSOR_SERVICES,
-)
+from .sensor_types import SENSOR_TYPES, SENSOR_SERVICES
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 # ---------------------------

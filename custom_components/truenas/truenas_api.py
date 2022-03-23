@@ -1,11 +1,10 @@
 """TrueNAS API"""
-
-import logging
-import requests
+from requests import get as requests_get, post as requests_post
+from logging import getLogger
 from threading import Lock
 from voluptuous import Optional
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 # ---------------------------
@@ -68,14 +67,14 @@ class TrueNASAPI(object):
                 "Authorization": f"Bearer {self._api_key}",
             }
             if method == "get":
-                response = requests.get(
+                response = requests_get(
                     f"{self._url}{service}",
                     headers=headers,
                     params=params,
                     verify=self._ssl_verify,
                 )
             elif method == "post":
-                response = requests.post(
+                response = requests_post(
                     f"{self._url}{service}",
                     headers=headers,
                     json=params,

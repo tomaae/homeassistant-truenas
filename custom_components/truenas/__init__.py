@@ -1,10 +1,5 @@
-"""The TrueNAS integration."""
-
-from homeassistant.const import CONF_HOST
-from .const import (
-    DOMAIN,
-    PLATFORMS,
-)
+"""The TrueNAS integration"""
+from .const import DOMAIN, PLATFORMS
 from .truenas_controller import TrueNASControllerData
 
 
@@ -12,7 +7,7 @@ from .truenas_controller import TrueNASControllerData
 #   async_setup
 # ---------------------------
 async def async_setup(hass, _config):
-    """Set up configured OMV Controller."""
+    """Set up configured OMV Controller"""
     hass.data[DOMAIN] = {}
     return True
 
@@ -21,7 +16,7 @@ async def async_setup(hass, _config):
 #   update_listener
 # ---------------------------
 async def update_listener(hass, config_entry) -> None:
-    """Handle options update."""
+    """Handle options update"""
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
@@ -29,7 +24,7 @@ async def update_listener(hass, config_entry) -> None:
 #   async_setup_entry
 # ---------------------------
 async def async_setup_entry(hass, config_entry):
-    """Set up TrueNAS config entry."""
+    """Set up TrueNAS config entry"""
     controller = TrueNASControllerData(hass, config_entry)
     await controller.async_update()
     await controller.async_init()
@@ -46,7 +41,7 @@ async def async_setup_entry(hass, config_entry):
 #   async_unload_entry
 # ---------------------------
 async def async_unload_entry(hass, config_entry):
-    """Unload TrueNAS config entry."""
+    """Unload TrueNAS config entry"""
     unload_ok = await hass.config_entries.async_unload_platforms(
         config_entry, PLATFORMS
     )

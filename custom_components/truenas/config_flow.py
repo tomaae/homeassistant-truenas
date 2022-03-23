@@ -1,10 +1,9 @@
 """Config flow to configure TrueNAS"""
 
 import voluptuous as vol
-import logging
-
-_LOGGER = logging.getLogger(__name__)
+from logging import getLogger
 from homeassistant.config_entries import CONN_CLASS_LOCAL_POLL, ConfigFlow
+from homeassistant.core import callback
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -12,8 +11,6 @@ from homeassistant.const import (
     CONF_SSL,
     CONF_VERIFY_SSL,
 )
-from homeassistant.core import callback
-
 from .const import (
     DEFAULT_DEVICE_NAME,
     DEFAULT_HOST,
@@ -23,6 +20,8 @@ from .const import (
 )
 from .truenas_api import TrueNASAPI
 
+_LOGGER = getLogger(__name__)
+
 
 # ---------------------------
 #   configured_instances
@@ -30,9 +29,9 @@ from .truenas_api import TrueNASAPI
 @callback
 def configured_instances(hass):
     """Return a set of configured instances"""
-    return set(
+    return {
         entry.data[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)
-    )
+    }
 
 
 # ---------------------------

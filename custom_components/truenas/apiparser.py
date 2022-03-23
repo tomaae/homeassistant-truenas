@@ -1,20 +1,20 @@
 """API parser for JSON APIs"""
-
-
-import logging
-import pytz
+from pytz import utc
+from logging import getLogger
 from datetime import datetime
-
 from voluptuous import Optional
 from homeassistant.components.diagnostics import async_redact_data
 from .const import TO_REDACT
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
+# ---------------------------
+#   utc_from_timestamp
+# ---------------------------
 def utc_from_timestamp(timestamp: float) -> datetime:
     """Return a UTC time from a timestamp"""
-    return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))
+    return utc.localize(datetime.utcfromtimestamp(timestamp))
 
 
 # ---------------------------

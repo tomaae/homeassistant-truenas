@@ -1,5 +1,5 @@
 """TrueNAS HA shared entity model"""
-import logging
+from logging import getLogger
 from typing import Any
 from collections.abc import Mapping
 from homeassistant.helpers import entity_platform
@@ -10,7 +10,7 @@ from homeassistant.const import ATTR_ATTRIBUTION, CONF_NAME, CONF_HOST
 from .helper import format_attribute
 from .const import DOMAIN, ATTRIBUTION
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 # ---------------------------

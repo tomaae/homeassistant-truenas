@@ -1,9 +1,6 @@
 """TrueNAS Controller"""
-
-import asyncio
-import pytz
+from asyncio import wait_for as asyncio_wait_for, Lock as Asyncio_lock
 from datetime import datetime, timedelta
-
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -14,26 +11,10 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
-
 from .const import DOMAIN
 from .apiparser import parse_api, utc_from_timestamp
 from .truenas_api import TrueNASAPI
-
-DEFAULT_TIME_ZONE = None
-
-
-def as_local(dattim: datetime) -> datetime:
-    """Convert a UTC datetime object to local time zone"""
-    if dattim.tzinfo == DEFAULT_TIME_ZONE:
-        return dattim
-    if dattim.tzinfo is None:
-        dattim = pytz.utc.localize(dattim)
-
-    return dattim.astimezone(DEFAULT_TIME_ZONE)
-
-
-def b2gib(b: int) -> float:
-    return round(b / 1073741824, 2)
+from .helper import as_local, b2gib
 
 
 # ---------------------------
@@ -63,7 +44,7 @@ class TrueNASControllerData(object):
         }
 
         self.listeners = []
-        self.lock = asyncio.Lock()
+        self.lock = Asyncio_lock()
 
         self.api = TrueNASAPI(
             hass,
@@ -123,7 +104,7 @@ class TrueNASControllerData(object):
     async def async_update(self):
         """Update TrueNAS data"""
         try:
-            await asyncio.wait_for(self.lock.acquire(), timeout=10)
+            await asyncio_wait_for(self.lock.acquire(), timeout=10)
         except:
             return
 

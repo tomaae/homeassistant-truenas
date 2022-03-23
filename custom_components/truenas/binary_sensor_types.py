@@ -1,9 +1,7 @@
 """Definitions for TrueNAS binary sensor entities"""
 from dataclasses import dataclass, field
 from typing import List
-from homeassistant.components.binary_sensor import (
-    BinarySensorEntityDescription,
-)
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 from .const import (
     SERVICE_JAIL_START,
     SCHEMA_SERVICE_JAIL_START,
