@@ -110,6 +110,8 @@ class TrueNASControllerData(object):
 
         await self.hass.async_add_executor_job(self.get_systeminfo)
         if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_systemstats)
+        if self.api.connected():
             await self.hass.async_add_executor_job(self.get_service)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_disk)
@@ -175,6 +177,10 @@ class TrueNASControllerData(object):
                 as_local(utc_from_timestamp(uptime_tm)).isoformat()
             )
 
+    # ---------------------------
+    #   get_systemstats
+    # ---------------------------
+    def get_systemstats(self):
         # Get graphs
         tmp_graph = self.api.query(
             "reporting/get_data",
