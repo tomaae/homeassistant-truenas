@@ -207,27 +207,6 @@ class TrueNASControllerData(object):
             if "name" not in tmp_graph[i]:
                 continue
 
-            # CPU load
-            if tmp_graph[i]["name"] == "load":
-                if "aggregations" in tmp_graph[i]:
-                    tmp_list = {}
-                    for e in range(len(tmp_graph[i]["legend"])):
-                        if not tmp_graph[i]["aggregations"]["mean"][e]:
-                            tmp_graph[i]["aggregations"]["mean"][e] = 0
-
-                        tmp_list[tmp_graph[i]["legend"][e]] = tmp_graph[i][
-                            "aggregations"
-                        ]["mean"][e]
-
-                    for tmp_load in ("load_shortterm", "load_midterm", "load_longterm"):
-                        if tmp_load in tmp_list:
-                            self.data["system_info"][tmp_load] = round(
-                                tmp_list[tmp_load], 2
-                            )
-                else:
-                    for tmp_load in ("load_shortterm", "load_midterm", "load_longterm"):
-                        self.data["system_info"][tmp_load] = 0.0
-
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
@@ -238,70 +217,51 @@ class TrueNASControllerData(object):
                     self.data["system_info"]["cpu_temperature"] = 0.0
 
             # CPU load
-            if tmp_graph[i]["name"] == "cpu":
-                if "aggregations" in tmp_graph[i]:
-                    tmp_list = {}
-                    for e in range(len(tmp_graph[i]["legend"])):
-                        tmp_list[tmp_graph[i]["legend"][e]] = tmp_graph[i][
-                            "aggregations"
-                        ]["mean"][e]
+            if tmp_graph[i]["name"] == "load":
+                tmp_arr = ("load_shortterm", "load_midterm", "load_longterm")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "")
 
-                    for tmp_load in ("interrupt", "system", "user", "nice", "idle"):
-                        if tmp_load in tmp_list:
-                            self.data["system_info"][f"cpu_{tmp_load}"] = round(
-                                tmp_list[tmp_load], 2
-                            )
-                    self.data["system_info"]["cpu_usage"] = round(
-                        self.data["system_info"]["cpu_system"]
-                        + self.data["system_info"]["cpu_user"],
-                        2,
-                    )
-                else:
-                    for tmp_load in ("interrupt", "system", "user", "nice", "idle"):
-                        self.data["system_info"][f"cpu_{tmp_load}"] = 0.0
-                        self.data["system_info"]["cpu_usage"] = 0.0
+            # CPU usage
+            if tmp_graph[i]["name"] == "cpu":
+                tmp_arr = ("interrupt", "system", "user", "nice", "idle")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
+                self.data["system_info"]["cpu_usage"] = round(
+                    self.data["system_info"]["cpu_system"]
+                    + self.data["system_info"]["cpu_user"],
+                    2,
+                )
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
-                if "aggregations" in tmp_graph[i]:
-                    tmp_list = {}
-                    for e in range(len(tmp_graph[i]["legend"])):
-                        tmp_list[tmp_graph[i]["legend"][e]] = tmp_graph[i][
-                            "aggregations"
-                        ]["mean"][e]
-
-                    for tmp_load in ("cache_size-arc_value", "cache_size-L2_value"):
-                        if tmp_load in tmp_list:
-                            if not tmp_list[tmp_load]:
-                                tmp_list[tmp_load] = 0
-
-                            self.data["system_info"][tmp_load] = b2gib(
-                                tmp_list[tmp_load]
-                            )
-                else:
-                    for tmp_load in ("cache_size-arc_value", "cache_size-L2_value"):
-                        self.data["system_info"][tmp_load] = 0.0
+                tmp_arr = ("cache_size-arc_value", "cache_size-L2_value")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
             # arcratio
             if tmp_graph[i]["name"] == "arcratio":
-                if "aggregations" in tmp_graph[i]:
-                    tmp_list = {}
-                    for e in range(len(tmp_graph[i]["legend"])):
-                        tmp_list[tmp_graph[i]["legend"][e]] = tmp_graph[i][
-                            "aggregations"
-                        ]["mean"][e]
+                tmp_arr = ("cache_ratio-arc_value", "cache_ratio-L2_value")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "")
 
-                    for tmp_load in ("cache_ratio-arc_value", "cache_ratio-L2_value"):
-                        if tmp_load in tmp_list:
-                            if not tmp_list[tmp_load]:
-                                tmp_list[tmp_load] = 0
-
-                            self.data["system_info"][tmp_load] = round(
-                                tmp_list[tmp_load], 2
-                            )
+    # ---------------------------
+    #   _systemstats_process
+    # ---------------------------
+    def _systemstats_process(self, arr, graph, t):
+        if "aggregations" in graph:
+            for e in range(len(graph["legend"])):
+                tmp_var = graph["legend"][e]
+                if tmp_var in arr:
+                    tmp_val = graph["aggregations"]["mean"][e] or 0.0
+                    if t == "arcsize":
+                        self.data["system_info"][tmp_var] = b2gib(tmp_val)
+                    elif t == "cpu":
+                        self.data["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
+                    else:
+                        self.data["system_info"][tmp_var] = round(tmp_val, 2)
+        else:
+            for tmp_load in arr:
+                if t == "cpu":
+                    self.data["system_info"][f"cpu_{tmp_load}"] = 0.0
                 else:
-                    for tmp_load in ("cache_ratio-arc_value", "cache_ratio-L2_value"):
-                        self.data["system_info"][tmp_load] = 0.0
+                    self.data["system_info"][tmp_load] = 0.0
 
     # ---------------------------
     #   get_service
