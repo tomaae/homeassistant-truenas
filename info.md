@@ -1,6 +1,6 @@
 ![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/truenas-logo-color.webp)
 
-Monitor and control your TrueNAS device from Home Assistant.
+Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
  * Monitor System (Cpu, Load, Temperature, ARC/L2ARC, Uptime)
  * Monitor Disks
  * Monitor Pools (including boot-pool)
@@ -9,7 +9,7 @@ Monitor and control your TrueNAS device from Home Assistant.
  * Monitor Snapshot Tasks
  * Control and Monitor Services
  * Control and Monitor Virtual Machines
- * Control and Monitor Jails
+ * Control and Monitor Jails (TrueNAS CORE only)
  * Control and Monitor Cloudsync
  * Create a Dataset Snapshot
 
