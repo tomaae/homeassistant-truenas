@@ -55,6 +55,8 @@ class TrueNASControllerData(object):
         )
 
         self._force_update_callback = None
+        self._is_scale = False
+        self._is_virtual = False
 
     # ---------------------------
     #   async_init
@@ -168,6 +170,15 @@ class TrueNASControllerData(object):
             ],
         )
 
+        self._is_scale = bool(
+            self.data["system_info"]["version"].startswith("TrueNAS-SCALE-")
+        )
+
+        self._is_virtual = self.data["system_info"]["system_product"] in [
+            "VirtualBox",
+            "VMware Virtual Platform",
+        ]
+
         if self.data["system_info"]["uptime_seconds"] > 0:
             now = datetime.now().replace(microsecond=0)
             uptime_tm = datetime.timestamp(
@@ -182,24 +193,30 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_systemstats(self):
         # Get graphs
+        tmp_params = {
+            "graphs": [
+                {"name": "load"},
+                {"name": "cputemp"},
+                {"name": "cpu"},
+                {"name": "arcsize"},
+                {"name": "arcratio"},
+            ],
+            "reporting_query": {
+                "start": "now-90s",
+                "end": "now-30s",
+                "aggregate": True,
+            },
+        }
+
+        if self._is_virtual:
+            tmp_params["graphs"].remove({"name": "cputemp"})
+
         tmp_graph = self.api.query(
             "reporting/get_data",
             method="post",
-            params={
-                "graphs": [
-                    {"name": "load"},
-                    {"name": "cputemp"},
-                    {"name": "cpu"},
-                    {"name": "arcsize"},
-                    {"name": "arcratio"},
-                ],
-                "reporting_query": {
-                    "start": "now-90s",
-                    "end": "now-30s",
-                    "aggregate": True,
-                },
-            },
+            params=tmp_params,
         )
+
         if not isinstance(tmp_graph, list):
             return
 
@@ -524,6 +541,9 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_jail(self):
         """Get jails from TrueNAS"""
+        if self._is_scale:
+            return
+
         self.data["jail"] = parse_api(
             data=self.data["jail"],
             source=self.api.query("jail"),
