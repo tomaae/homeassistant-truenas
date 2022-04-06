@@ -107,7 +107,7 @@ class TrueNASControllerData(object):
         """Update TrueNAS data"""
         try:
             await asyncio_wait_for(self.lock.acquire(), timeout=10)
-        except:
+        except Exception:
             return
 
         await self.hass.async_add_executor_job(self.get_systeminfo)
