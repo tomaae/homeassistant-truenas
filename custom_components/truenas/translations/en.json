@@ -2,7 +2,6 @@
     "config": {
         "step": {
             "user": {
-                "title": "TrueNAS",
                 "description": "Set up TrueNAS integration.",
                 "data": {
                     "name": "Name of the integration",
