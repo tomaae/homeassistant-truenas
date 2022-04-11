@@ -1,5 +1,5 @@
 # Number of days of inactivity before an issue becomes stale
-daysUntilStale: 30
+daysUntilStale: 14
 
 # Number of days of inactivity before a stale issue is closed
 daysUntilClose: 7
@@ -37,7 +37,7 @@ closeComment: false
 
 # Handle pull requests a little bit faster and with an adjusted comment.
 pulls:
-  daysUntilStale: 30
+  daysUntilStale: 14
   exemptProjects: false
   markComment: >
     There hasn't been any activity on this pull request recently. This pull
