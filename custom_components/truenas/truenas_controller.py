@@ -174,9 +174,10 @@ class TrueNASControllerData(object):
             self.data["system_info"]["version"].startswith("TrueNAS-SCALE-")
         )
 
-        self._is_virtual = self.data["system_info"]["system_product"] in [
+        self._is_virtual = self.data["system_info"]["system_manufacturer"] in [
+            "QEMU",
             "VirtualBox",
-            "VMware Virtual Platform",
+            "VMware, Inc.",
         ]
 
         if self.data["system_info"]["uptime_seconds"] > 0:
