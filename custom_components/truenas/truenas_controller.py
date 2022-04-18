@@ -229,7 +229,7 @@ class TrueNASControllerData(object):
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
                     self.data["system_info"]["cpu_temperature"] = round(
-                        max(tmp_graph[i]["aggregations"]["mean"]), 1
+                        max(list(filter(None, tmp_graph[i]["aggregations"]["mean"]))), 1
                     )
                 else:
                     self.data["system_info"]["cpu_temperature"] = 0.0
