@@ -337,11 +337,13 @@ class TrueNASControllerData(object):
                     "name": "scrub_start",
                     "source": "scan/start_time/$date",
                     "default": 0,
+                    "convert": "utc_from_timestamp",
                 },
                 {
                     "name": "scrub_end",
                     "source": "scan/end_time/$date",
                     "default": 0,
+                    "convert": "utc_from_timestamp",
                 },
                 {
                     "name": "scrub_secs_left",
