@@ -7,7 +7,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     SensorEntityDescription,
 )
-from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES
+from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES, DATA_KIBIBYTES
 from .const import (
     SERVICE_CLOUDSYNC_RUN,
     SCHEMA_SERVICE_CLOUDSYNC_RUN,
@@ -15,6 +15,14 @@ from .const import (
     SCHEMA_SERVICE_DATASET_SNAPSHOT,
 )
 
+DEVICE_ATTRIBUTES_NETWORK = [
+    "description",
+    "mtu",
+    "link_state",
+    "active_media_type",
+    "active_media_subtype",
+    "link_address",
+]
 
 DEVICE_ATTRIBUTES_POOL = [
     "path",
@@ -377,6 +385,38 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_SNAPSHOTTASK,
+    ),
+    "traffic_rx": TrueNASSensorEntityDescription(
+        key="traffic_rx",
+        name="RX",
+        icon="mdi:download-network-outline",
+        native_unit_of_measurement=DATA_KIBIBYTES,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=None,
+        ha_group="System",
+        data_path="interface",
+        data_attribute="if_octets_rx",
+        data_name="name",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_NETWORK,
+    ),
+    "traffic_tx": TrueNASSensorEntityDescription(
+        key="traffic_tx",
+        name="TX",
+        icon="mdi:upload-network-outline",
+        native_unit_of_measurement=DATA_KIBIBYTES,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=None,
+        ha_group="System",
+        data_path="interface",
+        data_attribute="if_octets_tx",
+        data_name="name",
+        data_uid="",
+        data_reference="id",
+        data_attributes_list=DEVICE_ATTRIBUTES_NETWORK,
     ),
 }
 
