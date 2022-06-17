@@ -16,7 +16,7 @@
 ![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/header.png)
 
 Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
- * Monitor System (Cpu, Load, Temperature, ARC/L2ARC, Uptime)
+ * Monitor System (Cpu, Load, Temperature, Network, ARC/L2ARC, Uptime)
  * Monitor Disks
  * Monitor Pools (including boot-pool)
  * Monitor Datasets
