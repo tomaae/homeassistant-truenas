@@ -222,8 +222,8 @@ class TrueNASControllerData(object):
                 },
             ],
             ensure_vals=[
-                {"name": "if_octets_rx", "default": 0},
-                {"name": "if_octets_tx", "default": 0},
+                {"name": "rx", "default": 0},
+                {"name": "tx", "default": 0},
             ],
         )
 
@@ -294,7 +294,11 @@ class TrueNASControllerData(object):
             if tmp_graph[i]["name"] == "interface":
                 tmp_etc = tmp_graph[i]["identifier"]
                 if tmp_etc in self.data["interface"]:
-                    tmp_arr = ("if_octets_rx", "if_octets_tx")
+                    # 12->13 API change
+                    tmp_graph[i]["legend"] = [
+                        tmp.replace("if_octets_", "") for tmp in tmp_graph[i]["legend"]
+                    ]
+                    tmp_arr = ("rx", "tx")
                     if "aggregations" in tmp_graph[i]:
                         for e in range(len(tmp_graph[i]["legend"])):
                             tmp_var = tmp_graph[i]["legend"][e]
