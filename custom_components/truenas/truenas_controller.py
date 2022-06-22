@@ -177,8 +177,9 @@ class TrueNASControllerData(object):
 
         self._is_virtual = self.data["system_info"]["system_manufacturer"] in [
             "QEMU",
-            "VirtualBox",
             "VMware, Inc.",
+        ] or self.data["system_info"]["system_product"] in [
+            "VirtualBox",
         ]
 
         if self.data["system_info"]["uptime_seconds"] > 0:
