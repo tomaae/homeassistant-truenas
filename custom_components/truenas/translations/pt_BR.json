@@ -14,10 +14,10 @@
         },
         "error": {
             "name_exists": "O nome já existe.",
-            "no_response": "Sem resposta do host.",
             "401": "Nenhuma autorização para este endpoint.",
             "404": "API não encontrada neste host.",
-            "500": "Erro interno."
+            "500": "Erro interno.",
+            "no_response": "Sem resposta do host."
         }
     }
 }
