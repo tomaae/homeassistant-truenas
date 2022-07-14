@@ -93,7 +93,7 @@ class TrueNASAPI(object):
             try:
                 errorcode = response.status_code
             except:
-                errorcode = "no_respose"
+                errorcode = "no_response"
 
             _LOGGER.warning(
                 "TrueNAS %s unable to fetch data (%s)", self._host, errorcode
