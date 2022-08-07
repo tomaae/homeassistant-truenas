@@ -481,7 +481,7 @@ class TrueNASControllerData(object):
             if vals["path"] in tmp_dataset:
                 self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
 
-            if vals["name"] == "boot-pool":
+            if vals["name"] in ["boot-pool", "freenas-boot"]:
                 self.data["pool"][uid]["available_gib"] = b2gib(
                     vals["root_dataset_available"]
                 )
