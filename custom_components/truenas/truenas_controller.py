@@ -374,15 +374,16 @@ class TrueNASControllerData(object):
                     + self.data["system_info"]["cache_size-arc_value"],
                     2,
                 )
-                self.data["system_info"]["memory-usage_percent"] = round(
-                    100
-                    * (
-                        float(self.data["system_info"]["memory-total_value"])
-                        - float(self.data["system_info"]["memory-free_value"])
+                if self.data["system_info"]["memory-total_value"] > 0:
+                    self.data["system_info"]["memory-usage_percent"] = round(
+                        100
+                        * (
+                            float(self.data["system_info"]["memory-total_value"])
+                            - float(self.data["system_info"]["memory-free_value"])
+                        )
+                        / float(self.data["system_info"]["memory-total_value"]),
+                        0,
                     )
-                    / float(self.data["system_info"]["memory-total_value"]),
-                    0,
-                )
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
