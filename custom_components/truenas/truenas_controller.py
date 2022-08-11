@@ -122,24 +122,24 @@ class TrueNASControllerData(object):
         await self.hass.async_add_executor_job(self.get_systeminfo)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_systemstats)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_service)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_disk)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_dataset)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_pool)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_jail)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_vm)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_cloudsync)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_replication)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_snapshottask)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_service)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_disk)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_dataset)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_pool)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_jail)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_vm)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_cloudsync)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_replication)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_snapshottask)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
