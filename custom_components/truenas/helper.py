@@ -10,6 +10,7 @@ DEFAULT_TIME_ZONE = None
 # ---------------------------
 def format_attribute(attr):
     res = attr.replace("_", " ")
+    res = attr.replace("-", " ")
     res = res.capitalize()
     res = res.replace("zfs", "ZFS")
     res = res.replace(" gib", " GiB")

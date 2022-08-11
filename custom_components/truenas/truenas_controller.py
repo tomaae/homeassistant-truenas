@@ -122,24 +122,24 @@ class TrueNASControllerData(object):
         await self.hass.async_add_executor_job(self.get_systeminfo)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_systemstats)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_service)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_disk)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_dataset)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_pool)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_jail)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_vm)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_cloudsync)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_replication)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_snapshottask)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_service)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_disk)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_dataset)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_pool)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_jail)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_vm)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_cloudsync)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_replication)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_snapshottask)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -176,6 +176,12 @@ class TrueNASControllerData(object):
                 {"name": "cache_size-L2_value", "default": 0.0},
                 {"name": "cache_ratio-arc_value", "default": 0},
                 {"name": "cache_ratio-L2_value", "default": 0},
+                {"name": "memory-used_value", "default": 0.0},
+                {"name": "memory-free_value", "default": 0.0},
+                {"name": "memory-cached_value", "default": 0.0},
+                {"name": "memory-buffered_value", "default": 0.0},
+                {"name": "memory-total_value", "default": 0.0},
+                {"name": "memory-usage_percent", "default": 0},
             ],
         )
 
@@ -247,6 +253,7 @@ class TrueNASControllerData(object):
                 {"name": "cpu"},
                 {"name": "arcsize"},
                 {"name": "arcratio"},
+                {"name": "memory"},
             ],
             "reporting_query": {
                 "start": "now-90s",
@@ -352,10 +359,35 @@ class TrueNASControllerData(object):
                         for tmp_load in tmp_arr:
                             self.data["interface"][tmp_etc][tmp_load] = 0.0
 
+            # arcratio
+            if tmp_graph[i]["name"] == "memory":
+                tmp_arr = (
+                    "memory-used_value",
+                    "memory-free_value",
+                    "memory-cached_value",
+                    "memory-buffered_value",
+                )
+                self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
+                self.data["system_info"]["memory-total_value"] = round(
+                    self.data["system_info"]["memory-used_value"]
+                    + self.data["system_info"]["memory-free_value"]
+                    + self.data["system_info"]["cache_size-arc_value"],
+                    2,
+                )
+                self.data["system_info"]["memory-usage_percent"] = round(
+                    100
+                    * (
+                        float(self.data["system_info"]["memory-total_value"])
+                        - float(self.data["system_info"]["memory-free_value"])
+                    )
+                    / float(self.data["system_info"]["memory-total_value"]),
+                    0,
+                )
+
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
                 tmp_arr = ("cache_size-arc_value", "cache_size-L2_value")
-                self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
 
             # arcratio
             if tmp_graph[i]["name"] == "arcratio":
@@ -371,7 +403,7 @@ class TrueNASControllerData(object):
                 tmp_var = graph["legend"][e]
                 if tmp_var in arr:
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
-                    if t == "arcsize":
+                    if t == "memory":
                         self.data["system_info"][tmp_var] = b2gib(tmp_val)
                     elif t == "cpu":
                         self.data["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)

@@ -79,6 +79,14 @@ DEVICE_ATTRIBUTES_CPU = [
     "cpu_idle",
 ]
 
+DEVICE_ATTRIBUTES_MEMORY = [
+    "memory-used_value",
+    "memory-free_value",
+    "memory-cached_value",
+    "memory-buffered_value",
+    "memory-total_value",
+]
+
 DEVICE_ATTRIBUTES_CLOUDSYNC = [
     "direction",
     "path",
@@ -227,6 +235,22 @@ SENSOR_TYPES = {
         data_uid="",
         data_reference="",
         data_attributes_list=DEVICE_ATTRIBUTES_CPU,
+    ),
+    "system_memory_usage": TrueNASSensorEntityDescription(
+        key="system_memory_usage",
+        name="Memory Usage",
+        icon="mdi:memory",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        ha_group="System",
+        data_path="system_info",
+        data_attribute="memory-usage_percent",
+        data_name="",
+        data_uid="",
+        data_reference="",
+        data_attributes_list=DEVICE_ATTRIBUTES_MEMORY,
     ),
     "system_cache_size-arc_value": TrueNASSensorEntityDescription(
         key="system_cache_size-arc_value",
