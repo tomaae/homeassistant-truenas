@@ -96,11 +96,17 @@ class TrueNASAPI(object):
                 errorcode = "no_response"
 
             _LOGGER.warning(
-                "TrueNAS %s unable to fetch data (%s)", self._host, errorcode
+                'TrueNAS %s unable to fetch data "%s" (%s)',
+                self._host,
+                service,
+                errorcode,
             )
 
+            if errorcode != 500 and service != "reporting/get_data":
+
+                self._connected = False
+
             self._error = errorcode
-            self._connected = False
             self.lock.release()
             return None
 
@@ -109,3 +115,7 @@ class TrueNASAPI(object):
         self.lock.release()
 
         return data
+
+    @property
+    def error(self):
+        return self._error

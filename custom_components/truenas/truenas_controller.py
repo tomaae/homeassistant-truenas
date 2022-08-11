@@ -1,6 +1,7 @@
 """TrueNAS Controller"""
 from asyncio import wait_for as asyncio_wait_for, Lock as Asyncio_lock
 from datetime import datetime, timedelta
+from logging import getLogger
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -15,6 +16,8 @@ from .const import DOMAIN
 from .apiparser import parse_api, utc_from_timestamp
 from .truenas_api import TrueNASAPI
 from .helper import as_local, b2gib
+
+_LOGGER = getLogger(__name__)
 
 
 # ---------------------------
@@ -54,6 +57,8 @@ class TrueNASControllerData(object):
             config_entry.data[CONF_SSL],
             config_entry.data[CONF_VERIFY_SSL],
         )
+
+        self._systemstats_errored = []
 
         self._force_update_callback = None
         self._is_scale = False
@@ -253,6 +258,13 @@ class TrueNASControllerData(object):
         if self._is_virtual:
             tmp_params["graphs"].remove({"name": "cputemp"})
 
+        for tmp in tmp_params["graphs"]:
+            if tmp["name"] in self._systemstats_errored:
+                tmp_params["graphs"].remove(tmp)
+
+        if not tmp_params["graphs"]:
+            return
+
         tmp_graph = self.api.query(
             "reporting/get_data",
             method="post",
@@ -260,6 +272,32 @@ class TrueNASControllerData(object):
         )
 
         if not isinstance(tmp_graph, list):
+            if self.api.error == 500:
+                for tmp in tmp_params["graphs"]:
+                    tmp2 = self.api.query(
+                        "reporting/get_data",
+                        method="post",
+                        params={
+                            "graphs": [
+                                tmp,
+                            ],
+                            "reporting_query": {
+                                "start": "now-90s",
+                                "end": "now-30s",
+                                "aggregate": True,
+                            },
+                        },
+                    )
+                    if not isinstance(tmp2, list) and self.api.error == 500:
+                        self._systemstats_errored.append(tmp["name"])
+
+                _LOGGER.warning(
+                    "TrueNAS %s fetching following graphs failed, check your NAS: %s",
+                    self.host,
+                    self._systemstats_errored,
+                )
+                self.get_systemstats()
+
             return
 
         for i in range(len(tmp_graph)):
