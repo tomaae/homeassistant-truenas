@@ -16,6 +16,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up entry for TrueNAS component"""
     dispatcher = {
         "TrueNASSensor": TrueNASSensor,
+        "TrueNASUptimeSensor": TrueNASUptimeSensor,
         "TrueNASClousyncSensor": TrueNASClousyncSensor,
         "TrueNASDatasetSensor": TrueNASDatasetSensor,
     }
@@ -56,6 +57,29 @@ class TrueNASSensor(TrueNASEntity, SensorEntity):
             return self.entity_description.native_unit_of_measurement
 
         return None
+
+
+# ---------------------------
+#   TrueNASUptimeSensor
+# ---------------------------
+class TrueNASUptimeSensor(TrueNASSensor):
+    """Define an TrueNAS Uptime sensor"""
+
+    async def restart(self):
+        """Restart TrueNAS systen"""
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "system/reboot",
+            "post",
+        )
+
+    async def stop(self):
+        """Shutdown TrueNAS systen"""
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "system/shutdown",
+            "post",
+        )
 
 
 # ---------------------------

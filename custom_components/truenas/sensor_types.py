@@ -13,6 +13,10 @@ from .const import (
     SCHEMA_SERVICE_CLOUDSYNC_RUN,
     SERVICE_DATASET_SNAPSHOT,
     SCHEMA_SERVICE_DATASET_SNAPSHOT,
+    SERVICE_SYSTEM_REBOOT,
+    SCHEMA_SERVICE_SYSTEM_REBOOT,
+    SERVICE_SYSTEM_SHUTDOWN,
+    SCHEMA_SERVICE_SYSTEM_SHUTDOWN,
 )
 
 DEVICE_ATTRIBUTES_NETWORK = [
@@ -159,6 +163,7 @@ SENSOR_TYPES = {
         data_name="",
         data_uid="",
         data_reference="",
+        func="TrueNASUptimeSensor",
     ),
     "system_cpu_temperature": TrueNASSensorEntityDescription(
         key="system_cpu_temperature",
@@ -447,4 +452,6 @@ SENSOR_TYPES = {
 SENSOR_SERVICES = [
     [SERVICE_CLOUDSYNC_RUN, SCHEMA_SERVICE_CLOUDSYNC_RUN, "start"],
     [SERVICE_DATASET_SNAPSHOT, SCHEMA_SERVICE_DATASET_SNAPSHOT, "snapshot"],
+    [SERVICE_SYSTEM_REBOOT, SCHEMA_SERVICE_SYSTEM_REBOOT, "restart"],
+    [SERVICE_SYSTEM_SHUTDOWN, SCHEMA_SERVICE_SYSTEM_SHUTDOWN, "stop"],
 ]

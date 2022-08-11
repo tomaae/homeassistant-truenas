@@ -5,7 +5,6 @@ cloudsync_run:
   target:
     entity:
       domain: sensor
-      integration: truenas
 
 dataset_snapshot:
   name: Dataset Snapshot
@@ -13,7 +12,20 @@ dataset_snapshot:
   target:
     entity:
       domain: sensor
-      integration: truenas
+
+system_reboot:
+  name: Reboot TrueNAS
+  description: Reboot TrueNAS System
+  target:
+    entity:
+      domain: sensor
+
+system_shutdown:
+  name: Shutdown TrueNAS
+  description: Shutdown TrueNAS System
+  target:
+    entity:
+      domain: sensor
 
 service_start:
   name: Service Start
@@ -21,7 +33,6 @@ service_start:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 service_stop:
   name: Service Stop
@@ -29,7 +40,6 @@ service_stop:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 service_restart:
   name: Service Restart
@@ -37,7 +47,6 @@ service_restart:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 service_reload:
   name: Service Reload
@@ -45,7 +54,6 @@ service_reload:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 jail_start:
   name: Jail Start
@@ -53,7 +61,6 @@ jail_start:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 jail_stop:
   name: Jail Stop
@@ -61,7 +68,6 @@ jail_stop:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 jail_restart:
   name: Jail Restart
@@ -69,15 +75,13 @@ jail_restart:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
-      
+
 vm_start:
   name: VM Start
   description: Start a VM
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
 
 vm_stop:
   name: VM Stop
@@ -85,4 +89,3 @@ vm_stop:
   target:
     entity:
       domain: binary_sensor
-      integration: truenas
