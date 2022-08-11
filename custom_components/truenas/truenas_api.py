@@ -73,6 +73,7 @@ class TrueNASAPI(object):
                     params=params,
                     verify=self._ssl_verify,
                 )
+
             elif method == "post":
                 response = requests_post(
                     f"{self._url}{service}",
@@ -86,13 +87,13 @@ class TrueNASAPI(object):
                 _LOGGER.debug("TrueNAS %s query response: %s", self._host, data)
             else:
                 error = True
-        except:
+        except Exception:
             error = True
 
         if error:
             try:
                 errorcode = response.status_code
-            except:
+            except Exception:
                 errorcode = "no_response"
 
             _LOGGER.warning(
@@ -103,7 +104,6 @@ class TrueNASAPI(object):
             )
 
             if errorcode != 500 and service != "reporting/get_data":
-
                 self._connected = False
 
             self._error = errorcode
