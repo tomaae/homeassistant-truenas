@@ -12,6 +12,8 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers import entity_registry as er, device_registry as dr
+from homeassistant.helpers.entity_registry import async_entries_for_config_entry
 from .const import DOMAIN
 from .apiparser import parse_api, utc_from_timestamp
 from .truenas_api import TrueNASAPI
@@ -59,6 +61,7 @@ class TrueNASControllerData(object):
         )
 
         self._systemstats_errored = []
+        self.datasets_hass_device_id = None
 
         self._force_update_callback = None
         self._is_scale = False
@@ -531,7 +534,7 @@ class TrueNASControllerData(object):
     def get_dataset(self):
         """Get datasets from TrueNAS"""
         self.data["dataset"] = parse_api(
-            data=self.data["dataset"],
+            data={},
             source=self.api.query("pool/dataset"),
             key="id",
             vals=[
@@ -600,6 +603,37 @@ class TrueNASControllerData(object):
 
         for uid, vals in self.data["dataset"].items():
             self.data["dataset"][uid]["used_gb"] = b2gib(vals["used"])
+
+        if len(self.data["dataset"]) == 0:
+            return
+
+        entities_to_be_removed = []
+        if not self.datasets_hass_device_id:
+            device_registry = dr.async_get(self.hass)
+            for device in device_registry.devices.values():
+                if (
+                    self.config_entry.entry_id in device.config_entries
+                    and device.name.endswith(" Datasets")
+                ):
+                    self.datasets_hass_device_id = device.id
+
+            if not self.datasets_hass_device_id:
+                return
+
+        entity_registry = er.async_get(self.hass)
+        entity_entries = async_entries_for_config_entry(
+            entity_registry, self.config_entry.entry_id
+        )
+        for entity in entity_entries:
+            if (
+                entity.device_id == self.datasets_hass_device_id
+                and entity.unique_id.removeprefix(f"{self.name.lower()}-dataset-")
+                not in self.data["dataset"]
+            ):
+                entities_to_be_removed.append(entity.entity_id)
+
+        for entity_id in entities_to_be_removed:
+            entity_registry.async_remove(entity_id)
 
     # ---------------------------
     #   get_disk
