@@ -15,14 +15,14 @@ dataset_snapshot:
 
 system_reboot:
   name: Reboot TrueNAS
-  description: Reboot TrueNAS System
+  description: Reboot TrueNAS System (Target Uptime Sensor)
   target:
     entity:
       domain: sensor
 
 system_shutdown:
   name: Shutdown TrueNAS
-  description: Shutdown TrueNAS System
+  description: Shutdown TrueNAS System (Target Uptime Sensor)
   target:
     entity:
       domain: sensor

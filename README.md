@@ -16,7 +16,7 @@
 ![Truenas Logo](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/header.png)
 
 Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
- * Monitor System (Cpu, Load, Temperature, Network, ARC/L2ARC, Uptime)
+ * Monitor System (Cpu, Load, Memory, Temperature, Network, ARC/L2ARC, Uptime)
  * Monitor Disks
  * Monitor Pools (including boot-pool)
  * Monitor Datasets
@@ -27,6 +27,7 @@ Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
  * Control and Monitor Jails (TrueNAS CORE only)
  * Control and Monitor Cloudsync
  * Create a Dataset Snapshot
+ * Reboot and Shutdown TrueNAS system
  
 
 # Features
@@ -89,13 +90,18 @@ Service control is available through services.
 
 ![Services](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/service.png)
 
+## Reboot and Shutdown
+Reboot or Shutdown a TrueNAS system.
+Service control is available through services.
+Target system uptime sensor.
+
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).
 
 You can find it under "Integrations", named "TrueNAS"
 
 Minimum requirements:
-* TrueNAS Core 12.0
+* TrueNAS Core 12.0 or TrueNAS Scale (Any version)
 * Home Assistant 2022.2.0
 
 ## Using TrueNAS development branch
