@@ -4,6 +4,7 @@ from homeassistant.const import Platform
 PLATFORMS = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
+    Platform.UPDATE,
 ]
 
 DOMAIN = "truenas"

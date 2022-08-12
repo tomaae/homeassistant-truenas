@@ -182,8 +182,35 @@ class TrueNASControllerData(object):
                 {"name": "memory-buffered_value", "default": 0.0},
                 {"name": "memory-total_value", "default": 0.0},
                 {"name": "memory-usage_percent", "default": 0},
+                {"name": "update_available", "type": "bool", "default": False},
             ],
         )
+
+        self.data["system_info"] = parse_api(
+            data=self.data["system_info"],
+            source=self.api.query("update/check_available", method="post"),
+            vals=[
+                {
+                    "name": "update_status",
+                    "source": "status",
+                    "default": "unknown",
+                },
+                {
+                    "name": "update_version",
+                    "source": "version",
+                    "default": "unknown",
+                },
+            ],
+        )
+
+        self.data["system_info"]["update_available"] = (
+            self.data["system_info"]["update_status"] == "AVAILABLE"
+        )
+
+        if not self.data["system_info"]["update_available"]:
+            self.data["system_info"]["update_version"] = self.data["system_info"][
+                "version"
+            ]
 
         self._is_scale = bool(
             self.data["system_info"]["version"].startswith("TrueNAS-SCALE-")
