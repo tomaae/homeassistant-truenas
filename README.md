@@ -27,6 +27,7 @@ Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
  * Control and Monitor Jails (TrueNAS CORE only)
  * Control and Monitor Cloudsync
  * Create a Dataset Snapshot
+ * Update Sensor
  * Reboot and Shutdown TrueNAS system
  
 
