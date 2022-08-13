@@ -183,8 +183,41 @@ class TrueNASControllerData(object):
                 {"name": "memory-total_value", "default": 0.0},
                 {"name": "memory-usage_percent", "default": 0},
                 {"name": "update_available", "type": "bool", "default": False},
+                {"name": "update_progress", "default": 0},
+                {"name": "update_jobid", "default": 0},
+                {"name": "update_state", "default": "unknown"},
             ],
         )
+        if not self.api.connected():
+            return
+
+        if self.data["system_info"]["update_jobid"]:
+            self.data["system_info"] = parse_api(
+                data=self.data["system_info"],
+                source=self.api.query(
+                    "core/get_jobs",
+                    method="get",
+                    params={"id": self.data["system_info"]["update_jobid"]},
+                ),
+                vals=[
+                    {
+                        "name": "update_progress",
+                        "source": "progress/percent",
+                        "default": 0,
+                    },
+                    {
+                        "name": "update_state",
+                        "source": "state",
+                        "default": "unknown",
+                    },
+                ],
+            )
+            if not self.api.connected():
+                return
+
+            if self.data["system_info"]["update_state"] != "RUNNING":
+                self.data["system_info"]["update_progress"] = 0
+                self.data["system_info"]["update_jobid"] = 0
 
         self.data["system_info"] = parse_api(
             data=self.data["system_info"],
@@ -202,6 +235,9 @@ class TrueNASControllerData(object):
                 },
             ],
         )
+
+        if not self.api.connected():
+            return
 
         self.data["system_info"]["update_available"] = (
             self.data["system_info"]["update_status"] == "AVAILABLE"

@@ -51,7 +51,8 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
         """Set up device update entity."""
         super().__init__(inst, uid, truenas_controller, entity_description)
 
-        # self._attr_supported_features = UpdateEntityFeature.INSTALL
+        self._attr_supported_features = UpdateEntityFeature.INSTALL
+        self._attr_supported_features |= UpdateEntityFeature.PROGRESS
 
     @property
     def installed_version(self) -> str:
@@ -68,4 +69,21 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
-        self._ctrl.api.query("update/update", method="post")
+        self._data["update_jobid"] = await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "update/update",
+            "post",
+            {"reboot": True},
+        )
+        await self._ctrl.async_update()
+
+    @property
+    def in_progress(self) -> int:
+        """Update installation progress."""
+        if self._data["update_state"] != "RUNNING":
+            return False
+
+        if self._data["update_progress"] == 0:
+            self._data["update_progress"] = 1
+
+        return self._data["update_progress"]
