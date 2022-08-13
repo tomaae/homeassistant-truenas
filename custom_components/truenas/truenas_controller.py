@@ -765,9 +765,11 @@ class TrueNASControllerData(object):
             method="post",
             params={"names": []},
         )
-        for uid in self.data["disk"]:
-            if uid in temps:
-                self.data["disk"][uid]["temperature"] = temps[uid]
+
+        if temps:
+            for uid in self.data["disk"]:
+                if uid in temps:
+                    self.data["disk"][uid]["temperature"] = temps[uid]
 
     # ---------------------------
     #   get_jail
