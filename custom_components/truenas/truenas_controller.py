@@ -191,34 +191,6 @@ class TrueNASControllerData(object):
         if not self.api.connected():
             return
 
-        if self.data["system_info"]["update_jobid"]:
-            self.data["system_info"] = parse_api(
-                data=self.data["system_info"],
-                source=self.api.query(
-                    "core/get_jobs",
-                    method="get",
-                    params={"id": self.data["system_info"]["update_jobid"]},
-                ),
-                vals=[
-                    {
-                        "name": "update_progress",
-                        "source": "progress/percent",
-                        "default": 0,
-                    },
-                    {
-                        "name": "update_state",
-                        "source": "state",
-                        "default": "unknown",
-                    },
-                ],
-            )
-            if not self.api.connected():
-                return
-
-            if self.data["system_info"]["update_state"] != "RUNNING":
-                self.data["system_info"]["update_progress"] = 0
-                self.data["system_info"]["update_jobid"] = 0
-
         self.data["system_info"] = parse_api(
             data=self.data["system_info"],
             source=self.api.query("update/check_available", method="post"),
@@ -247,6 +219,38 @@ class TrueNASControllerData(object):
             self.data["system_info"]["update_version"] = self.data["system_info"][
                 "version"
             ]
+
+        if self.data["system_info"]["update_jobid"]:
+            self.data["system_info"] = parse_api(
+                data=self.data["system_info"],
+                source=self.api.query(
+                    "core/get_jobs",
+                    method="get",
+                    params={"id": self.data["system_info"]["update_jobid"]},
+                ),
+                vals=[
+                    {
+                        "name": "update_progress",
+                        "source": "progress/percent",
+                        "default": 0,
+                    },
+                    {
+                        "name": "update_state",
+                        "source": "state",
+                        "default": "unknown",
+                    },
+                ],
+            )
+            if not self.api.connected():
+                return
+
+            if (
+                self.data["system_info"]["update_state"] != "RUNNING"
+                or not self.data["system_info"]["update_available"]
+            ):
+                self.data["system_info"]["update_progress"] = 0
+                self.data["system_info"]["update_jobid"] = 0
+                self.data["system_info"]["update_state"] = "unknown"
 
         self._is_scale = bool(
             self.data["system_info"]["version"].startswith("TrueNAS-SCALE-")
