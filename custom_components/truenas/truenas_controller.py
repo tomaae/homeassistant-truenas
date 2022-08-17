@@ -730,7 +730,7 @@ class TrueNASControllerData(object):
             if (
                 entity.device_id == self.datasets_hass_device_id
                 and entity.unique_id.removeprefix(f"{self.name.lower()}-dataset-")
-                not in self.data["dataset"]
+                not in map(str.lower, self.data["dataset"].keys())
             ):
                 _LOGGER.debug(f"dataset to be removed: {entity.unique_id}")
                 entities_to_be_removed.append(entity.entity_id)
