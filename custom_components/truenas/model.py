@@ -104,6 +104,8 @@ def model_update_items(
 class TrueNASEntity:
     """Define entity"""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         inst,
@@ -128,12 +130,12 @@ class TrueNASEntity:
     def name(self) -> str:
         """Return the name for this entity"""
         if not self._uid:
-            return f"{self._inst} {self.entity_description.name}"
+            return f"{self.entity_description.name}"
 
         if self.entity_description.name:
-            return f"{self._inst} {self._data[self.entity_description.data_name]} {self.entity_description.name}"
+            return f"{self._data[self.entity_description.data_name]} {self.entity_description.name}"
 
-        return f"{self._inst} {self._data[self.entity_description.data_name]}"
+        return f"{self._data[self.entity_description.data_name]}"
 
     @property
     def unique_id(self) -> str:

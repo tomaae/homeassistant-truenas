@@ -130,7 +130,7 @@ SENSOR_TYPES = {
     ),
     "service": TrueNASBinarySensorEntityDescription(
         key="service",
-        name=" service",
+        name="",
         icon_enabled="mdi:cog",
         icon_disabled="mdi:cog-off",
         device_class=None,
