@@ -53,6 +53,7 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
 
         self._attr_supported_features = UpdateEntityFeature.INSTALL
         self._attr_supported_features |= UpdateEntityFeature.PROGRESS
+        self._attr_title = self.entity_description.title
 
     @property
     def installed_version(self) -> str:

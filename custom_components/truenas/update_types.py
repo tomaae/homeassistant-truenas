@@ -11,6 +11,7 @@ class TrueNASUpdateEntityDescription(UpdateEntityDescription):
     ha_group: str = ""
     ha_connection: str = ""
     ha_connection_value: str = ""
+    title: str = ""
     data_path: str = ""
     data_attribute: str = "available"
     data_name: str = ""
@@ -25,6 +26,7 @@ SENSOR_TYPES = {
         key="system_update",
         name="Update",
         ha_group="System",
+        title="TrueNAS",
         data_path="system_info",
         data_attribute="update_available",
         data_name="",
