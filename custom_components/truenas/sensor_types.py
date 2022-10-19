@@ -39,6 +39,7 @@ DEVICE_ATTRIBUTES_POOL = [
     "scrub_end",
     "scrub_secs_left",
     "healthy",
+    "total_gib",
 ]
 
 DEVICE_ATTRIBUTES_DATASET = [

@@ -34,6 +34,7 @@ DEVICE_ATTRIBUTES_POOL = [
     "scrub_end",
     "scrub_secs_left",
     "available_gib",
+    "total_gib",
 ]
 
 DEVICE_ATTRIBUTES_JAIL = [

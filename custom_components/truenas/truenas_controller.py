@@ -556,6 +556,7 @@ class TrueNASControllerData(object):
             ],
             ensure_vals=[
                 {"name": "available_gib", "default": 0.0},
+                {"name": "total_gib", "default": 0.0},
             ],
         )
 
@@ -584,6 +585,11 @@ class TrueNASControllerData(object):
                     "default": 0,
                 },
                 {
+                    "name": "root_dataset_used",
+                    "source": "root_dataset/properties/used/parsed",
+                    "default": 0,
+                },
+                {
                     "name": "scan_function",
                     "source": "scan/function",
                     "default": "unknown",
@@ -609,22 +615,36 @@ class TrueNASControllerData(object):
             ],
             ensure_vals=[
                 {"name": "available_gib", "default": 0.0},
+                {"name": "total_gib", "default": 0.0},
             ],
         )
 
         # Process pools
-        tmp_dataset = {
-            self.data["dataset"][uid]["mountpoint"]: b2gib(vals["available"])
-            for uid, vals in self.data["dataset"].items()
-        }
+        tmp_dataset_available = {}
+        tmp_dataset_total = {}
+        for uid, vals in self.data["dataset"].items():
+            tmp_dataset_available[self.data["dataset"][uid]["mountpoint"]] = b2gib(
+                vals["available"]
+            )
+            tmp_dataset_total[self.data["dataset"][uid]["mountpoint"]] = b2gib(
+                vals["available"] + vals["used"]
+            )
 
         for uid, vals in self.data["pool"].items():
-            if vals["path"] in tmp_dataset:
-                self.data["pool"][uid]["available_gib"] = tmp_dataset[vals["path"]]
+            if vals["path"] in tmp_dataset_available:
+                self.data["pool"][uid]["available_gib"] = tmp_dataset_available[
+                    vals["path"]
+                ]
+
+            if vals["path"] in tmp_dataset_total:
+                self.data["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
 
             if vals["name"] in ["boot-pool", "freenas-boot"]:
                 self.data["pool"][uid]["available_gib"] = b2gib(
                     vals["root_dataset_available"]
+                )
+                self.data["pool"][uid]["total_gib"] = b2gib(
+                    vals["root_dataset_available"] + vals["root_dataset_used"]
                 )
                 self.data["pool"][uid].pop("root_dataset")
 
