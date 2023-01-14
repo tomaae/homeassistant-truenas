@@ -401,8 +401,8 @@ class TrueNASControllerData(object):
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
                 self.data["system_info"]["cpu_usage"] = round(
                     self.data["system_info"]["cpu_system"]
-                    + self.data["system_info"]["cpu_user"],
-                    2,
+#                    + self.data["system_info"]["cpu_user"],
+                    ,2,
                 )
 
             # Interface
