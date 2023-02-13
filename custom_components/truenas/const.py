@@ -29,6 +29,8 @@ TO_REDACT = {
     "system_serial",
     "ip4_addr",
     "ip6_addr",
+    "account",
+    "key",
 }
 
 SERVICE_CLOUDSYNC_RUN = "cloudsync_run"
