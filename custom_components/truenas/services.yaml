@@ -89,3 +89,19 @@ vm_stop:
   target:
     entity:
       domain: binary_sensor
+
+app_start:
+  name: App Start
+  description: Start a app
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
+
+app_stop:
+  name: App Stop
+  description: Stop a app
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
