@@ -4,6 +4,7 @@ cloudsync_run:
   description: Start a Clousync Job
   target:
     entity:
+      integration: truenas
       domain: sensor
 
 dataset_snapshot:
@@ -11,6 +12,7 @@ dataset_snapshot:
   description: Create a Dataset Snapshot
   target:
     entity:
+      integration: truenas
       domain: sensor
 
 system_reboot:
@@ -18,6 +20,7 @@ system_reboot:
   description: Reboot TrueNAS System (Target Uptime Sensor)
   target:
     entity:
+      integration: truenas
       domain: sensor
 
 system_shutdown:
@@ -25,6 +28,7 @@ system_shutdown:
   description: Shutdown TrueNAS System (Target Uptime Sensor)
   target:
     entity:
+      integration: truenas
       domain: sensor
 
 service_start:
@@ -32,6 +36,7 @@ service_start:
   description: Start a Service
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 service_stop:
@@ -39,6 +44,7 @@ service_stop:
   description: Stop a Service
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 service_restart:
@@ -46,6 +52,7 @@ service_restart:
   description: Restart a Service
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 service_reload:
@@ -53,6 +60,7 @@ service_reload:
   description: Reload a Service
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 jail_start:
@@ -60,6 +68,7 @@ jail_start:
   description: Start a Jail
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 jail_stop:
@@ -67,6 +76,7 @@ jail_stop:
   description: Stop a Jail
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 jail_restart:
@@ -74,6 +84,7 @@ jail_restart:
   description: Restart a Jail
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 vm_start:
@@ -81,6 +92,7 @@ vm_start:
   description: Start a VM
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 vm_stop:
@@ -88,6 +100,7 @@ vm_stop:
   description: Stop a VM
   target:
     entity:
+      integration: truenas
       domain: binary_sensor
 
 app_start:
