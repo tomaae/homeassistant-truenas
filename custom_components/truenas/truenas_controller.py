@@ -47,6 +47,7 @@ class TrueNASControllerData(object):
             "cloudsync": {},
             "replication": {},
             "snapshottask": {},
+            "app": {},
         }
 
         self.listeners = []
@@ -140,6 +141,8 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_replication)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_snapshottask)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_app)
 
         async_dispatcher_send(self.hass, self.signal_update)
         self.lock.release()
@@ -962,3 +965,29 @@ class TrueNASControllerData(object):
                 },
             ],
         )
+
+    # ---------------------------
+    #   get_app
+    # ---------------------------
+    def get_app(self):
+        """Get Apps from TrueNAS."""
+        self.data["app"] = parse_api(
+            data=self.data["app"],
+            source=self.api.query("chart/release"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "name", "default": "unknown"},
+                {"name": "human_version", "default": "unknown"},
+                {"name": "update_available", "default": "unknown"},
+                {"name": "container_images_update_available", "default": "unknown"},
+                {"name": "portal", "source": "portals/open", "default": "unknown"},
+                {"name": "status", "default": "unknown"},
+            ],
+            ensure_vals=[
+                {"name": "running", "type": "bool", "default": False},
+            ],
+        )
+
+        for uid, vals in self.data["app"].items():
+            self.data["app"][uid]["running"] = vals["status"] == "ACTIVE"

@@ -1,4 +1,4 @@
-"""TrueNAS HA shared entity model"""
+"""TrueNAS HA shared entity model."""
 from logging import getLogger
 from typing import Any
 from collections.abc import Mapping
@@ -19,6 +19,7 @@ _LOGGER = getLogger(__name__)
 async def model_async_setup_entry(
     hass, config_entry, async_add_entities, sensor_services, sensor_types, dispatcher
 ):
+    """Add entities model."""
     inst = config_entry.data[CONF_NAME]
     truenas_controller = hass.data[DOMAIN][config_entry.entry_id]
     sensors = {}
@@ -29,7 +30,7 @@ async def model_async_setup_entry(
 
     @callback
     def update_controller():
-        """Update the values of the controller"""
+        """Update the values of the controller."""
         model_update_items(
             inst,
             truenas_controller,
@@ -53,6 +54,8 @@ async def model_async_setup_entry(
 def model_update_items(
     inst, truenas_controller, async_add_entities, sensors, dispatcher, sensor_types
 ):
+    """Add entites."""
+
     def _register_entity(_sensors, _item_id, _uid, _uid_sensor):
         _LOGGER.debug("Updating entity %s", _item_id)
         if _item_id in _sensors:
@@ -102,18 +105,12 @@ def model_update_items(
 #   TrueNASEntity
 # ---------------------------
 class TrueNASEntity:
-    """Define entity"""
+    """Define entity."""
 
     _attr_has_entity_name = True
 
-    def __init__(
-        self,
-        inst,
-        uid: "",
-        truenas_controller,
-        entity_description,
-    ):
-        """Initialize entity"""
+    def __init__(self, inst, uid: "", truenas_controller, entity_description):
+        """Initialize entity."""
         self.entity_description = entity_description
         self._inst = inst
         self._ctrl = truenas_controller
@@ -128,7 +125,7 @@ class TrueNASEntity:
 
     @property
     def name(self) -> str:
-        """Return the name for this entity"""
+        """Return the name for this entity."""
         if not self._uid:
             return f"{self.entity_description.name}"
 
@@ -139,7 +136,7 @@ class TrueNASEntity:
 
     @property
     def unique_id(self) -> str:
-        """Return a unique id for this entity"""
+        """Return a unique id for this entity."""
         if self._uid:
             return f"{self._inst.lower()}-{self.entity_description.key}-{str(self._data[self.entity_description.data_reference]).lower()}"
         else:
@@ -147,12 +144,12 @@ class TrueNASEntity:
 
     @property
     def available(self) -> bool:
-        """Return if controller is available"""
+        """Return if controller is available."""
         return self._ctrl.connected()
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return a description for device registry"""
+        """Return a description for device registry."""
         dev_connection = DOMAIN
         dev_connection_value = f"{self._ctrl.name}_{self.entity_description.ha_group}"
         dev_group = self.entity_description.ha_group
@@ -187,7 +184,7 @@ class TrueNASEntity:
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any]:
-        """Return the state attributes"""
+        """Return the state attributes."""
         attributes = super().extra_state_attributes
         for variable in self.entity_description.data_attributes_list:
             if variable in self._data:
@@ -196,25 +193,25 @@ class TrueNASEntity:
         return attributes
 
     async def async_added_to_hass(self):
-        """Run when entity about to be added to hass"""
+        """Run when entity about to be added to hass."""
         _LOGGER.debug("New binary sensor %s (%s)", self._inst, self.unique_id)
 
     async def start(self):
-        """Dummy run function"""
+        """Run function."""
         _LOGGER.error("Start functionality does not exist for %s", self.entity_id)
 
     async def stop(self):
-        """Dummy stop function"""
+        """Stop function."""
         _LOGGER.error("Stop functionality does not exist for %s", self.entity_id)
 
     async def restart(self):
-        """Dummy restart function"""
+        """Restart function."""
         _LOGGER.error("Restart functionality does not exist for %s", self.entity_id)
 
     async def reload(self):
-        """Dummy reload function"""
+        """Reload function."""
         _LOGGER.error("Reload functionality does not exist for %s", self.entity_id)
 
     async def snapshot(self):
-        """Dummy snapshot function"""
+        """Take snapshot function."""
         _LOGGER.error("Snapshot functionality does not exist for %s", self.entity_id)
