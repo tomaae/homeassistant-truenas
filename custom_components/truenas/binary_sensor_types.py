@@ -1,26 +1,28 @@
-"""Definitions for TrueNAS binary sensor entities"""
+"""Definitions for TrueNAS binary sensor entities."""
 from dataclasses import dataclass, field
 from typing import List
+
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription
+
 from .const import (
-    SERVICE_JAIL_START,
-    SCHEMA_SERVICE_JAIL_START,
-    SERVICE_JAIL_STOP,
-    SCHEMA_SERVICE_JAIL_STOP,
-    SERVICE_JAIL_RESTART,
     SCHEMA_SERVICE_JAIL_RESTART,
-    SERVICE_SERVICE_START,
-    SCHEMA_SERVICE_SERVICE_START,
-    SERVICE_SERVICE_STOP,
-    SCHEMA_SERVICE_SERVICE_STOP,
-    SERVICE_SERVICE_RESTART,
-    SCHEMA_SERVICE_SERVICE_RESTART,
-    SERVICE_SERVICE_RELOAD,
+    SCHEMA_SERVICE_JAIL_START,
+    SCHEMA_SERVICE_JAIL_STOP,
     SCHEMA_SERVICE_SERVICE_RELOAD,
-    SERVICE_VM_START,
+    SCHEMA_SERVICE_SERVICE_RESTART,
+    SCHEMA_SERVICE_SERVICE_START,
+    SCHEMA_SERVICE_SERVICE_STOP,
     SCHEMA_SERVICE_VM_START,
-    SERVICE_VM_STOP,
     SCHEMA_SERVICE_VM_STOP,
+    SERVICE_JAIL_RESTART,
+    SERVICE_JAIL_START,
+    SERVICE_JAIL_STOP,
+    SERVICE_SERVICE_RELOAD,
+    SERVICE_SERVICE_RESTART,
+    SERVICE_SERVICE_START,
+    SERVICE_SERVICE_STOP,
+    SERVICE_VM_START,
+    SERVICE_VM_STOP,
 )
 
 DEVICE_ATTRIBUTES_POOL = [
@@ -65,7 +67,7 @@ DEVICE_ATTRIBUTES_SERVICE = [
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
-    """Class describing mikrotik entities"""
+    """Class describing mikrotik entities."""
 
     icon_enabled: str = ""
     icon_disabled: str = ""

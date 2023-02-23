@@ -1,4 +1,4 @@
-"""Definitions for TrueNAS sensor entities"""
+"""Definitions for TrueNAS sensor entities."""
 from dataclasses import dataclass, field
 from typing import List
 from homeassistant.helpers.entity import EntityCategory
@@ -135,7 +135,7 @@ DEVICE_ATTRIBUTES_SNAPSHOTTASK = [
 
 @dataclass
 class TrueNASSensorEntityDescription(SensorEntityDescription):
-    """Class describing mikrotik entities"""
+    """Class describing mikrotik entities."""
 
     ha_group: str = ""
     ha_connection: str = ""

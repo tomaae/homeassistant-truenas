@@ -1,6 +1,7 @@
-"""Helper functions"""
-from pytz import utc
+"""Helper functions."""
 from datetime import datetime
+
+from pytz import utc
 
 DEFAULT_TIME_ZONE = None
 
@@ -8,7 +9,8 @@ DEFAULT_TIME_ZONE = None
 # ---------------------------
 #   format_attribute
 # ---------------------------
-def format_attribute(attr):
+def format_attribute(attr: str) -> str:
+    """Format attribute."""
     res = attr.replace("_", " ")
     res = res.replace("-", " ")
     res = res.capitalize()
@@ -26,7 +28,7 @@ def format_attribute(attr):
 #   as_local
 # ---------------------------
 def as_local(dattim: datetime) -> datetime:
-    """Convert a UTC datetime object to local time zone"""
+    """Convert a UTC datetime object to local time zone."""
     if dattim.tzinfo == DEFAULT_TIME_ZONE:
         return dattim
     if dattim.tzinfo is None:
@@ -39,4 +41,5 @@ def as_local(dattim: datetime) -> datetime:
 #   b2gib
 # ---------------------------
 def b2gib(b: int) -> float:
+    """Convert to gib."""
     return round(b / 1073741824, 2)

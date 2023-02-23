@@ -1,4 +1,4 @@
-"""Constants used by the TrueNAS integration"""
+"""Constants used by the TrueNAS integration."""
 from homeassistant.const import Platform
 
 PLATFORMS = [
