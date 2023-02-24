@@ -70,7 +70,7 @@ def model_update_items(
     sensor_types: dict[Any, Any],
 ) -> None:
     """Update items."""
-    
+
     def _register_entity(_sensors, _item_id, _uid, _uid_sensor):
         _LOGGER.debug("Updating entity %s", _item_id)
         if _item_id in _sensors:
