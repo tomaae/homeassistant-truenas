@@ -42,7 +42,7 @@ class TrueNASSensor(TrueNASEntity, SensorEntity):
     @property
     def state(self) -> str:
         """Return the state."""
-        return self._data.get(self.entity_description.data_attribute, 'unknown')
+        return self._data.get(self.entity_description.data_attribute, "unknown")
 
     @property
     def native_unit_of_measurement(self) -> str | None:
