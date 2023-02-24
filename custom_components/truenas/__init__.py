@@ -3,7 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
-from .truenas_controller import TrueNASControllerData
+from .coordinator import TrueNASDataUpdateCoordinator
 
 
 # ---------------------------
@@ -20,11 +20,11 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up TrueNAS config entry."""
     hass.data.setdefault(DOMAIN, {})
-    controller = TrueNASControllerData(hass, entry)
-    await controller.async_update()
-    await controller.async_init()
 
-    hass.data[DOMAIN][entry.entry_id] = controller
+    coordinator = TrueNASDataUpdateCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+
+    hass.data[DOMAIN][entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))

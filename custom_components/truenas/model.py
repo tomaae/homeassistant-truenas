@@ -3,17 +3,16 @@ from collections.abc import Mapping
 from logging import getLogger
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION, CONF_HOST, CONF_NAME
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
+from .coordinator import TrueNASDataUpdateCoordinator
 from .helper import format_attribute
-from .truenas_controller import TrueNASControllerData
 
 _LOGGER = getLogger(__name__)
 
@@ -23,125 +22,68 @@ _LOGGER = getLogger(__name__)
 # ---------------------------
 async def model_async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    coordinator: TrueNASDataUpdateCoordinator,
     async_add_entities: AddEntitiesCallback,
     sensor_services: dict[Any, Any],
     sensor_types: dict[Any, Any],
-    dispatcher: dict[Any, Any],
+    dispatcher: dict[str, Any],
 ) -> None:
     """Set up integration from a config entry."""
-    inst = config_entry.data[CONF_NAME]
-    truenas_controller = hass.data[DOMAIN][config_entry.entry_id]
-    sensors = {}
-
     platform = entity_platform.async_get_current_platform()
-    for tmp in sensor_services:
-        platform.async_register_entity_service(tmp[0], tmp[1], tmp[2])
+    for service in sensor_services:
+        platform.async_register_entity_service(service[0], service[1], service[2])
 
-    @callback
-    def update_controller():
-        """Update the values of the controller."""
-        model_update_items(
-            inst,
-            truenas_controller,
-            async_add_entities,
-            sensors,
-            dispatcher,
-            sensor_types,
-        )
-
-    truenas_controller.listeners.append(
-        async_dispatcher_connect(
-            hass, truenas_controller.signal_update, update_controller
-        )
-    )
-    update_controller()
-
-
-# ---------------------------
-#   model_update_items
-# ---------------------------
-def model_update_items(
-    inst: str,
-    truenas_controller: TrueNASControllerData,
-    async_add_entities: AddEntitiesCallback,
-    sensors: dict[Any, Any],
-    dispatcher: dict[Any, Any],
-    sensor_types: dict[Any, Any],
-) -> None:
-    """Update items."""
-    def _register_entity(_sensors, _item_id, _uid, _uid_sensor):
-        _LOGGER.debug("Updating entity %s", _item_id)
-        if _item_id in _sensors:
-            if _sensors[_item_id].enabled:
-                _sensors[_item_id].async_schedule_update_ha_state()
-            return None
-
-        return dispatcher[_uid_sensor.func](
-            inst=inst,
-            uid=_uid,
-            truenas_controller=truenas_controller,
-            entity_description=_uid_sensor,
-        )
-
-    new_sensors = []
+    sensors = []
     for sensor in sensor_types:
         uid_sensor = sensor_types[sensor]
         if not uid_sensor.data_reference:
             uid_sensor = sensor_types[sensor]
             if (
-                uid_sensor.data_attribute
-                not in truenas_controller.data[uid_sensor.data_path]
-                or truenas_controller.data[uid_sensor.data_path][
-                    uid_sensor.data_attribute
-                ]
+                uid_sensor.data_attribute not in coordinator.data[uid_sensor.data_path]
+                or coordinator.data[uid_sensor.data_path][uid_sensor.data_attribute]
                 == "unknown"
             ):
                 continue
-
-            item_id = f"{inst}-{sensor}"
-            if tmp := _register_entity(sensors, item_id, "", uid_sensor):
-                sensors[item_id] = tmp
-                new_sensors.append(sensors[item_id])
+            sensors.append(
+                dispatcher[uid_sensor.func](
+                    coordinator=coordinator, entity_description=uid_sensor
+                )
+            )
         else:
-            for uid in truenas_controller.data[uid_sensor.data_path]:
-                uid_data = truenas_controller.data[uid_sensor.data_path]
-                item_id = f"{inst}-{sensor}-{str(uid_data[uid][uid_sensor.data_reference]).lower()}"
-                if tmp := _register_entity(sensors, item_id, uid, uid_sensor):
-                    sensors[item_id] = tmp
-                    new_sensors.append(sensors[item_id])
+            for uid in coordinator.data[uid_sensor.data_path]:
+                sensors.append(
+                    dispatcher[uid_sensor.func](
+                        coordinator=coordinator, entity_description=uid_sensor, uid=uid
+                    )
+                )
 
-    if new_sensors:
-        async_add_entities(new_sensors, True)
+    async_add_entities(sensors, True)
 
 
 # ---------------------------
 #   TrueNASEntity
 # ---------------------------
-class TrueNASEntity:
+class TrueNASEntity(CoordinatorEntity[TrueNASDataUpdateCoordinator], Entity):
     """Define entity."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        inst: str,
-        uid: str,
-        truenas_controller: TrueNASControllerData,
+        coordinator: TrueNASDataUpdateCoordinator,
         entity_description,
+        uid: str | None = None,
     ) -> None:
         """Initialize entity."""
+        super().__init__(coordinator)
+        self.coordinator = coordinator
         self.entity_description = entity_description
-        self._inst = inst
-        self._ctrl = truenas_controller
+        self._inst = coordinator.config_entry.data[CONF_NAME]
         self._attr_extra_state_attributes = {ATTR_ATTRIBUTION: ATTRIBUTION}
         self._uid = uid
+        self._data = coordinator.data[self.entity_description.data_path]
         if self._uid:
-            self._data = truenas_controller.data[self.entity_description.data_path][
-                self._uid
-            ]
-        else:
-            self._data = truenas_controller.data[self.entity_description.data_path]
+            self._data = self._data[self._uid]
 
     @property
     def name(self) -> str:
@@ -165,16 +107,18 @@ class TrueNASEntity:
     @property
     def available(self) -> bool:
         """Return if controller is available."""
-        return self._ctrl.connected()
+        return self.coordinator.connected()
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return a description for device registry."""
         dev_connection = DOMAIN
-        dev_connection_value = f"{self._ctrl.name}_{self.entity_description.ha_group}"
+        dev_connection_value = (
+            f"{self.coordinator.name}_{self.entity_description.ha_group}"
+        )
         dev_group = self.entity_description.ha_group
         if self.entity_description.ha_group == "System":
-            dev_connection_value = self._ctrl.data["system_info"]["hostname"]
+            dev_connection_value = self.coordinator.data["system_info"]["hostname"]
 
         if self.entity_description.ha_group.startswith("data__"):
             dev_group = self.entity_description.ha_group[6:]
@@ -195,11 +139,11 @@ class TrueNASEntity:
             connections={(dev_connection, f"{dev_connection_value}")},
             identifiers={(dev_connection, f"{dev_connection_value}")},
             default_name=f"{self._inst} {dev_group}",
-            default_manufacturer=f"{self._ctrl.data['system_info']['system_manufacturer']}",
-            default_model=f"{self._ctrl.data['system_info']['system_product']}",
-            sw_version=f"{self._ctrl.data['system_info']['version']}",
-            configuration_url=f"http://{self._ctrl.config_entry.data[CONF_HOST]}",
-            via_device=(DOMAIN, f"{self._ctrl.data['system_info']['hostname']}"),
+            default_manufacturer=f"{self.coordinator.data['system_info']['system_manufacturer']}",
+            default_model=f"{self.coordinator.data['system_info']['system_product']}",
+            sw_version=f"{self.coordinator.data['system_info']['version']}",
+            configuration_url=f"http://{self.coordinator.config_entry.data[CONF_HOST]}",
+            via_device=(DOMAIN, f"{self.coordinator.data['system_info']['hostname']}"),
         )
 
     @property
