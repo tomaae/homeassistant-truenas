@@ -1,65 +1,70 @@
 """TrueNAS sensor platform."""
+from __future__ import annotations
+
 from datetime import datetime
 from logging import getLogger
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .model import TrueNASEntity, model_async_setup_entry
+from .model import TrueNASEntity
 from .sensor_types import SENSOR_SERVICES, SENSOR_TYPES
 
 _LOGGER = getLogger(__name__)
 
 
-# ---------------------------
-#   async_setup_entry
-# ---------------------------
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up entry for TrueNAS component."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    dispatcher = {
-        "TrueNASSensor": TrueNASSensor,
-        "TrueNASUptimeSensor": TrueNASUptimeSensor,
-        "TrueNASClousyncSensor": TrueNASClousyncSensor,
-        "TrueNASDatasetSensor": TrueNASDatasetSensor,
-    }
-    await model_async_setup_entry(
-        hass, coordinator, async_add_entities, SENSOR_SERVICES, SENSOR_TYPES, dispatcher
-    )
+    platform = entity_platform.async_get_current_platform()
+    for service in SENSOR_SERVICES:
+        platform.async_register_entity_service(service[0], service[1], service[2])
+
+    entities = []
+    for description in SENSOR_TYPES:
+        if not description.data_reference:
+            if (
+                coordinator.data[description.data_path].get(description.data_attribute)
+                is None
+            ):
+                continue
+            obj = eval(description.func)(coordinator, description)
+            entities.append(obj)
+        else:
+            for uid in coordinator.data[description.data_path]:
+                obj = eval(description.func)(coordinator, description, uid)
+                entities.append(obj)
+
+    async_add_entities(entities, True)
 
 
-# ---------------------------
-#   TrueNASSensor
-# ---------------------------
 class TrueNASSensor(TrueNASEntity, SensorEntity):
     """Define an TrueNAS sensor."""
 
     @property
     def state(self) -> str:
         """Return the state."""
-        return self._data.get(self.entity_description.data_attribute, "unknown")
+        return self._data.get(self.description.data_attribute, "unknown")
 
     @property
     def native_unit_of_measurement(self) -> str | None:
         """Return the unit the value is expressed in."""
-        if self.entity_description.native_unit_of_measurement:
-            if self.entity_description.native_unit_of_measurement.startswith("data__"):
-                uom = self.entity_description.native_unit_of_measurement[6:]
+        if self.description.native_unit_of_measurement:
+            if self.description.native_unit_of_measurement.startswith("data__"):
+                uom = self.description.native_unit_of_measurement[6:]
                 if uom in self._data:
                     uom = self._data[uom]
                     return uom
 
-            return self.entity_description.native_unit_of_measurement
+            return self.description.native_unit_of_measurement
 
 
-# ---------------------------
-#   TrueNASUptimeSensor
-# ---------------------------
 class TrueNASUptimeSensor(TrueNASSensor):
     """Define an TrueNAS Uptime sensor."""
 
@@ -80,9 +85,6 @@ class TrueNASUptimeSensor(TrueNASSensor):
         )
 
 
-# ---------------------------
-#   TrueNASDatasetSensor
-# ---------------------------
 class TrueNASDatasetSensor(TrueNASSensor):
     """Define an TrueNAS Dataset sensor."""
 
@@ -97,9 +99,6 @@ class TrueNASDatasetSensor(TrueNASSensor):
         )
 
 
-# ---------------------------
-#   TrueNASClousyncSensor
-# ---------------------------
 class TrueNASClousyncSensor(TrueNASSensor):
     """Define an TrueNAS Cloudsync sensor."""
 

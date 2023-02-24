@@ -1,66 +1,68 @@
 """TrueNAS binary sensor platform."""
+from __future__ import annotations
+
 from logging import getLogger
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .binary_sensor_types import SENSOR_SERVICES, SENSOR_TYPES
 from .const import DOMAIN
-from .model import TrueNASEntity, model_async_setup_entry
+from .model import TrueNASEntity
 
 _LOGGER = getLogger(__name__)
 
 
-# ---------------------------
-#   async_setup_entry
-# ---------------------------
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    dispatcher = {
-        "TrueNASBinarySensor": TrueNASBinarySensor,
-        "TrueNASJailBinarySensor": TrueNASJailBinarySensor,
-        "TrueNASVMBinarySensor": TrueNASVMBinarySensor,
-        "TrueNASServiceBinarySensor": TrueNASServiceBinarySensor,
-        "TrueNASAppBinarySensor": TrueNASAppBinarySensor,
-    }
-    await model_async_setup_entry(
-        hass, coordinator, async_add_entities, SENSOR_SERVICES, SENSOR_TYPES, dispatcher
-    )
+    platform = entity_platform.async_get_current_platform()
+    for service in SENSOR_SERVICES:
+        platform.async_register_entity_service(service[0], service[1], service[2])
+
+    entities = []
+    for description in SENSOR_TYPES:
+        if not description.data_reference:
+            if (
+                coordinator.data[description.data_path].get(description.data_attribute)
+                is None
+            ):
+                continue
+            obj = eval(description.func)(coordinator, description)
+            entities.append(obj)
+        else:
+            for uid in coordinator.data[description.data_path]:
+                obj = eval(description.func)(coordinator, description, uid)
+                entities.append(obj)
+
+    async_add_entities(entities, True)
 
 
-# ---------------------------
-#   TrueNASBinarySensor
-# ---------------------------
 class TrueNASBinarySensor(TrueNASEntity, BinarySensorEntity):
     """Define an TrueNAS Binary Sensor."""
 
     @property
     def is_on(self) -> bool:
         """Return true if device is on."""
-        return self._data[self.entity_description.data_is_on]
+        return self._data[self.description.data_is_on]
 
     @property
     def icon(self) -> str:
         """Return the icon."""
-        if self.entity_description.icon_enabled:
-            if self._data[self.entity_description.data_is_on]:
-                return self.entity_description.icon_enabled
-            else:
-                return self.entity_description.icon_disabled
+        if self._data[self.description.data_is_on]:
+            return self.description.icon_enabled
+        return self.description.icon_disabled
 
 
-# ---------------------------
-#   TrueNASJailBinarySensor
-# ---------------------------
 class TrueNASJailBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS Jail Binary Sensor."""
 
-    async def start(self):
+    async def start(self) -> None:
         """Start a Jail."""
         tmp_jail = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"jail/id/{self._data['id']}"
@@ -82,7 +84,7 @@ class TrueNASJailBinarySensor(TrueNASBinarySensor):
             self.coordinator.api.query, "jail/start", "post", self._data["id"]
         )
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop a Jail."""
         tmp_jail = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"jail/id/{self._data['id']}"
@@ -104,7 +106,7 @@ class TrueNASJailBinarySensor(TrueNASBinarySensor):
             self.coordinator.api.query, "jail/stop", "post", {"jail": self._data["id"]}
         )
 
-    async def restart(self):
+    async def restart(self) -> None:
         """Restart a Jail."""
         tmp_jail = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"jail/id/{self._data['id']}"
@@ -127,13 +129,10 @@ class TrueNASJailBinarySensor(TrueNASBinarySensor):
         )
 
 
-# ---------------------------
-#   TrueNASVMBinarySensor
-# ---------------------------
 class TrueNASVMBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS VM Binary Sensor."""
 
-    async def start(self):
+    async def start(self) -> None:
         """Start a VM."""
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"vm/id/{self._data['id']}"
@@ -153,7 +152,7 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
             self.coordinator.api.query, f"vm/id/{self._data['id']}/start", "post"
         )
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop a VM."""
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"vm/id/{self._data['id']}"
@@ -174,13 +173,10 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         )
 
 
-# ---------------------------
-#   TrueNASServiceBinarySensor
-# ---------------------------
 class TrueNASServiceBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS Service Binary Sensor."""
 
-    async def start(self):
+    async def start(self) -> None:
         """Start a Service."""
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"service/id/{self._data['id']}"
@@ -208,7 +204,7 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         )
         await self.coordinator.async_request_refresh()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop a Service."""
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"service/id/{self._data['id']}"
@@ -236,7 +232,7 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         )
         await self.coordinator.async_request_refresh()
 
-    async def restart(self):
+    async def restart(self) -> None:
         """Restart a Service."""
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"service/id/{self._data['id']}"
@@ -264,7 +260,7 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         )
         await self.coordinator.async_request_refresh()
 
-    async def reload(self):
+    async def reload(self) -> None:
         """Reload a Service."""
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"service/id/{self._data['id']}"
@@ -293,13 +289,10 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         await self.coordinator.async_request_refresh()
 
 
-# ---------------------------
-#   TrueNASAppsBinarySensor
-# ---------------------------
 class TrueNASAppBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS Applications Binary Sensor."""
 
-    async def start(self):
+    async def start(self) -> None:
         """Start a VM."""
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"/chart/release/id/{self._data['id']}"
@@ -323,7 +316,7 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
         )
         await self.coordinator.async_request_refresh()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop a VM."""
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"/chart/release/id/{self._data['id']}"

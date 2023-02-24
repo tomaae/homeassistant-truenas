@@ -1,4 +1,6 @@
 """Definitions for TrueNAS sensor entities."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import List
 
@@ -139,36 +141,31 @@ DEVICE_ATTRIBUTES_SNAPSHOTTASK = [
 class TrueNASSensorEntityDescription(SensorEntityDescription):
     """Class describing mikrotik entities."""
 
-    ha_group: str = ""
-    ha_connection: str = ""
-    ha_connection_value: str = ""
-    data_path: str = ""
-    data_attribute: str = ""
-    data_name: str = ""
-    data_uid: str = ""
-    data_reference: str = ""
+    ha_group: str | None = None
+    ha_connection: str | None = None
+    ha_connection_value: str | None = None
+    data_path: str | None = None
+    data_attribute: str | None = None
+    data_name: str | None = None
+    data_uid: str | None = None
+    data_reference: str | None = None
     data_attributes_list: List = field(default_factory=lambda: [])
     func: str = "TrueNASSensor"
 
 
-SENSOR_TYPES = {
-    "system_uptime": TrueNASSensorEntityDescription(
+SENSOR_TYPES = (
+    TrueNASSensorEntityDescription(
         key="system_uptime",
         name="Uptime",
         icon="mdi:clock-outline",
-        native_unit_of_measurement=None,
         device_class=SensorDeviceClass.TIMESTAMP,
-        state_class=None,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="uptimeEpoch",
-        data_name="",
-        data_uid="",
-        data_reference="",
         func="TrueNASUptimeSensor",
     ),
-    "system_cpu_temperature": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cpu_temperature",
         name="Temperature",
         icon="mdi:thermometer",
@@ -179,278 +176,200 @@ SENSOR_TYPES = {
         ha_group="System",
         data_path="system_info",
         data_attribute="cpu_temperature",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_load_shortterm": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_load_shortterm",
         name="CPU load shortterm",
         icon="mdi:gauge",
-        native_unit_of_measurement=None,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="load_shortterm",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_load_midterm": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_load_midterm",
         name="CPU load midterm",
         icon="mdi:gauge",
-        native_unit_of_measurement=None,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="load_midterm",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_load_longterm": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_load_longterm",
         name="CPU load longterm",
         icon="mdi:gauge",
-        native_unit_of_measurement=None,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="load_longterm",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_cpu_usage": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cpu_usage",
         name="CPU usage",
         icon="mdi:cpu-64-bit",
         native_unit_of_measurement=PERCENTAGE,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="cpu_usage",
-        data_name="",
-        data_uid="",
-        data_reference="",
         data_attributes_list=DEVICE_ATTRIBUTES_CPU,
     ),
-    "system_memory_usage": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_memory_usage",
         name="Memory usage",
         icon="mdi:memory",
         native_unit_of_measurement=PERCENTAGE,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="memory-usage_percent",
-        data_name="",
-        data_uid="",
-        data_reference="",
         data_attributes_list=DEVICE_ATTRIBUTES_MEMORY,
     ),
-    "system_cache_size-arc_value": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cache_size-arc_value",
         name="ARC size",
         icon="mdi:memory",
         native_unit_of_measurement=DATA_GIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="cache_size-arc_value",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_cache_size-L2_value": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cache_size-L2_value",
         name="L2ARC size",
         icon="mdi:memory",
         native_unit_of_measurement=DATA_GIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="cache_size-L2_value",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_cache_ratio-arc_value": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cache_ratio-arc_value",
         name="ARC ratio",
         icon="mdi:aspect-ratio",
-        native_unit_of_measurement=None,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="cache_ratio-arc_value",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "system_cache_ratio-L2_value": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="system_cache_ratio-L2_value",
         name="L2ARC ratio",
         icon="mdi:aspect-ratio",
-        native_unit_of_measurement=None,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         ha_group="System",
         data_path="system_info",
         data_attribute="cache_ratio-L2_value",
-        data_name="",
-        data_uid="",
-        data_reference="",
     ),
-    "dataset": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="dataset",
-        name="",
         icon="mdi:database",
         native_unit_of_measurement=DATA_GIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=None,
         ha_group="Datasets",
         data_path="dataset",
         data_attribute="used_gb",
         data_name="name",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_DATASET,
         func="TrueNASDatasetSensor",
     ),
-    "disk": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="disk",
-        name="",
         icon="mdi:harddisk",
         native_unit_of_measurement=TEMP_CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=None,
         ha_group="Disks",
         data_path="disk",
         data_attribute="temperature",
         data_name="name",
-        data_uid="",
         data_reference="devname",
         data_attributes_list=DEVICE_ATTRIBUTES_DISK,
     ),
-    "pool_free": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="pool_free",
         name="free",
         icon="mdi:database-settings",
         native_unit_of_measurement=DATA_GIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=None,
         ha_group="System",
         data_path="pool",
         data_attribute="available_gib",
         data_name="name",
-        data_uid="",
         data_reference="guid",
         data_attributes_list=DEVICE_ATTRIBUTES_POOL,
     ),
-    "cloudsync": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="cloudsync",
-        name="",
         icon="mdi:cloud-upload",
-        native_unit_of_measurement=None,
-        device_class=None,
-        state_class=None,
-        entity_category=None,
         ha_group="Cloudsync",
         data_path="cloudsync",
         data_attribute="state",
         data_name="description",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_CLOUDSYNC,
         func="TrueNASClousyncSensor",
     ),
-    "replication": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="replication",
-        name="",
         icon="mdi:transfer",
-        native_unit_of_measurement=None,
-        device_class=None,
-        state_class=None,
-        entity_category=None,
         ha_group="Replication",
         data_path="replication",
         data_attribute="state",
         data_name="name",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_REPLICATION,
     ),
-    "snapshottask": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="snapshottask",
-        name="",
         icon="mdi:checkbox-marked-circle-plus-outline",
-        native_unit_of_measurement=None,
-        device_class=None,
-        state_class=None,
-        entity_category=None,
         ha_group="Snapshot tasks",
         data_path="snapshottask",
         data_attribute="state",
         data_name="dataset",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_SNAPSHOTTASK,
     ),
-    "traffic_rx": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="traffic_rx",
         name="RX",
         icon="mdi:download-network-outline",
         native_unit_of_measurement=DATA_KIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=None,
         ha_group="System",
         data_path="interface",
         data_attribute="rx",
         data_name="name",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_NETWORK,
     ),
-    "traffic_tx": TrueNASSensorEntityDescription(
+    TrueNASSensorEntityDescription(
         key="traffic_tx",
         name="TX",
         icon="mdi:upload-network-outline",
         native_unit_of_measurement=DATA_KIBIBYTES,
-        device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=None,
         ha_group="System",
         data_path="interface",
         data_attribute="tx",
         data_name="name",
-        data_uid="",
         data_reference="id",
         data_attributes_list=DEVICE_ATTRIBUTES_NETWORK,
     ),
-}
+)
 
 SENSOR_SERVICES = [
     [SERVICE_CLOUDSYNC_RUN, SCHEMA_SERVICE_CLOUDSYNC_RUN, "start"],

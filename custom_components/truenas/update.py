@@ -1,21 +1,23 @@
 """TrueNAS binary sensor platform."""
+from __future__ import annotations
+
 from logging import getLogger
 from typing import Any
 
 from homeassistant.components.update import (
     UpdateDeviceClass,
     UpdateEntity,
-    UpdateEntityDescription,
     UpdateEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import TrueNASDataUpdateCoordinator
-from .model import TrueNASEntity, model_async_setup_entry
-from .update_types import SENSOR_SERVICES, SENSOR_TYPES
+from .model import TrueNASEntity
+from .update_types import SENSOR_SERVICES, SENSOR_TYPES, TrueNASUpdateEntityDescription
 
 _LOGGER = getLogger(__name__)
 DEVICE_UPDATE = "device_update"
@@ -29,35 +31,32 @@ async def async_setup_entry(
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    dispatcher = {
-        "TrueNASUpdate": TrueNASUpdate,
-    }
-    await model_async_setup_entry(
-        hass, coordinator, async_add_entities, SENSOR_SERVICES, SENSOR_TYPES, dispatcher
-    )
+
+    platform = entity_platform.async_get_current_platform()
+    for service in SENSOR_SERVICES:
+        platform.async_register_entity_service(service[0], service[1], service[2])
+
+    entities = [TrueNASUpdate(coordinator, description) for description in SENSOR_TYPES]
+    async_add_entities(entities, True)
 
 
-# ---------------------------
-#   TrueNASUpdate
-# ---------------------------
 class TrueNASUpdate(TrueNASEntity, UpdateEntity):
     """Define an TrueNAS Update Sensor."""
 
-    TYPE = DEVICE_UPDATE
     _attr_device_class = UpdateDeviceClass.FIRMWARE
+    _attr_supported_features = (
+        UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
+    )
 
     def __init__(
         self,
         coordinator: TrueNASDataUpdateCoordinator,
-        entity_description: UpdateEntityDescription,
+        description: TrueNASUpdateEntityDescription,
         uid: str | None = None,
-    ):
+    ) -> None:
         """Set up device update entity."""
-        super().__init__(coordinator, entity_description, uid)
-
-        self._attr_supported_features = UpdateEntityFeature.INSTALL
-        self._attr_supported_features |= UpdateEntityFeature.PROGRESS
-        self._attr_title = self.entity_description.title
+        super().__init__(coordinator, description, uid)
+        self._attr_title = self.description.title
 
     @property
     def installed_version(self) -> str:
