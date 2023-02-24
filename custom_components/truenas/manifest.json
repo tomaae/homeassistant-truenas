@@ -1,14 +1,14 @@
 {
     "domain": "truenas",
     "name": "TrueNAS",
-    "config_flow": true,
-    "iot_class": "local_polling",
-    "documentation": "https://github.com/tomaae/homeassistant-truenas",
-    "issue_tracker": "https://github.com/tomaae/homeassistant-truenas/issues",
-    "dependencies": [],
-    "requirements": [],
     "codeowners": [
         "@tomaae"
     ],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/tomaae/homeassistant-truenas",
+    "iot_class": "local_polling",
+    "issue_tracker": "https://github.com/tomaae/homeassistant-truenas/issues",
+    "requirements": [],
     "version": "0.0.0"
 }
