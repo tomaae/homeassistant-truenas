@@ -106,7 +106,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASDataUpdateCoordinator], Entity):
 
     @property
     def available(self) -> bool:
-        """Return if controller is available."""
+        """Return if coordinator is available."""
         return self.coordinator.connected()
 
     @property
