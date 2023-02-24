@@ -1,22 +1,24 @@
 """Definitions for TrueNAS sensor entities."""
 from dataclasses import dataclass, field
 from typing import List
-from homeassistant.helpers.entity import EntityCategory
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorStateClass,
     SensorEntityDescription,
+    SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, DATA_GIBIBYTES, DATA_KIBIBYTES
+from homeassistant.const import DATA_GIBIBYTES, DATA_KIBIBYTES, PERCENTAGE, TEMP_CELSIUS
+from homeassistant.helpers.entity import EntityCategory
+
 from .const import (
-    SERVICE_CLOUDSYNC_RUN,
     SCHEMA_SERVICE_CLOUDSYNC_RUN,
-    SERVICE_DATASET_SNAPSHOT,
     SCHEMA_SERVICE_DATASET_SNAPSHOT,
-    SERVICE_SYSTEM_REBOOT,
     SCHEMA_SERVICE_SYSTEM_REBOOT,
-    SERVICE_SYSTEM_SHUTDOWN,
     SCHEMA_SERVICE_SYSTEM_SHUTDOWN,
+    SERVICE_CLOUDSYNC_RUN,
+    SERVICE_DATASET_SNAPSHOT,
+    SERVICE_SYSTEM_REBOOT,
+    SERVICE_SYSTEM_SHUTDOWN,
 )
 
 DEVICE_ATTRIBUTES_NETWORK = [

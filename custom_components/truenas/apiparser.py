@@ -1,9 +1,12 @@
 """API parser for JSON APIs."""
-from pytz import utc
-from logging import getLogger
 from datetime import datetime
+from logging import getLogger
+
+from pytz import utc
 from voluptuous import Optional
+
 from homeassistant.components.diagnostics import async_redact_data
+
 from .const import TO_REDACT
 
 _LOGGER = getLogger(__name__)
