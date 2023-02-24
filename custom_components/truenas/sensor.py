@@ -20,6 +20,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, _async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up entry for TrueNAS component."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
     dispatcher = {
         "TrueNASSensor": TrueNASSensor,
         "TrueNASUptimeSensor": TrueNASUptimeSensor,

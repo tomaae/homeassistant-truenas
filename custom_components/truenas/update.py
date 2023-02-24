@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.update import (
     UpdateDeviceClass,
     UpdateEntity,
+    UpdateEntityDescription,
     UpdateEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -31,6 +32,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, _async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
     dispatcher = {
         "TrueNASUpdate": TrueNASUpdate,
     }
