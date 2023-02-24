@@ -10,6 +10,7 @@ on:
     paths:
       - 'custom_components/**'
       - 'tests/**'
+  workflow_dispatch:
 
 jobs:
 
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v3"
       - name: Black Code Format Check
         uses: lgeiger/black-action@master
         with:
@@ -29,11 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: "actions/checkout@v2"
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+        uses: "actions/checkout@v3"
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.10'
       - name: Generate Requirements lists
         run: |
           python3 .github/generate_requirements.py
@@ -45,9 +46,7 @@ jobs:
       - name: Lint with flake8
         run: |
           pip install flake8
-          # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --ignore W503,E722,F722  --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
   #     - name: Test with pytest
   #       run: |
@@ -60,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v3"
       - name: Security check - Bandit
         uses: ioggstream/bandit-report-artifacts@v0.0.2
         with:
@@ -68,7 +67,7 @@ jobs:
           config_file: .github/bandit.yaml
           ignore_failure: false
       - name: Security check report artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: Security report
           path: output/security_report.txt
@@ -79,6 +78,6 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out code from GitHub
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v3"
       - name: Run hassfest
         uses: home-assistant/actions/hassfest@master
