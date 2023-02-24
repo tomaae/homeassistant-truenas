@@ -26,6 +26,7 @@ async def async_setup_entry(
         "TrueNASJailBinarySensor": TrueNASJailBinarySensor,
         "TrueNASVMBinarySensor": TrueNASVMBinarySensor,
         "TrueNASServiceBinarySensor": TrueNASServiceBinarySensor,
+        "TrueNASAppBinarySensor": TrueNASAppBinarySensor,
     }
     await model_async_setup_entry(
         hass,
@@ -295,3 +296,56 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
             {"service": self._data["service"]},
         )
         await self._ctrl.async_update()
+
+
+# ---------------------------
+#   TrueNASAppsBinarySensor
+# ---------------------------
+class TrueNASAppBinarySensor(TrueNASBinarySensor):
+    """Define a TrueNAS Applications Binary Sensor."""
+
+    async def start(self):
+        """Start a VM."""
+        tmp_vm = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"/chart/release/id/{self._data['id']}"
+        )
+
+        if "status" not in tmp_vm:
+            _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
+            return
+
+        if tmp_vm["status"] == "ACTIVE":
+            _LOGGER.warning(
+                "VM %s (%s) is not down", self._data["name"], self._data["id"]
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "/chart/release/scale",
+            "post",
+            {"release_name": self._data["id"], "scale_options": {"replica_count": 1}},
+        )
+
+    async def stop(self):
+        """Stop a VM."""
+        tmp_vm = await self.hass.async_add_executor_job(
+            self._ctrl.api.query, f"/chart/release/id/{self._data['id']}"
+        )
+
+        if "status" not in tmp_vm:
+            _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
+            return
+
+        if tmp_vm["status"] != "ACTIVE":
+            _LOGGER.warning(
+                "VM %s (%s) is not up", self._data["name"], self._data["id"]
+            )
+            return
+
+        await self.hass.async_add_executor_job(
+            self._ctrl.api.query,
+            "/chart/release/scale",
+            "post",
+            {"release_name": self._data["id"], "scale_options": {"replica_count": 0}},
+        )
