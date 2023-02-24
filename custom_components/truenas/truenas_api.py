@@ -1,8 +1,12 @@
-"""TrueNAS API"""
-from requests import get as requests_get, post as requests_post
+"""TrueNAS API."""
 from logging import getLogger
 from threading import Lock
+from typing import Any
+
+from requests import get as requests_get, post as requests_post
 from voluptuous import Optional
+
+from homeassistant.core import HomeAssistant
 
 _LOGGER = getLogger(__name__)
 
@@ -11,10 +15,17 @@ _LOGGER = getLogger(__name__)
 #   TrueNASAPI
 # ---------------------------
 class TrueNASAPI(object):
-    """Handle all communication with TrueNAS"""
+    """Handle all communication with TrueNAS."""
 
-    def __init__(self, hass, host, api_key, use_ssl=False, verify_ssl=True):
-        """Initialize the TrueNAS API"""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        host: str,
+        api_key: str,
+        use_ssl: bool = False,
+        verify_ssl: bool = True,
+    ) -> None:
+        """Initialize the TrueNAS API."""
         self._hass = hass
         self._host = host
         self._use_ssl = use_ssl
@@ -33,14 +44,14 @@ class TrueNASAPI(object):
     #   connected
     # ---------------------------
     def connected(self) -> bool:
-        """Return connected boolean"""
+        """Return connected boolean."""
         return self._connected
 
     # ---------------------------
     #   connection_test
     # ---------------------------
-    def connection_test(self):
-        """TrueNAS connection test"""
+    def connection_test(self) -> tuple:
+        """Test connection."""
         self.query("pool")
 
         return self._connected, self._error
@@ -48,9 +59,10 @@ class TrueNASAPI(object):
     # ---------------------------
     #   query
     # ---------------------------
-    def query(self, service, method="get", params={}) -> Optional(list):
-        """Retrieve data from TrueNAS"""
-
+    def query(
+        self, service: str, method: str = "get", params: dict[str, Any] | None = {}
+    ) -> Optional(list):
+        """Retrieve data from TrueNAS."""
         self.lock.acquire()
         error = False
         try:
@@ -118,4 +130,5 @@ class TrueNASAPI(object):
 
     @property
     def error(self):
+        """Return error."""
         return self._error

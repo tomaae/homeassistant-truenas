@@ -1,14 +1,18 @@
-"""TrueNAS binary sensor platform"""
+"""TrueNAS binary sensor platform."""
 from logging import getLogger
 from typing import Any
+
 from homeassistant.components.update import (
-    UpdateEntity,
     UpdateDeviceClass,
+    UpdateEntity,
     UpdateEntityFeature,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .model import model_async_setup_entry, TrueNASEntity
-from .update_types import SENSOR_TYPES, SENSOR_SERVICES
+from .model import TrueNASEntity, model_async_setup_entry
+from .update_types import SENSOR_SERVICES, SENSOR_TYPES
 
 _LOGGER = getLogger(__name__)
 DEVICE_UPDATE = "device_update"
@@ -17,8 +21,12 @@ DEVICE_UPDATE = "device_update"
 # ---------------------------
 #   async_setup_entry
 # ---------------------------
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up device tracker for OpenMediaVault component"""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up device tracker for OpenMediaVault component."""
     dispatcher = {
         "TrueNASUpdate": TrueNASUpdate,
     }
@@ -36,18 +44,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 #   TrueNASUpdate
 # ---------------------------
 class TrueNASUpdate(TrueNASEntity, UpdateEntity):
-    """Define an TrueNAS Update Sensor"""
+    """Define an TrueNAS Update Sensor."""
 
     TYPE = DEVICE_UPDATE
     _attr_device_class = UpdateDeviceClass.FIRMWARE
 
-    def __init__(
-        self,
-        inst,
-        uid: "",
-        truenas_controller,
-        entity_description,
-    ):
+    def __init__(self, inst, uid, truenas_controller, entity_description):
         """Set up device update entity."""
         super().__init__(inst, uid, truenas_controller, entity_description)
 

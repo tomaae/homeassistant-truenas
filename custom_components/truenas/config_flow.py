@@ -1,16 +1,22 @@
-"""Config flow to configure TrueNAS"""
+"""Config flow to configure TrueNAS."""
+from __future__ import annotations
+
+from logging import getLogger
+from typing import Any
 
 import voluptuous as vol
-from logging import getLogger
+
 from homeassistant.config_entries import CONN_CLASS_LOCAL_POLL, ConfigFlow
-from homeassistant.core import callback
 from homeassistant.const import (
+    CONF_API_KEY,
     CONF_HOST,
     CONF_NAME,
-    CONF_API_KEY,
     CONF_SSL,
     CONF_VERIFY_SSL,
 )
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
+
 from .const import (
     DEFAULT_DEVICE_NAME,
     DEFAULT_HOST,
@@ -28,7 +34,7 @@ _LOGGER = getLogger(__name__)
 # ---------------------------
 @callback
 def configured_instances(hass):
-    """Return a set of configured instances"""
+    """Return a set of configured instances."""
     return {
         entry.data[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)
     }
@@ -38,20 +44,21 @@ def configured_instances(hass):
 #   TrueNASConfigFlow
 # ---------------------------
 class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
-    """TrueNASConfigFlow class"""
+    """TrueNASConfigFlow class."""
 
     VERSION = 1
     CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
-    def __init__(self):
-        """Initialize TrueNASConfigFlow"""
-
-    async def async_step_import(self, user_input=None):
-        """Occurs when a previous entry setup fails and is re-initiated"""
+    async def async_step_import(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Occurs when a previous entry setup fails and is re-initiated."""
         return await self.async_step_user(user_input)
 
-    async def async_step_user(self, user_input=None):
-        """Handle a flow initialized by the user"""
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle a flow initialized by the user."""
         errors = {}
         if user_input is not None:
             # Check if instance with this name already exists
@@ -94,8 +101,10 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    def _show_config_form(self, user_input, errors=None):
-        """Show the configuration form"""
+    def _show_config_form(
+        self, user_input: dict[str, Any] | None, errors: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Show the configuration form."""
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(

@@ -1,10 +1,14 @@
-"""TrueNAS sensor platform"""
-from logging import getLogger
-from typing import Optional
+"""TrueNAS sensor platform."""
 from datetime import datetime
+from logging import getLogger
+
 from homeassistant.components.sensor import SensorEntity
-from .model import model_async_setup_entry, TrueNASEntity
-from .sensor_types import SENSOR_TYPES, SENSOR_SERVICES
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .model import TrueNASEntity, model_async_setup_entry
+from .sensor_types import SENSOR_SERVICES, SENSOR_TYPES
 
 _LOGGER = getLogger(__name__)
 
@@ -12,8 +16,12 @@ _LOGGER = getLogger(__name__)
 # ---------------------------
 #   async_setup_entry
 # ---------------------------
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up entry for TrueNAS component"""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up entry for TrueNAS component."""
     dispatcher = {
         "TrueNASSensor": TrueNASSensor,
         "TrueNASUptimeSensor": TrueNASUptimeSensor,
@@ -34,19 +42,19 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 #   TrueNASSensor
 # ---------------------------
 class TrueNASSensor(TrueNASEntity, SensorEntity):
-    """Define an TrueNAS sensor"""
+    """Define an TrueNAS sensor."""
 
     @property
-    def state(self) -> Optional[str]:
-        """Return the state"""
+    def state(self) -> str:
+        """Return the state."""
         if self.entity_description.data_attribute:
             return self._data[self.entity_description.data_attribute]
         else:
             return "unknown"
 
     @property
-    def native_unit_of_measurement(self):
-        """Return the unit the value is expressed in"""
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit the value is expressed in."""
         if self.entity_description.native_unit_of_measurement:
             if self.entity_description.native_unit_of_measurement.startswith("data__"):
                 uom = self.entity_description.native_unit_of_measurement[6:]
@@ -63,18 +71,18 @@ class TrueNASSensor(TrueNASEntity, SensorEntity):
 #   TrueNASUptimeSensor
 # ---------------------------
 class TrueNASUptimeSensor(TrueNASSensor):
-    """Define an TrueNAS Uptime sensor"""
+    """Define an TrueNAS Uptime sensor."""
 
-    async def restart(self):
-        """Restart TrueNAS systen"""
+    async def restart(self) -> None:
+        """Restart TrueNAS systen."""
         await self.hass.async_add_executor_job(
             self._ctrl.api.query,
             "system/reboot",
             "post",
         )
 
-    async def stop(self):
-        """Shutdown TrueNAS systen"""
+    async def stop(self) -> None:
+        """Shutdown TrueNAS systen."""
         await self.hass.async_add_executor_job(
             self._ctrl.api.query,
             "system/shutdown",
@@ -86,10 +94,10 @@ class TrueNASUptimeSensor(TrueNASSensor):
 #   TrueNASDatasetSensor
 # ---------------------------
 class TrueNASDatasetSensor(TrueNASSensor):
-    """Define an TrueNAS Dataset sensor"""
+    """Define an TrueNAS Dataset sensor."""
 
-    async def snapshot(self):
-        """Create dataset snapshot"""
+    async def snapshot(self) -> None:
+        """Create dataset snapshot."""
         ts = datetime.now().isoformat(sep="_", timespec="microseconds")
         await self.hass.async_add_executor_job(
             self._ctrl.api.query,
@@ -103,10 +111,10 @@ class TrueNASDatasetSensor(TrueNASSensor):
 #   TrueNASClousyncSensor
 # ---------------------------
 class TrueNASClousyncSensor(TrueNASSensor):
-    """Define an TrueNAS Cloudsync sensor"""
+    """Define an TrueNAS Cloudsync sensor."""
 
-    async def start(self):
-        """Run cloudsync job"""
+    async def start(self) -> None:
+        """Run cloudsync job."""
         tmp_job = await self.hass.async_add_executor_job(
             self._ctrl.api.query, f"cloudsync/id/{self._data['id']}"
         )

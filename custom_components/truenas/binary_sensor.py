@@ -1,8 +1,13 @@
 """TrueNAS binary sensor platform."""
 from logging import getLogger
+
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from .model import model_async_setup_entry, TrueNASEntity
-from .binary_sensor_types import SENSOR_TYPES, SENSOR_SERVICES
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .binary_sensor_types import SENSOR_SERVICES, SENSOR_TYPES
+from .model import TrueNASEntity, model_async_setup_entry
 
 _LOGGER = getLogger(__name__)
 
@@ -10,7 +15,11 @@ _LOGGER = getLogger(__name__)
 # ---------------------------
 #   async_setup_entry
 # ---------------------------
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up device tracker for OpenMediaVault component."""
     dispatcher = {
         "TrueNASBinarySensor": TrueNASBinarySensor,

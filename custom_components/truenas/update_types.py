@@ -1,12 +1,13 @@
-"""Definitions for TrueNAS update entities"""
+"""Definitions for TrueNAS update entities."""
 from dataclasses import dataclass, field
 from typing import List
+
 from homeassistant.components.update import UpdateEntityDescription
 
 
 @dataclass
 class TrueNASUpdateEntityDescription(UpdateEntityDescription):
-    """Class describing mikrotik entities"""
+    """Class describing mikrotik entities."""
 
     ha_group: str = ""
     ha_connection: str = ""

@@ -1,14 +1,19 @@
 """TrueNAS HA shared entity model."""
+from collections.abc import Mapping
 from logging import getLogger
 from typing import Any
-from collections.abc import Mapping
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ATTRIBUTION, CONF_HOST, CONF_NAME
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.core import callback
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_NAME, CONF_HOST
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .const import ATTRIBUTION, DOMAIN
 from .helper import format_attribute
-from .const import DOMAIN, ATTRIBUTION
+from .truenas_controller import TrueNASControllerData
 
 _LOGGER = getLogger(__name__)
 
@@ -17,9 +22,14 @@ _LOGGER = getLogger(__name__)
 #   model_async_setup_entry
 # ---------------------------
 async def model_async_setup_entry(
-    hass, config_entry, async_add_entities, sensor_services, sensor_types, dispatcher
-):
-    """Add entities model."""
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+    sensor_services: dict[Any, Any],
+    sensor_types: dict[Any, Any],
+    dispatcher: dict[Any, Any],
+) -> None:
+    """Set up integration from a config entry."""
     inst = config_entry.data[CONF_NAME]
     truenas_controller = hass.data[DOMAIN][config_entry.entry_id]
     sensors = {}
@@ -52,10 +62,14 @@ async def model_async_setup_entry(
 #   model_update_items
 # ---------------------------
 def model_update_items(
-    inst, truenas_controller, async_add_entities, sensors, dispatcher, sensor_types
-):
-    """Add entites."""
-
+    inst: str,
+    truenas_controller: TrueNASControllerData,
+    async_add_entities: AddEntitiesCallback,
+    sensors: dict[Any, Any],
+    dispatcher: dict[Any, Any],
+    sensor_types: dict[Any, Any],
+) -> None:
+    """Update items."""
     def _register_entity(_sensors, _item_id, _uid, _uid_sensor):
         _LOGGER.debug("Updating entity %s", _item_id)
         if _item_id in _sensors:
@@ -109,7 +123,13 @@ class TrueNASEntity:
 
     _attr_has_entity_name = True
 
-    def __init__(self, inst, uid: "", truenas_controller, entity_description):
+    def __init__(
+        self,
+        inst: str,
+        uid: str,
+        truenas_controller: TrueNASControllerData,
+        entity_description,
+    ) -> None:
         """Initialize entity."""
         self.entity_description = entity_description
         self._inst = inst
@@ -192,26 +212,22 @@ class TrueNASEntity:
 
         return attributes
 
-    async def async_added_to_hass(self):
-        """Run when entity about to be added to hass."""
-        _LOGGER.debug("New binary sensor %s (%s)", self._inst, self.unique_id)
-
     async def start(self):
         """Run function."""
-        _LOGGER.error("Start functionality does not exist for %s", self.entity_id)
+        raise NotImplementedError()
 
     async def stop(self):
         """Stop function."""
-        _LOGGER.error("Stop functionality does not exist for %s", self.entity_id)
+        raise NotImplementedError()
 
     async def restart(self):
         """Restart function."""
-        _LOGGER.error("Restart functionality does not exist for %s", self.entity_id)
+        raise NotImplementedError()
 
     async def reload(self):
         """Reload function."""
-        _LOGGER.error("Reload functionality does not exist for %s", self.entity_id)
+        raise NotImplementedError()
 
     async def snapshot(self):
-        """Take snapshot function."""
-        _LOGGER.error("Snapshot functionality does not exist for %s", self.entity_id)
+        """Snapshot function."""
+        raise NotImplementedError()

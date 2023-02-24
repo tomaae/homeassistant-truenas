@@ -1,23 +1,26 @@
-"""TrueNAS Controller"""
-from asyncio import wait_for as asyncio_wait_for, Lock as Asyncio_lock
+"""TrueNAS Controller."""
+from asyncio import Lock as Asyncio_lock, wait_for as asyncio_wait_for
 from datetime import datetime, timedelta
 from logging import getLogger
+
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_API_KEY,
     CONF_HOST,
     CONF_NAME,
-    CONF_API_KEY,
     CONF_SSL,
     CONF_VERIFY_SSL,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers import entity_registry as er, device_registry as dr
 from homeassistant.helpers.entity_registry import async_entries_for_config_entry
-from .const import DOMAIN
+from homeassistant.helpers.event import async_track_time_interval
+
 from .apiparser import parse_api, utc_from_timestamp
-from .truenas_api import TrueNASAPI
+from .const import DOMAIN
 from .helper import as_local, b2gib
+from .truenas_api import TrueNASAPI
 
 _LOGGER = getLogger(__name__)
 
@@ -26,10 +29,10 @@ _LOGGER = getLogger(__name__)
 #   TrueNASControllerData
 # ---------------------------
 class TrueNASControllerData(object):
-    """TrueNASControllerData Class"""
+    """TrueNASControllerData Class."""
 
-    def __init__(self, hass, config_entry):
-        """Initialize TrueNASController"""
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+        """Initialize TrueNASController."""
         self.hass = hass
         self.config_entry = config_entry
         self.name = config_entry.data[CONF_NAME]
@@ -71,7 +74,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   async_init
     # ---------------------------
-    async def async_init(self):
+    async def async_init(self) -> None:
+        """Initialize."""
         self._force_update_callback = async_track_time_interval(
             self.hass, self.force_update, timedelta(seconds=60)
         )
@@ -80,15 +84,15 @@ class TrueNASControllerData(object):
     #   signal_update
     # ---------------------------
     @property
-    def signal_update(self):
-        """Event to signal new data"""
+    def signal_update(self) -> str:
+        """Event to signal new data."""
         return f"{DOMAIN}-update-{self.name}"
 
     # ---------------------------
     #   async_reset
     # ---------------------------
-    async def async_reset(self):
-        """Reset dispatchers"""
+    async def async_reset(self) -> bool:
+        """Reset dispatchers."""
         for unsub_dispatcher in self.listeners:
             unsub_dispatcher()
 
@@ -98,23 +102,23 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   connected
     # ---------------------------
-    def connected(self):
-        """Return connected state"""
+    def connected(self) -> str:
+        """Return connected state."""
         return self.api.connected()
 
     # ---------------------------
     #   force_update
     # ---------------------------
     @callback
-    async def force_update(self, _now=None):
-        """Trigger update by timer"""
+    async def force_update(self, _now=None) -> None:
+        """Trigger update by timer."""
         await self.async_update()
 
     # ---------------------------
     #   async_update
     # ---------------------------
     async def async_update(self):
-        """Update TrueNAS data"""
+        """Update TrueNAS data."""
         try:
             await asyncio_wait_for(self.lock.acquire(), timeout=10)
         except Exception:
@@ -150,8 +154,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_systeminfo
     # ---------------------------
-    def get_systeminfo(self):
-        """Get system info from TrueNAS"""
+    def get_systeminfo(self) -> None:
+        """Get system info from TrueNAS."""
         self.data["system_info"] = parse_api(
             data=self.data["system_info"],
             source=self.api.query("system/info"),
@@ -314,8 +318,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_systemstats
     # ---------------------------
-    def get_systemstats(self):
-        # Get graphs
+    def get_systemstats(self) -> None:
+        """Get system statistics."""
         tmp_params = {
             "graphs": [
                 {"name": "load"},
@@ -468,7 +472,7 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   _systemstats_process
     # ---------------------------
-    def _systemstats_process(self, arr, graph, t):
+    def _systemstats_process(self, arr, graph, t) -> None:
         if "aggregations" in graph:
             for e in range(len(graph["legend"])):
                 tmp_var = graph["legend"][e]
@@ -490,8 +494,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_service
     # ---------------------------
-    def get_service(self):
-        """Get service info from TrueNAS"""
+    def get_service(self) -> None:
+        """Get service info from TrueNAS."""
         self.data["service"] = parse_api(
             data=self.data["service"],
             source=self.api.query("service"),
@@ -513,8 +517,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_pool
     # ---------------------------
-    def get_pool(self):
-        """Get pools from TrueNAS"""
+    def get_pool(self) -> None:
+        """Get pools from TrueNAS."""
         self.data["pool"] = parse_api(
             data=self.data["pool"],
             source=self.api.query("pool"),
@@ -654,8 +658,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_dataset
     # ---------------------------
-    def get_dataset(self):
-        """Get datasets from TrueNAS"""
+    def get_dataset(self) -> None:
+        """Get datasets from TrueNAS."""
         self.data["dataset"] = parse_api(
             data={},
             source=self.api.query("pool/dataset"),
@@ -764,8 +768,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_disk
     # ---------------------------
-    def get_disk(self):
-        """Get disks from TrueNAS"""
+    def get_disk(self) -> None:
+        """Get disks from TrueNAS."""
         self.data["disk"] = parse_api(
             data=self.data["disk"],
             source=self.api.query("disk"),
@@ -804,8 +808,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_jail
     # ---------------------------
-    def get_jail(self):
-        """Get jails from TrueNAS"""
+    def get_jail(self) -> None:
+        """Get jails from TrueNAS."""
         if self._is_scale:
             return
 
@@ -831,8 +835,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_vm
     # ---------------------------
-    def get_vm(self):
-        """Get VMs from TrueNAS"""
+    def get_vm(self) -> None:
+        """Get VMs from TrueNAS."""
         self.data["vm"] = parse_api(
             data=self.data["vm"],
             source=self.api.query("vm"),
@@ -859,8 +863,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_cloudsync
     # ---------------------------
-    def get_cloudsync(self):
-        """Get cloudsync from TrueNAS"""
+    def get_cloudsync(self) -> None:
+        """Get cloudsync from TrueNAS."""
         self.data["cloudsync"] = parse_api(
             data=self.data["cloudsync"],
             source=self.api.query("cloudsync"),
@@ -898,8 +902,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_replication
     # ---------------------------
-    def get_replication(self):
-        """Get replication from TrueNAS"""
+    def get_replication(self) -> None:
+        """Get replication from TrueNAS."""
         self.data["replication"] = parse_api(
             data=self.data["replication"],
             source=self.api.query("replication"),
@@ -940,8 +944,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_snapshottask
     # ---------------------------
-    def get_snapshottask(self):
-        """Get replication from TrueNAS"""
+    def get_snapshottask(self) -> None:
+        """Get replication from TrueNAS."""
         self.data["snapshottask"] = parse_api(
             data=self.data["snapshottask"],
             source=self.api.query("pool/snapshottask"),
