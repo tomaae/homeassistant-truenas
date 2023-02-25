@@ -4,12 +4,13 @@ from __future__ import annotations
 from datetime import datetime
 from logging import getLogger
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, DOMAIN as sd
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_platform, entity_registry as er
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
+from homeassistant.util import slugify
 from .const import DOMAIN
 from .model import TrueNASEntity
 from .sensor_types import SENSOR_SERVICES, SENSOR_TYPES
@@ -26,22 +27,36 @@ async def async_setup_entry(
     for service in SENSOR_SERVICES:
         platform.async_register_entity_service(service[0], service[1], service[2])
 
-    entities = []
-    for description in SENSOR_TYPES:
-        if not description.data_reference:
-            if (
-                coordinator.data[description.data_path].get(description.data_attribute)
-                is None
-            ):
-                continue
-            obj = eval(description.func)(coordinator, description)
-            entities.append(obj)
-        else:
-            for uid in coordinator.data[description.data_path]:
-                obj = eval(description.func)(coordinator, description, uid)
-                entities.append(obj)
+    @callback
+    def update_controller(coordinator):
+        """Update the values of the controller."""
 
-    async_add_entities(entities, True)
+        def check_exist(obj, coordinator):
+            """Check entity exists."""
+            entity_registry = er.async_get(coordinator.hass)
+            entity_id = f"{sd}." + slugify(f"{obj._inst}-{obj.description.ha_group}-{obj.name}")
+            if entity_id in entity_registry.entities.data.keys():
+                if entity_id not in coordinator.hass.states.async_entity_ids():
+                    _LOGGER.debug("Add entity %s", entity_id)
+                    async_add_entities([obj])
+            else:
+                _LOGGER.debug("New entity %s", entity_id)
+                async_add_entities([obj])
+
+        for description in SENSOR_TYPES:
+            data = coordinator.data[description.data_path]
+            if not description.data_reference:
+                if data.get(description.data_attribute) is None:
+                    continue
+                obj = eval(description.func)(coordinator, description)
+                check_exist(obj, coordinator)
+            else:
+                for uid in data:
+                    obj = eval(description.func)(coordinator, description, uid)
+                    check_exist(obj, coordinator)
+
+    update_controller(coordinator)
+    async_dispatcher_connect(hass, "UPDATE_SENSORS", update_controller)
 
 
 class TrueNASSensor(TrueNASEntity, SensorEntity):
@@ -59,8 +74,7 @@ class TrueNASSensor(TrueNASEntity, SensorEntity):
             if self.description.native_unit_of_measurement.startswith("data__"):
                 uom = self.description.native_unit_of_measurement[6:]
                 if uom in self._data:
-                    uom = self._data[uom]
-                    return uom
+                    return self._data[uom]
 
             return self.description.native_unit_of_measurement
 

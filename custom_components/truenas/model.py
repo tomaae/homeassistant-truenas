@@ -66,9 +66,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASDataUpdateCoordinator], Entity):
     def device_info(self) -> DeviceInfo:
         """Return a description for device registry."""
         dev_connection = DOMAIN
-        dev_connection_value = (
-            f"{self.coordinator.name}_{self.description.ha_group}"
-        )
+        dev_connection_value = f"{self.coordinator.name}_{self.description.ha_group}"
         dev_group = self.description.ha_group
         if self.description.ha_group == "System":
             dev_connection_value = self.coordinator.data["system_info"]["hostname"]
@@ -109,22 +107,16 @@ class TrueNASEntity(CoordinatorEntity[TrueNASDataUpdateCoordinator], Entity):
 
         return attributes
 
-    async def start(self):
-        """Run function."""
-        raise NotImplementedError()
+    async def async_added_to_hass(self) -> None:
+        """Run when entity is about to be added to hass."""
+        await super().async_added_to_hass()
+        _LOGGER.debug("ADD %s", self.unique_id)
 
-    async def stop(self):
-        """Stop function."""
-        raise NotImplementedError()
+    async def async_will_remove_from_hass(self) -> None:
+        """Call when entity is being removed from hass."""
+        await super().async_will_remove_from_hass()
+        _LOGGER.debug("REMOVE %s", self.unique_id)
 
-    async def restart(self):
-        """Restart function."""
-        raise NotImplementedError()
-
-    async def reload(self):
-        """Reload function."""
-        raise NotImplementedError()
-
-    async def snapshot(self):
-        """Snapshot function."""
-        raise NotImplementedError()
+    async def async_remove_device(self, device_id: str) -> None:
+        """Add device removed listener."""
+        _LOGGER.debug("REMOVE %s", self.unique_id)

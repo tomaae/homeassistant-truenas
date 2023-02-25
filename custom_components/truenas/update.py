@@ -37,7 +37,7 @@ async def async_setup_entry(
         platform.async_register_entity_service(service[0], service[1], service[2])
 
     entities = [TrueNASUpdate(coordinator, description) for description in SENSOR_TYPES]
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class TrueNASUpdate(TrueNASEntity, UpdateEntity):

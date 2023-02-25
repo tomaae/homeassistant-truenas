@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.entity_registry import async_entries_for_config_entry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .apiparser import parse_api, utc_from_timestamp
 from .const import DOMAIN
@@ -86,6 +87,8 @@ class TrueNASDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as error:
             raise UpdateFailed(error) from error
         finally:
+            async_dispatcher_send(self.hass, "UPDATE_SENSORS", self)
+            async_dispatcher_send(self.hass, "UPDATE_BINARY_SENSORS", self)
             return self.data
 
     def get_systeminfo(self) -> None:
