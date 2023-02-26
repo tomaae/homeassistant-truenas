@@ -22,7 +22,6 @@ from .update_types import (  # noqa: F401
 )
 
 _LOGGER = getLogger(__name__)
-DEVICE_UPDATE = "device_update"
 
 
 # ---------------------------
