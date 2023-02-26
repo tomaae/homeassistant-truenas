@@ -55,16 +55,11 @@ async def async_add_entities(
 
         async def async_check_exist(obj, coordinator):
             """Check entity exists."""
-            entity_registry = er.async_get(coordinator.hass)
             entity_id = f"{platform.domain}." + slugify(
                 f"{obj._inst}-{obj.description.ha_group}-{obj.name}"
             )
-            if entity_id in entity_registry.entities.data.keys():
-                if entity_id not in coordinator.hass.states.async_entity_ids():
-                    _LOGGER.debug("Add entity %s", entity_id)
-                    await platform.async_add_entities([obj])
-            else:
-                _LOGGER.debug("New entity %s", entity_id)
+            if entity_id not in platform.entities:
+                _LOGGER.debug("Add entity %s", entity_id)
                 await platform.async_add_entities([obj])
 
         _LOGGER.debug("Check %s", platform.domain)
