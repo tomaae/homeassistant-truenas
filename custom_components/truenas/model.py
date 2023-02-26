@@ -112,6 +112,10 @@ class TrueNASEntity(CoordinatorEntity[TrueNASDataUpdateCoordinator], Entity):
         await super().async_added_to_hass()
         _LOGGER.debug("ADD %s", self.unique_id)
 
+        def send_removed_signal():
+            _LOGGER.debug("REMOVE %s", self.unique_id)
+        self.async_on_remove(send_removed_signal)
+
     async def async_will_remove_from_hass(self) -> None:
         """Call when entity is being removed from hass."""
         await super().async_will_remove_from_hass()

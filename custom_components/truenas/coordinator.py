@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from logging import getLogger
+from typing import Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -12,11 +13,19 @@ from homeassistant.const import (
     CONF_SSL,
     CONF_VERIFY_SSL,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_platform as ep,
+    entity_registry as er,
+)
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.entity_registry import async_entries_for_config_entry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.util import slugify
 
 from .apiparser import parse_api, utc_from_timestamp
 from .const import DOMAIN
@@ -26,6 +35,54 @@ from .truenas_api import TrueNASAPI
 _LOGGER = getLogger(__name__)
 
 SCAN_INTERVAL = 60
+
+
+async def async_add_entities(
+    hass: HomeAssistant, entry: ConfigEntry, dispatcher: dict[str, Callable]
+):
+    """Add entities."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    platform = ep.async_get_current_platform()
+    services = platform.platform.SENSOR_SERVICES
+    descriptions = platform.platform.SENSOR_TYPES
+
+    for service in services:
+        platform.async_register_entity_service(service[0], service[1], service[2])
+
+    @callback
+    async def async_update_controller(coordinator):
+        """Update the values of the controller."""
+
+        async def async_check_exist(obj, coordinator):
+            """Check entity exists."""
+            entity_registry = er.async_get(coordinator.hass)
+            entity_id = f"{platform.domain}." + slugify(
+                f"{obj._inst}-{obj.description.ha_group}-{obj.name}"
+            )
+            if entity_id in entity_registry.entities.data.keys():
+                if entity_id not in coordinator.hass.states.async_entity_ids():
+                    _LOGGER.debug("Add entity %s", entity_id)
+                    await platform.async_add_entities([obj])
+            else:
+                _LOGGER.debug("New entity %s", entity_id)
+                await platform.async_add_entities([obj])
+
+        _LOGGER.debug("Check %s", platform.domain)
+        for description in descriptions:
+            data = coordinator.data[description.data_path]
+            if not description.data_reference:
+                if data.get(description.data_attribute) is None:
+                    continue
+                obj = dispatcher[description.func](coordinator, description)
+                await async_check_exist(obj, coordinator)
+            else:
+                for uid in data:
+                    obj = dispatcher[description.func](coordinator, description, uid)
+                    await async_check_exist(obj, coordinator)
+
+    await async_update_controller(coordinator)
+    unsub = async_dispatcher_connect(hass, "update_sensors", async_update_controller)
+    entry.async_on_unload(unsub)
 
 
 class TrueNASDataUpdateCoordinator(DataUpdateCoordinator):
@@ -87,8 +144,7 @@ class TrueNASDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as error:
             raise UpdateFailed(error) from error
         finally:
-            async_dispatcher_send(self.hass, "UPDATE_SENSORS", self)
-            async_dispatcher_send(self.hass, "UPDATE_BINARY_SENSORS", self)
+            async_dispatcher_send(self.hass, "update_sensors", self)
             return self.data
 
     def get_systeminfo(self) -> None:

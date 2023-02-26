@@ -3,62 +3,30 @@ from __future__ import annotations
 
 from logging import getLogger
 
-from homeassistant.components.binary_sensor import DOMAIN as myD, BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_platform, entity_registry as er
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import slugify
 
-from .binary_sensor_types import SENSOR_SERVICES, SENSOR_TYPES
-from .const import DOMAIN
+from .binary_sensor_types import SENSOR_SERVICES, SENSOR_TYPES  # noqa: F401
+from .coordinator import async_add_entities
 from .model import TrueNASEntity
 
 _LOGGER = getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: ConfigEntry, _async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    platform = entity_platform.async_get_current_platform()
-    for service in SENSOR_SERVICES:
-        platform.async_register_entity_service(service[0], service[1], service[2])
-
-    @callback
-    def update_controller(coordinator):
-        """Update the values of the controller."""
-
-        def check_exist(obj, coordinator):
-            """Check entity exists."""
-            entity_registry = er.async_get(coordinator.hass)
-            entity_id = f"{myD}." + slugify(
-                f"{obj._inst}-{obj.description.ha_group}-{obj.name}"
-            )
-            if entity_id in entity_registry.entities.data.keys():
-                if entity_id not in coordinator.hass.states.async_entity_ids():
-                    _LOGGER.debug("Add entity %s", entity_id)
-                    async_add_entities([obj])
-            else:
-                _LOGGER.debug("New entity %s", entity_id)
-                async_add_entities([obj])
-
-        for description in SENSOR_TYPES:
-            data = coordinator.data[description.data_path]
-            if not description.data_reference:
-                if data.get(description.data_attribute) is None:
-                    continue
-                obj = eval(description.func)(coordinator, description)
-                check_exist(obj, coordinator)
-            else:
-                for uid in data:
-                    obj = eval(description.func)(coordinator, description, uid)
-                    check_exist(obj, coordinator)
-
-    update_controller(coordinator)
-    async_dispatcher_connect(hass, "UPDATE_BINARY_SENSORS", update_controller)
+    dispatcher = {
+        "TrueNASBinarySensor": TrueNASBinarySensor,
+        "TrueNASJailBinarySensor": TrueNASJailBinarySensor,
+        "TrueNASVMBinarySensor": TrueNASVMBinarySensor,
+        "TrueNASServiceBinarySensor": TrueNASServiceBinarySensor,
+        "TrueNASAppBinarySensor": TrueNASAppBinarySensor,
+    }
+    await async_add_entities(hass, entry, dispatcher)
 
 
 class TrueNASBinarySensor(TrueNASEntity, BinarySensorEntity):

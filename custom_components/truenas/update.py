@@ -11,13 +11,15 @@ from homeassistant.components.update import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import TrueNASDataUpdateCoordinator
+from .coordinator import TrueNASDataUpdateCoordinator, async_add_entities
 from .model import TrueNASEntity
-from .update_types import SENSOR_SERVICES, SENSOR_TYPES, TrueNASUpdateEntityDescription
+from .update_types import (  # noqa: F401
+    SENSOR_SERVICES,
+    SENSOR_TYPES,
+    TrueNASUpdateEntityDescription,
+)
 
 _LOGGER = getLogger(__name__)
 DEVICE_UPDATE = "device_update"
@@ -27,17 +29,13 @@ DEVICE_UPDATE = "device_update"
 #   async_setup_entry
 # ---------------------------
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: ConfigEntry, _async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-
-    platform = entity_platform.async_get_current_platform()
-    for service in SENSOR_SERVICES:
-        platform.async_register_entity_service(service[0], service[1], service[2])
-
-    entities = [TrueNASUpdate(coordinator, description) for description in SENSOR_TYPES]
-    async_add_entities(entities)
+    dispatcher = {
+        "TrueNASUpdate": TrueNASUpdate,
+    }
+    await async_add_entities(hass, entry, dispatcher)
 
 
 class TrueNASUpdate(TrueNASEntity, UpdateEntity):
