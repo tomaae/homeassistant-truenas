@@ -96,6 +96,8 @@ Reboot or Shutdown a TrueNAS system.
 Service control is available through services.
 Target system uptime sensor.
 
+![image](https://user-images.githubusercontent.com/36953052/221521930-f8f789e6-deec-4cc2-b11e-740caa056e44.png)
+
 # Install integration
 This integration is distributed using [HACS](https://hacs.xyz/).
 
