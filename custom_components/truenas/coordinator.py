@@ -53,7 +53,7 @@ async def async_add_entities(
     async def async_update_controller(coordinator):
         """Update the values of the controller."""
 
-        async def async_check_exist(obj, coordinator):
+        async def async_check_exist(obj, coordinator) -> None:
             """Check entity exists."""
             entity_registry = er.async_get(hass)
             entity_id = f"{platform.domain}." + slugify(
