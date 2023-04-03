@@ -132,7 +132,7 @@ NOTES:
 
 ## Translation
 To help out with the translation you need an account on Lokalise, the easiest way to get one is to [click here](https://lokalise.com/login/) then select "Log in with GitHub".
-After you have created your account [click here to join TrueNAS Instegrations project on Lokalise](https://app.lokalise.com/public/9252786762290237258f09.36273104/).
+After you have created your account [click here to join TrueNAS Integrations project on Lokalise](https://app.lokalise.com/public/9252786762290237258f09.36273104/).
 
 If you want to add translations for a language that is not listed please [open a Feature request](https://github.com/tomaae/homeassistant-truenas/issues/new?labels=enhancement&title=%5BLokalise%5D%20Add%20new%20translations%20language).
 
