@@ -1,0 +1,23 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Configure la integración de TrueNAS.",
+                "data": {
+                    "name": "Nombre de la integración",
+                    "host": "Anfitrión",
+                    "api_key": "Clave API",
+                    "ssl": "Usar SSL",
+                    "verify_ssl": "Verificar certificado SSL"
+                }
+            }
+        },
+        "error": {
+            "name_exists": "Nombre ya existente.",
+            "401": "No hay autorización para este extremo.",
+            "404": "API no encontrada en este host.",
+            "500": "Error Interno.",
+            "no_response": "No hay respuesta del anfitrión."
+        }
+    }
+}
