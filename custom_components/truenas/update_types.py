@@ -19,7 +19,7 @@ class TrueNASUpdateEntityDescription(UpdateEntityDescription):
     data_uid: str = ""
     data_reference: str = ""
     data_attributes_list: List = field(default_factory=lambda: [])
-    func: str = "TrueNASUpdate"
+    func: str = ""
 
 
 SENSOR_TYPES = {
@@ -33,6 +33,19 @@ SENSOR_TYPES = {
         data_name="",
         data_uid="",
         data_reference="",
+        func="TrueNASUpdate",
+    ),
+    "app_update": TrueNASUpdateEntityDescription(
+        key="app_update",
+        name="Update",
+        ha_group="Apps",
+        title="TrueNAS",
+        data_path="app",
+        data_attribute="update_available",
+        data_name="name",
+        data_uid="",
+        data_reference="id",
+        func="TrueNASAppUpdate",
     ),
 }
 

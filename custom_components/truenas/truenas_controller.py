@@ -982,11 +982,17 @@ class TrueNASControllerData(object):
             vals=[
                 {"name": "id", "default": 0},
                 {"name": "name", "default": "unknown"},
-                {"name": "human_version", "default": "unknown"},
                 {"name": "update_available", "default": "unknown"},
                 {"name": "container_images_update_available", "default": "unknown"},
                 {"name": "portal", "source": "portals/open", "default": "unknown"},
                 {"name": "status", "default": "unknown"},
+                {"name": "version", "source": "human_version", "default": "unknown"},
+                {
+                    "name": "latest_version",
+                    "source": "human_latest_version",
+                    "default": "unknown",
+                }
+                
             ],
             ensure_vals=[
                 {"name": "running", "type": "bool", "default": False},
@@ -995,3 +1001,31 @@ class TrueNASControllerData(object):
 
         for uid, vals in self.data["app"].items():
             self.data["app"][uid]["running"] = vals["status"] == "ACTIVE"
+            if vals["update_available"]:
+                self.data["app"][uid] = parse_api(
+                    data=self.data["app"][uid],
+                    source=self.api.query(
+                        "/chart/release/upgrade_summary",
+                        method="post",
+                        params={"release_name": vals["id"], "options": {}},
+                    ),
+                    vals=[
+                        {
+                            "name": "update_item",
+                            "source": "item_update_available",
+                            "default": "unknown",
+                        },
+                        {
+                            "name": "update_image",
+                            "source": "image_update_available",
+                            "default": "unknown",
+                        },
+                        {
+                            "name": "available_versions_for_upgrade",
+                            "default": "unknown",
+                        },
+                        {"name": "changelog", "default": "unknown"},
+                    ],
+                )
+            else:
+                self.data["app"][uid]["latest_version"] = vals["version"]

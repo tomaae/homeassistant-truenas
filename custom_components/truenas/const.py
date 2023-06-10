@@ -1,5 +1,8 @@
 """Constants used by the TrueNAS integration."""
+import voluptuous as vol
+
 from homeassistant.const import Platform
+import homeassistant.helpers.config_validation as cv
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -70,3 +73,7 @@ SERVICE_APP_START = "app_start"
 SCHEMA_SERVICE_APP_START = {}
 SERVICE_APP_STOP = "app_stop"
 SCHEMA_SERVICE_APP_STOP = {}
+SERVICE_APP_UPDATE = "app_update"
+SCHEMA_SERVICE_APP_UPDATE = {
+    vol.Optional("version"): cv.string,
+}

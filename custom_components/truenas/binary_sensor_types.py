@@ -1,4 +1,6 @@
 """Definitions for TrueNAS binary sensor entities."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import List
 
@@ -7,6 +9,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 from .const import (
     SCHEMA_SERVICE_APP_START,
     SCHEMA_SERVICE_APP_STOP,
+    SCHEMA_SERVICE_APP_UPDATE,
     SCHEMA_SERVICE_JAIL_RESTART,
     SCHEMA_SERVICE_JAIL_START,
     SCHEMA_SERVICE_JAIL_STOP,
@@ -18,6 +21,7 @@ from .const import (
     SCHEMA_SERVICE_VM_STOP,
     SERVICE_APP_START,
     SERVICE_APP_STOP,
+    SERVICE_APP_UPDATE,
     SERVICE_JAIL_RESTART,
     SERVICE_JAIL_START,
     SERVICE_JAIL_STOP,
@@ -71,7 +75,7 @@ DEVICE_ATTRIBUTES_SERVICE = [
 DEVICE_ATTRIBUTES_APP = [
     "name",
     "version",
-    "human_version",
+    "update_version",
     "update_available",
     "container_images_update_available",
     "portal",
@@ -190,4 +194,5 @@ SENSOR_SERVICES = [
     [SERVICE_SERVICE_RELOAD, SCHEMA_SERVICE_SERVICE_RELOAD, "reload"],
     [SERVICE_APP_START, SCHEMA_SERVICE_APP_START, "start"],
     [SERVICE_APP_STOP, SCHEMA_SERVICE_APP_STOP, "stop"],
+    [SERVICE_APP_UPDATE, SCHEMA_SERVICE_APP_UPDATE, "upgrade"],
 ]

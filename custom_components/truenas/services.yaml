@@ -118,3 +118,16 @@ app_stop:
     entity:
       integration: truenas
       domain: binary_sensor
+
+app_update:
+  name: Application update
+  description: If you do not specify the version, the latest will be applied
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
+  fields:
+    version:
+      name: version
+      selector:
+        text:
