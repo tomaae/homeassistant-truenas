@@ -17,17 +17,19 @@
 
 Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
  * Monitor System (Cpu, Load, Memory, Temperature, Network, ARC/L2ARC, Uptime)
+ * Monitor Apps (TrueNAS Scale only)
+ * Monitor Datasets
  * Monitor Disks
  * Monitor Pools (including boot-pool)
- * Monitor Datasets
  * Monitor Replication Tasks
  * Monitor Snapshot Tasks
- * Monitor Apps (TrueNAS Scale only)
+ * Control and Monitor Apps (TrueNAS Scale only)
+ * Control and Monitor Cloudsync
+ * Control and Monitor Jails (TrueNAS CORE only)
  * Control and Monitor Services
  * Control and Monitor Virtual Machines
- * Control and Monitor Jails (TrueNAS CORE only)
- * Control and Monitor Cloudsync
  * Create a Dataset Snapshot
+ * Update Apps
  * Update Sensor
  * Reboot and Shutdown TrueNAS system
  
