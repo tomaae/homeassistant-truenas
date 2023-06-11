@@ -22,6 +22,7 @@ Monitor and control your TrueNAS CORE/SCALE device from Home Assistant.
  * Monitor Datasets
  * Monitor Replication Tasks
  * Monitor Snapshot Tasks
+ * Monitor Apps (TrueNAS Scale only)
  * Control and Monitor Services
  * Control and Monitor Virtual Machines
  * Control and Monitor Jails (TrueNAS CORE only)
@@ -90,6 +91,12 @@ Control and monitor status and attributes for each TrueNAS service.
 Service control is available through services.
 
 ![Services](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/service.png)
+
+## Apps
+Control and monitor status and attributes for each TrueNAS apps.
+Apps control is available through start/stop/update services.
+
+![Apps](https://raw.githubusercontent.com/tomaae/homeassistant-truenas/master/docs/assets/images/ui/apps.png)
 
 ## Reboot and Shutdown
 Reboot or Shutdown a TrueNAS system.
