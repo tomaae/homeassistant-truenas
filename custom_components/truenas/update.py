@@ -109,7 +109,7 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
         self._attr_supported_features = (
             UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
         )
-        self._attr_title = self.entity_description.title
+        self._attr_title = self._data["name"].capitalize()
 
     @property
     def installed_version(self) -> str:
@@ -124,7 +124,9 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
     @property
     def in_progress(self) -> bool | None:
         """Return progress status."""
-        return self is True and (self._data["version"] != self._data["latest_version"])
+        if self._data["status"] == "DEPLOYING":
+            return True
+        return False
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
@@ -143,8 +145,6 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
                 "upgrade_options": {"values": {}, "item_version": version},
             },
         )
-
+        self._data["status"] = "DEPLOYING"
         self._attr_in_progress = True
         self.async_write_ha_state()
-
-        await self._ctrl.async_update()
