@@ -192,16 +192,27 @@ class TrueNASEntity:
                 dev_connection_value = dev_connection_value[6:]
                 dev_connection_value = self._data[dev_connection_value]
 
-        return DeviceInfo(
-            connections={(dev_connection, f"{dev_connection_value}")},
-            identifiers={(dev_connection, f"{dev_connection_value}")},
-            default_name=f"{self._inst} {dev_group}",
-            default_manufacturer=f"{self._ctrl.data['system_info']['system_manufacturer']}",
-            default_model=f"{self._ctrl.data['system_info']['system_product']}",
-            sw_version=f"{self._ctrl.data['system_info']['version']}",
-            configuration_url=f"http://{self._ctrl.config_entry.data[CONF_HOST]}",
-            via_device=(DOMAIN, f"{self._ctrl.data['system_info']['hostname']}"),
-        )
+        if self.entity_description.ha_group == "System":
+            return DeviceInfo(
+                connections={(dev_connection, f"{dev_connection_value}")},
+                identifiers={(dev_connection, f"{dev_connection_value}")},
+                name=f"{self._inst} {dev_group}",
+                model=f"{self._ctrl.data['system_info']['system_product']}",
+                manufacturer=f"{self._ctrl.data['system_info']['system_manufacturer']}",
+                sw_version=f"{self._ctrl.data['system_info']['version']}",
+                configuration_url=f"http://{self._ctrl.config_entry.data[CONF_HOST]}",
+            )
+        else:
+            return DeviceInfo(
+                connections={(dev_connection, f"{dev_connection_value}")},
+                default_name=f"{self._inst} {dev_group}",
+                default_model=f"{self._ctrl.data['system_info']['system_product']}",
+                default_manufacturer=f"{self._ctrl.data['system_info']['system_manufacturer']}",
+                via_device=(
+                    DOMAIN,
+                    f"{self._ctrl.data['system_info']['hostname']}",
+                ),
+            )
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any]:
