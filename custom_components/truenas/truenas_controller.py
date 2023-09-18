@@ -145,7 +145,7 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_replication)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_snapshottask)
-        if self.api.connected():
+        if self.api.connected() and self._is_scale:
             await self.hass.async_add_executor_job(self.get_app)
 
         async_dispatcher_send(self.hass, self.signal_update)
