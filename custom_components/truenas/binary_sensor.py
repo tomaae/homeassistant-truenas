@@ -136,7 +136,7 @@ class TrueNASJailBinarySensor(TrueNASBinarySensor):
 class TrueNASVMBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS VM Binary Sensor."""
 
-    async def start(self):
+    async def start(self, overcommit: bool = False):
         """Start a VM."""
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"vm/id/{self._data['id']}"
@@ -153,7 +153,10 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
             return
 
         await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"vm/id/{self._data['id']}/start", "post"
+            self.coordinator.api.query,
+            f"vm/id/{self._data['id']}/start",
+            "post",
+            {"overcommit": overcommit},
         )
 
     async def stop(self):

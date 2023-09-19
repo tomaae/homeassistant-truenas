@@ -90,6 +90,15 @@ jail_restart:
 vm_start:
   name: VM Start
   description: Start a VM
+  fields:
+    overcommit:
+      name: Overcommit Memory
+      description: Memory overcommitment allows the VM to launch even though there is insufficient free memory.
+      required: false
+      default: false
+      selector:
+        boolean:
+
   target:
     entity:
       integration: truenas
