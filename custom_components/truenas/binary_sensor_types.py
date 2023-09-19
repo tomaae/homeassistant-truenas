@@ -1,8 +1,11 @@
 """Definitions for TrueNAS binary sensor entities."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import List
-
-from homeassistant.components.binary_sensor import BinarySensorEntityDescription
+from homeassistant.components.binary_sensor import (
+    BinarySensorEntityDescription,
+)
 
 from .const import (
     SCHEMA_SERVICE_APP_START,
@@ -80,24 +83,24 @@ DEVICE_ATTRIBUTES_APP = [
 
 @dataclass
 class TrueNASBinarySensorEntityDescription(BinarySensorEntityDescription):
-    """Class describing mikrotik entities."""
+    """Class describing entities."""
 
-    icon_enabled: str = ""
-    icon_disabled: str = ""
-    ha_group: str = ""
-    ha_connection: str = ""
-    ha_connection_value: str = ""
-    data_path: str = ""
+    icon_enabled: str | None = None
+    icon_disabled: str | None = None
+    ha_group: str | None = None
+    ha_connection: str | None = None
+    ha_connection_value: str | None = None
+    data_path: str | None = None
     data_is_on: str = "available"
-    data_name: str = ""
-    data_uid: str = ""
-    data_reference: str = ""
+    data_name: str | None = None
+    data_uid: str | None = None
+    data_reference: str | None = None
     data_attributes_list: List = field(default_factory=lambda: [])
     func: str = "TrueNASBinarySensor"
 
 
-SENSOR_TYPES = {
-    "pool_healthy": TrueNASBinarySensorEntityDescription(
+SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
+    TrueNASBinarySensorEntityDescription(
         key="pool_healthy",
         name="healthy",
         icon_enabled="mdi:database",
@@ -112,7 +115,7 @@ SENSOR_TYPES = {
         data_reference="guid",
         data_attributes_list=DEVICE_ATTRIBUTES_POOL,
     ),
-    "jail": TrueNASBinarySensorEntityDescription(
+    TrueNASBinarySensorEntityDescription(
         key="jail",
         name="",
         icon_enabled="mdi:layers",
@@ -128,7 +131,7 @@ SENSOR_TYPES = {
         data_attributes_list=DEVICE_ATTRIBUTES_JAIL,
         func="TrueNASJailBinarySensor",
     ),
-    "vm": TrueNASBinarySensorEntityDescription(
+    TrueNASBinarySensorEntityDescription(
         key="vm",
         name="",
         icon_enabled="mdi:server",
@@ -144,7 +147,7 @@ SENSOR_TYPES = {
         data_attributes_list=DEVICE_ATTRIBUTES_VM,
         func="TrueNASVMBinarySensor",
     ),
-    "service": TrueNASBinarySensorEntityDescription(
+    TrueNASBinarySensorEntityDescription(
         key="service",
         name="",
         icon_enabled="mdi:cog",
@@ -160,7 +163,7 @@ SENSOR_TYPES = {
         data_attributes_list=DEVICE_ATTRIBUTES_SERVICE,
         func="TrueNASServiceBinarySensor",
     ),
-    "app": TrueNASBinarySensorEntityDescription(
+    TrueNASBinarySensorEntityDescription(
         key="app",
         name="",
         icon_enabled="mdi:server",
@@ -176,7 +179,7 @@ SENSOR_TYPES = {
         data_attributes_list=DEVICE_ATTRIBUTES_APP,
         func="TrueNASAppBinarySensor",
     ),
-}
+)
 
 SENSOR_SERVICES = [
     [SERVICE_JAIL_START, SCHEMA_SERVICE_JAIL_START, "start"],

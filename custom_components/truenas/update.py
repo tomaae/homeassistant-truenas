@@ -1,17 +1,21 @@
 """TrueNAS binary sensor platform."""
+from __future__ import annotations
+
 from logging import getLogger
 from typing import Any
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.components.update import (
     UpdateDeviceClass,
     UpdateEntity,
     UpdateEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .model import TrueNASEntity, model_async_setup_entry
+from .coordinator import TrueNASCoordinator
+from .entity import TrueNASEntity, async_add_entities
 from .update_types import SENSOR_SERVICES, SENSOR_TYPES
 
 _LOGGER = getLogger(__name__)
@@ -24,20 +28,13 @@ DEVICE_UPDATE = "device_update"
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    _async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up device tracker for OpenMediaVault component."""
     dispatcher = {
         "TrueNASUpdate": TrueNASUpdate,
     }
-    await model_async_setup_entry(
-        hass,
-        config_entry,
-        async_add_entities,
-        SENSOR_SERVICES,
-        SENSOR_TYPES,
-        dispatcher,
-    )
+    await async_add_entities(hass, config_entry, dispatcher)
 
 
 # ---------------------------
@@ -49,9 +46,14 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
     TYPE = DEVICE_UPDATE
     _attr_device_class = UpdateDeviceClass.FIRMWARE
 
-    def __init__(self, inst, uid, truenas_controller, entity_description):
+    def __init__(
+        self,
+        coordinator: TrueNASCoordinator,
+        entity_description,
+        uid: str | None = None,
+    ):
         """Set up device update entity."""
-        super().__init__(inst, uid, truenas_controller, entity_description)
+        super().__init__(coordinator, entity_description, uid)
 
         self._attr_supported_features = UpdateEntityFeature.INSTALL
         self._attr_supported_features |= UpdateEntityFeature.PROGRESS
@@ -73,12 +75,12 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
         self._data["update_jobid"] = await self.hass.async_add_executor_job(
-            self._ctrl.api.query,
+            self.coordinator.api.query,
             "update/update",
             "post",
             {"reboot": True},
         )
-        await self._ctrl.async_update()
+        await self.coordinator.async_refresh()
 
     @property
     def in_progress(self) -> int:
