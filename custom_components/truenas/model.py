@@ -122,7 +122,7 @@ def model_update_items(
 class TrueNASEntity:
     """Define entity."""
 
-    _attr_has_entity_name = True
+    # _attr_has_entity_name = True
 
     def __init__(
         self,
