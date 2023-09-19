@@ -5,10 +5,13 @@ from typing import Any
 
 from requests import get as requests_get, post as requests_post
 from voluptuous import Optional
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
 
 from homeassistant.core import HomeAssistant
 
 _LOGGER = getLogger(__name__)
+disable_warnings(InsecureRequestWarning)
 
 
 # ---------------------------
