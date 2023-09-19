@@ -1,9 +1,4 @@
 """Helper functions."""
-from datetime import datetime
-
-from pytz import utc
-
-DEFAULT_TIME_ZONE = None
 
 
 # ---------------------------
@@ -22,24 +17,3 @@ def format_attribute(attr: str) -> str:
     res = res.replace("Ip4 ", "IP4 ")
     res = res.replace("Ip6 ", "IP6 ")
     return res
-
-
-# ---------------------------
-#   as_local
-# ---------------------------
-def as_local(dattim: datetime) -> datetime:
-    """Convert a UTC datetime object to local time zone."""
-    if dattim.tzinfo == DEFAULT_TIME_ZONE:
-        return dattim
-    if dattim.tzinfo is None:
-        dattim = utc.localize(dattim)
-
-    return dattim.astimezone(DEFAULT_TIME_ZONE)
-
-
-# ---------------------------
-#   b2gib
-# ---------------------------
-def b2gib(b: int) -> float:
-    """Convert to gib."""
-    return round(b / 1073741824, 2)

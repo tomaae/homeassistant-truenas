@@ -35,9 +35,7 @@ _LOGGER = getLogger(__name__)
 @callback
 def configured_instances(hass):
     """Return a set of configured instances."""
-    return {
-        entry.data[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)
-    }
+    return {entry.ds[CONF_NAME] for entry in hass.config_entries.async_entries(DOMAIN)}
 
 
 # ---------------------------

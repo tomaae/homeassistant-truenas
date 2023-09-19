@@ -1,14 +1,22 @@
 """TrueNAS sensor platform."""
-from datetime import datetime
+from __future__ import annotations
+
 from logging import getLogger
+from datetime import date, datetime
+from decimal import Decimal
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .entity import TrueNASEntity, model_async_setup_entry
-from .sensor_types import SENSOR_SERVICES, SENSOR_TYPES
+from .coordinator import TrueNASCoordinator
+from .entity import TrueNASEntity, async_add_entities
+from .sensor_types import (
+    SENSOR_SERVICES,
+    SENSOR_TYPES,
+)
 
 _LOGGER = getLogger(__name__)
 
@@ -19,7 +27,7 @@ _LOGGER = getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    _async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up entry for TrueNAS component."""
     dispatcher = {
@@ -28,14 +36,7 @@ async def async_setup_entry(
         "TrueNASClousyncSensor": TrueNASClousyncSensor,
         "TrueNASDatasetSensor": TrueNASDatasetSensor,
     }
-    await model_async_setup_entry(
-        hass,
-        config_entry,
-        async_add_entities,
-        SENSOR_SERVICES,
-        SENSOR_TYPES,
-        dispatcher,
-    )
+    await async_add_entities(hass, config_entry, dispatcher)
 
 
 # ---------------------------
@@ -44,13 +45,21 @@ async def async_setup_entry(
 class TrueNASSensor(TrueNASEntity, SensorEntity):
     """Define an TrueNAS sensor."""
 
+    def __init__(
+        self,
+        coordinator: TrueNASCoordinator,
+        entity_description,
+        uid: str | None = None,
+    ):
+        super().__init__(coordinator, entity_description, uid)
+        self._attr_suggested_unit_of_measurement = (
+            self.entity_description.suggested_unit_of_measurement
+        )
+
     @property
-    def state(self) -> str:
-        """Return the state."""
-        if self.entity_description.data_attribute:
-            return self._data[self.entity_description.data_attribute]
-        else:
-            return "unknown"
+    def native_value(self) -> StateType | date | datetime | Decimal:
+        """Return the value reported by the sensor."""
+        return self._data[self.entity_description.data_attribute]
 
     @property
     def native_unit_of_measurement(self) -> str | None:
@@ -59,8 +68,7 @@ class TrueNASSensor(TrueNASEntity, SensorEntity):
             if self.entity_description.native_unit_of_measurement.startswith("data__"):
                 uom = self.entity_description.native_unit_of_measurement[6:]
                 if uom in self._data:
-                    uom = self._data[uom]
-                    return uom
+                    return self._data[uom]
 
             return self.entity_description.native_unit_of_measurement
 
@@ -76,7 +84,7 @@ class TrueNASUptimeSensor(TrueNASSensor):
     async def restart(self) -> None:
         """Restart TrueNAS systen."""
         await self.hass.async_add_executor_job(
-            self._ctrl.api.query,
+            self.coordinator.api.query,
             "system/reboot",
             "post",
         )
@@ -84,7 +92,7 @@ class TrueNASUptimeSensor(TrueNASSensor):
     async def stop(self) -> None:
         """Shutdown TrueNAS systen."""
         await self.hass.async_add_executor_job(
-            self._ctrl.api.query,
+            self.coordinator.api.query,
             "system/shutdown",
             "post",
         )
@@ -100,7 +108,7 @@ class TrueNASDatasetSensor(TrueNASSensor):
         """Create dataset snapshot."""
         ts = datetime.now().isoformat(sep="_", timespec="microseconds")
         await self.hass.async_add_executor_job(
-            self._ctrl.api.query,
+            self.coordinator.api.query,
             "zfs/snapshot",
             "post",
             {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
@@ -116,7 +124,7 @@ class TrueNASClousyncSensor(TrueNASSensor):
     async def start(self) -> None:
         """Run cloudsync job."""
         tmp_job = await self.hass.async_add_executor_job(
-            self._ctrl.api.query, f"cloudsync/id/{self._data['id']}"
+            self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
         )
 
         if "job" not in tmp_job:
@@ -135,5 +143,5 @@ class TrueNASClousyncSensor(TrueNASSensor):
             return
 
         await self.hass.async_add_executor_job(
-            self._ctrl.api.query, f"cloudsync/id/{self._data['id']}/sync", "post"
+            self.coordinator.api.query, f"cloudsync/id/{self._data['id']}/sync", "post"
         )

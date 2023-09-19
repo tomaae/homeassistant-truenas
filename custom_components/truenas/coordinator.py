@@ -1,9 +1,16 @@
 """TrueNAS Controller."""
-from asyncio import Lock as Asyncio_lock, wait_for as asyncio_wait_for
+from __future__ import annotations
+
+import logging
+
 from datetime import datetime, timedelta
-from logging import getLogger
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers.entity_registry import async_entries_for_config_entry
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_HOST,
@@ -11,34 +18,36 @@ from homeassistant.const import (
     CONF_SSL,
     CONF_VERIFY_SSL,
 )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.entity_registry import async_entries_for_config_entry
-from homeassistant.helpers.event import async_track_time_interval
 
+from .api import TrueNASAPI
 from .apiparser import parse_api, utc_from_timestamp
 from .const import DOMAIN
-from .helper import as_local, b2gib
-from .api import TrueNASAPI
 
-_LOGGER = getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 # ---------------------------
 #   TrueNASControllerData
 # ---------------------------
-class TrueNASControllerData(object):
-    """TrueNASControllerData Class."""
+class TrueNASCoordinator(DataUpdateCoordinator[None]):
+    """TrueNASCoordinator Class."""
 
-    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-        """Initialize TrueNASController."""
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
+        """Initialize TrueNASCoordinator."""
         self.hass = hass
-        self.config_entry = config_entry
+        self.config_entry: ConfigEntry = config_entry
+
+        super().__init__(
+            self.hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=10),
+        )
+
         self.name = config_entry.data[CONF_NAME]
         self.host = config_entry.data[CONF_HOST]
 
-        self.data = {
+        self.ds = {
             "interface": {},
             "disk": {},
             "pool": {},
@@ -53,9 +62,6 @@ class TrueNASControllerData(object):
             "app": {},
         }
 
-        self.listeners = []
-        self.lock = Asyncio_lock()
-
         self.api = TrueNASAPI(
             hass,
             config_entry.data[CONF_HOST],
@@ -66,38 +72,10 @@ class TrueNASControllerData(object):
 
         self._systemstats_errored = []
         self.datasets_hass_device_id = None
+        self.last_hwinfo_update = datetime(1970, 1, 1)
 
-        self._force_update_callback = None
         self._is_scale = False
         self._is_virtual = False
-
-    # ---------------------------
-    #   async_init
-    # ---------------------------
-    async def async_init(self) -> None:
-        """Initialize."""
-        self._force_update_callback = async_track_time_interval(
-            self.hass, self.force_update, timedelta(seconds=60)
-        )
-
-    # ---------------------------
-    #   signal_update
-    # ---------------------------
-    @property
-    def signal_update(self) -> str:
-        """Event to signal new data."""
-        return f"{DOMAIN}-update-{self.name}"
-
-    # ---------------------------
-    #   async_reset
-    # ---------------------------
-    async def async_reset(self) -> bool:
-        """Reset dispatchers."""
-        for unsub_dispatcher in self.listeners:
-            unsub_dispatcher()
-
-        self.listeners = []
-        return True
 
     # ---------------------------
     #   connected
@@ -107,22 +85,13 @@ class TrueNASControllerData(object):
         return self.api.connected()
 
     # ---------------------------
-    #   force_update
+    #   _async_update_data
     # ---------------------------
-    @callback
-    async def force_update(self, _now=None) -> None:
-        """Trigger update by timer."""
-        await self.async_update()
-
-    # ---------------------------
-    #   async_update
-    # ---------------------------
-    async def async_update(self):
+    async def _async_update_data(self):
         """Update TrueNAS data."""
-        try:
-            await asyncio_wait_for(self.lock.acquire(), timeout=10)
-        except Exception:
-            return
+        # delta = datetime.now().replace(microsecond=0) - self.last_hwinfo_update
+        # if self.api.has_reconnected() or delta.total_seconds() > 60 * 60 * 4:
+        #     await self.hass.async_add_executor_job(self.get_access)
 
         await self.hass.async_add_executor_job(self.get_systeminfo)
         if self.api.connected():
@@ -145,19 +114,21 @@ class TrueNASControllerData(object):
             await self.hass.async_add_executor_job(self.get_replication)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_snapshottask)
-        if self.api.connected() and self._is_scale:
+        if self.api.connected():
             await self.hass.async_add_executor_job(self.get_app)
 
-        async_dispatcher_send(self.hass, self.signal_update)
-        self.lock.release()
+        if not self.api.connected():
+            raise UpdateFailed("TrueNas Disconnected")
+
+        return self.ds
 
     # ---------------------------
     #   get_systeminfo
     # ---------------------------
     def get_systeminfo(self) -> None:
         """Get system info from TrueNAS."""
-        self.data["system_info"] = parse_api(
-            data=self.data["system_info"],
+        self.ds["system_info"] = parse_api(
+            data=self.ds["system_info"],
             source=self.api.query("system/info"),
             vals=[
                 {"name": "version", "default": "unknown"},
@@ -198,8 +169,8 @@ class TrueNASControllerData(object):
         if not self.api.connected():
             return
 
-        self.data["system_info"] = parse_api(
-            data=self.data["system_info"],
+        self.ds["system_info"] = parse_api(
+            data=self.ds["system_info"],
             source=self.api.query("update/check_available", method="post"),
             vals=[
                 {
@@ -218,22 +189,20 @@ class TrueNASControllerData(object):
         if not self.api.connected():
             return
 
-        self.data["system_info"]["update_available"] = (
-            self.data["system_info"]["update_status"] == "AVAILABLE"
+        self.ds["system_info"]["update_available"] = (
+            self.ds["system_info"]["update_status"] == "AVAILABLE"
         )
 
-        if not self.data["system_info"]["update_available"]:
-            self.data["system_info"]["update_version"] = self.data["system_info"][
-                "version"
-            ]
+        if not self.ds["system_info"]["update_available"]:
+            self.ds["system_info"]["update_version"] = self.ds["system_info"]["version"]
 
-        if self.data["system_info"]["update_jobid"]:
-            self.data["system_info"] = parse_api(
-                data=self.data["system_info"],
+        if self.ds["system_info"]["update_jobid"]:
+            self.ds["system_info"] = parse_api(
+                data=self.ds["system_info"],
                 source=self.api.query(
                     "core/get_jobs",
                     method="get",
-                    params={"id": self.data["system_info"]["update_jobid"]},
+                    params={"id": self.ds["system_info"]["update_jobid"]},
                 ),
                 vals=[
                     {
@@ -252,35 +221,33 @@ class TrueNASControllerData(object):
                 return
 
             if (
-                self.data["system_info"]["update_state"] != "RUNNING"
-                or not self.data["system_info"]["update_available"]
+                self.ds["system_info"]["update_state"] != "RUNNING"
+                or not self.ds["system_info"]["update_available"]
             ):
-                self.data["system_info"]["update_progress"] = 0
-                self.data["system_info"]["update_jobid"] = 0
-                self.data["system_info"]["update_state"] = "unknown"
+                self.ds["system_info"]["update_progress"] = 0
+                self.ds["system_info"]["update_jobid"] = 0
+                self.ds["system_info"]["update_state"] = "unknown"
 
         self._is_scale = bool(
-            self.data["system_info"]["version"].startswith("TrueNAS-SCALE-")
+            self.ds["system_info"]["version"].startswith("TrueNAS-SCALE-")
         )
 
-        self._is_virtual = self.data["system_info"]["system_manufacturer"] in [
+        self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
             "VMware, Inc.",
-        ] or self.data["system_info"]["system_product"] in [
+        ] or self.ds["system_info"]["system_product"] in [
             "VirtualBox",
         ]
 
-        if self.data["system_info"]["uptime_seconds"] > 0:
+        if self.ds["system_info"]["uptime_seconds"] > 0:
             now = datetime.now().replace(microsecond=0)
             uptime_tm = datetime.timestamp(
-                now - timedelta(seconds=int(self.data["system_info"]["uptime_seconds"]))
+                now - timedelta(seconds=int(self.ds["system_info"]["uptime_seconds"]))
             )
-            self.data["system_info"]["uptimeEpoch"] = str(
-                as_local(utc_from_timestamp(uptime_tm)).isoformat()
-            )
+            self.ds["system_info"]["uptimeEpoch"] = utc_from_timestamp(uptime_tm)
 
-        self.data["interface"] = parse_api(
-            data=self.data["interface"],
+        self.ds["interface"] = parse_api(
+            data=self.ds["interface"],
             source=self.api.query("interface"),
             key="id",
             vals=[
@@ -336,7 +303,7 @@ class TrueNASControllerData(object):
             },
         }
 
-        for uid, vals in self.data["interface"].items():
+        for uid, vals in self.ds["interface"].items():
             tmp_params["graphs"].append({"name": "interface", "identifier": uid})
 
         if self._is_virtual:
@@ -391,11 +358,11 @@ class TrueNASControllerData(object):
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
-                    self.data["system_info"]["cpu_temperature"] = round(
+                    self.ds["system_info"]["cpu_temperature"] = round(
                         max(list(filter(None, tmp_graph[i]["aggregations"]["mean"]))), 1
                     )
                 else:
-                    self.data["system_info"]["cpu_temperature"] = 0.0
+                    self.ds["system_info"]["cpu_temperature"] = 0.0
 
             # CPU load
             if tmp_graph[i]["name"] == "load":
@@ -406,16 +373,16 @@ class TrueNASControllerData(object):
             if tmp_graph[i]["name"] == "cpu":
                 tmp_arr = ("interrupt", "system", "user", "nice", "idle")
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
-                self.data["system_info"]["cpu_usage"] = round(
-                    self.data["system_info"]["cpu_system"]
-                    + self.data["system_info"]["cpu_user"],
+                self.ds["system_info"]["cpu_usage"] = round(
+                    self.ds["system_info"]["cpu_system"]
+                    + self.ds["system_info"]["cpu_user"],
                     2,
                 )
 
             # Interface
             if tmp_graph[i]["name"] == "interface":
                 tmp_etc = tmp_graph[i]["identifier"]
-                if tmp_etc in self.data["interface"]:
+                if tmp_etc in self.ds["interface"]:
                     # 12->13 API change
                     tmp_graph[i]["legend"] = [
                         tmp.replace("if_octets_", "") for tmp in tmp_graph[i]["legend"]
@@ -426,12 +393,12 @@ class TrueNASControllerData(object):
                             tmp_var = tmp_graph[i]["legend"][e]
                             if tmp_var in tmp_arr:
                                 tmp_val = tmp_graph[i]["aggregations"]["mean"][e] or 0.0
-                                self.data["interface"][tmp_etc][tmp_var] = round(
+                                self.ds["interface"][tmp_etc][tmp_var] = round(
                                     (tmp_val / 1024), 2
                                 )
                     else:
                         for tmp_load in tmp_arr:
-                            self.data["interface"][tmp_etc][tmp_load] = 0.0
+                            self.ds["interface"][tmp_etc][tmp_load] = 0.0
 
             # arcratio
             if tmp_graph[i]["name"] == "memory":
@@ -442,20 +409,20 @@ class TrueNASControllerData(object):
                     "memory-buffered_value",
                 )
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
-                self.data["system_info"]["memory-total_value"] = round(
-                    self.data["system_info"]["memory-used_value"]
-                    + self.data["system_info"]["memory-free_value"]
-                    + self.data["system_info"]["cache_size-arc_value"],
+                self.ds["system_info"]["memory-total_value"] = round(
+                    self.ds["system_info"]["memory-used_value"]
+                    + self.ds["system_info"]["memory-free_value"]
+                    + self.ds["system_info"]["cache_size-arc_value"],
                     2,
                 )
-                if self.data["system_info"]["memory-total_value"] > 0:
-                    self.data["system_info"]["memory-usage_percent"] = round(
+                if self.ds["system_info"]["memory-total_value"] > 0:
+                    self.ds["system_info"]["memory-usage_percent"] = round(
                         100
                         * (
-                            float(self.data["system_info"]["memory-total_value"])
-                            - float(self.data["system_info"]["memory-free_value"])
+                            float(self.ds["system_info"]["memory-total_value"])
+                            - float(self.ds["system_info"]["memory-free_value"])
                         )
-                        / float(self.data["system_info"]["memory-total_value"]),
+                        / float(self.ds["system_info"]["memory-total_value"]),
                         0,
                     )
 
@@ -479,25 +446,25 @@ class TrueNASControllerData(object):
                 if tmp_var in arr:
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
-                        self.data["system_info"][tmp_var] = b2gib(tmp_val)
+                        self.ds["system_info"][tmp_var] = tmp_val
                     elif t == "cpu":
-                        self.data["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
+                        self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
                     else:
-                        self.data["system_info"][tmp_var] = round(tmp_val, 2)
+                        self.ds["system_info"][tmp_var] = round(tmp_val, 2)
         else:
             for tmp_load in arr:
                 if t == "cpu":
-                    self.data["system_info"][f"cpu_{tmp_load}"] = 0.0
+                    self.ds["system_info"][f"cpu_{tmp_load}"] = 0.0
                 else:
-                    self.data["system_info"][tmp_load] = 0.0
+                    self.ds["system_info"][tmp_load] = 0.0
 
     # ---------------------------
     #   get_service
     # ---------------------------
     def get_service(self) -> None:
         """Get service info from TrueNAS."""
-        self.data["service"] = parse_api(
-            data=self.data["service"],
+        self.ds["service"] = parse_api(
+            data=self.ds["service"],
             source=self.api.query("service"),
             key="id",
             vals=[
@@ -511,16 +478,16 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid, vals in self.data["service"].items():
-            self.data["service"][uid]["running"] = vals["state"] == "RUNNING"
+        for uid, vals in self.ds["service"].items():
+            self.ds["service"][uid]["running"] = vals["state"] == "RUNNING"
 
     # ---------------------------
     #   get_pool
     # ---------------------------
     def get_pool(self) -> None:
         """Get pools from TrueNAS."""
-        self.data["pool"] = parse_api(
-            data=self.data["pool"],
+        self.ds["pool"] = parse_api(
+            data=self.ds["pool"],
             source=self.api.query("pool"),
             key="guid",
             vals=[
@@ -567,8 +534,8 @@ class TrueNASControllerData(object):
             ],
         )
 
-        self.data["pool"] = parse_api(
-            data=self.data["pool"],
+        self.ds["pool"] = parse_api(
+            data=self.ds["pool"],
             source=self.api.query("boot/get_state"),
             key="guid",
             vals=[
@@ -629,38 +596,39 @@ class TrueNASControllerData(object):
         # Process pools
         tmp_dataset_available = {}
         tmp_dataset_total = {}
-        for uid, vals in self.data["dataset"].items():
-            tmp_dataset_available[self.data["dataset"][uid]["mountpoint"]] = b2gib(
-                vals["available"]
-            )
-            tmp_dataset_total[self.data["dataset"][uid]["mountpoint"]] = b2gib(
+        for uid, vals in self.ds["dataset"].items():
+            tmp_dataset_available[self.ds["dataset"][uid]["mountpoint"]] = vals[
+                "available"
+            ]
+
+            tmp_dataset_total[self.ds["dataset"][uid]["mountpoint"]] = (
                 vals["available"] + vals["used"]
             )
 
-        for uid, vals in self.data["pool"].items():
+        for uid, vals in self.ds["pool"].items():
             if vals["path"] in tmp_dataset_available:
-                self.data["pool"][uid]["available_gib"] = tmp_dataset_available[
+                self.ds["pool"][uid]["available_gib"] = tmp_dataset_available[
                     vals["path"]
                 ]
 
             if vals["path"] in tmp_dataset_total:
-                self.data["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
+                self.ds["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
 
             if vals["name"] in ["boot-pool", "freenas-boot"]:
-                self.data["pool"][uid]["available_gib"] = b2gib(
-                    vals["root_dataset_available"]
-                )
-                self.data["pool"][uid]["total_gib"] = b2gib(
+                self.ds["pool"][uid]["available_gib"] = vals["root_dataset_available"]
+
+                self.ds["pool"][uid]["total_gib"] = (
                     vals["root_dataset_available"] + vals["root_dataset_used"]
                 )
-                self.data["pool"][uid].pop("root_dataset")
+
+                self.ds["pool"][uid].pop("root_dataset")
 
     # ---------------------------
     #   get_dataset
     # ---------------------------
     def get_dataset(self) -> None:
         """Get datasets from TrueNAS."""
-        self.data["dataset"] = parse_api(
+        self.ds["dataset"] = parse_api(
             data={},
             source=self.api.query("pool/dataset"),
             key="id",
@@ -728,10 +696,10 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid, vals in self.data["dataset"].items():
-            self.data["dataset"][uid]["used_gb"] = b2gib(vals["used"])
+        for uid, vals in self.ds["dataset"].items():
+            self.ds["dataset"][uid]["used_gb"] = vals["used"]
 
-        if len(self.data["dataset"]) == 0:
+        if len(self.ds["dataset"]) == 0:
             return
 
         entities_to_be_removed = []
@@ -757,7 +725,7 @@ class TrueNASControllerData(object):
             if (
                 entity.device_id == self.datasets_hass_device_id
                 and entity.unique_id.removeprefix(f"{self.name.lower()}-dataset-")
-                not in map(str.lower, self.data["dataset"].keys())
+                not in map(str.lower, self.ds["dataset"].keys())
             ):
                 _LOGGER.debug(f"dataset to be removed: {entity.unique_id}")
                 entities_to_be_removed.append(entity.entity_id)
@@ -770,8 +738,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_disk(self) -> None:
         """Get disks from TrueNAS."""
-        self.data["disk"] = parse_api(
-            data=self.data["disk"],
+        self.ds["disk"] = parse_api(
+            data=self.ds["disk"],
             source=self.api.query("disk"),
             key="devname",
             vals=[
@@ -801,9 +769,9 @@ class TrueNASControllerData(object):
         )
 
         if temps:
-            for uid in self.data["disk"]:
+            for uid in self.ds["disk"]:
                 if uid in temps:
-                    self.data["disk"][uid]["temperature"] = temps[uid]
+                    self.ds["disk"][uid]["temperature"] = temps[uid]
 
     # ---------------------------
     #   get_jail
@@ -813,8 +781,8 @@ class TrueNASControllerData(object):
         if self._is_scale:
             return
 
-        self.data["jail"] = parse_api(
-            data=self.data["jail"],
+        self.ds["jail"] = parse_api(
+            data=self.ds["jail"],
             source=self.api.query("jail"),
             key="id",
             vals=[
@@ -837,8 +805,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_vm(self) -> None:
         """Get VMs from TrueNAS."""
-        self.data["vm"] = parse_api(
-            data=self.data["vm"],
+        self.ds["vm"] = parse_api(
+            data=self.ds["vm"],
             source=self.api.query("vm"),
             key="id",
             vals=[
@@ -857,16 +825,16 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid, vals in self.data["vm"].items():
-            self.data["vm"][uid]["running"] = vals["state"] == "RUNNING"
+        for uid, vals in self.ds["vm"].items():
+            self.ds["vm"][uid]["running"] = vals["state"] == "RUNNING"
 
     # ---------------------------
     #   get_cloudsync
     # ---------------------------
     def get_cloudsync(self) -> None:
         """Get cloudsync from TrueNAS."""
-        self.data["cloudsync"] = parse_api(
-            data=self.data["cloudsync"],
+        self.ds["cloudsync"] = parse_api(
+            data=self.ds["cloudsync"],
             source=self.api.query("cloudsync"),
             key="id",
             vals=[
@@ -904,8 +872,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_replication(self) -> None:
         """Get replication from TrueNAS."""
-        self.data["replication"] = parse_api(
-            data=self.data["replication"],
+        self.ds["replication"] = parse_api(
+            data=self.ds["replication"],
             source=self.api.query("replication"),
             key="id",
             vals=[
@@ -946,8 +914,8 @@ class TrueNASControllerData(object):
     # ---------------------------
     def get_snapshottask(self) -> None:
         """Get replication from TrueNAS."""
-        self.data["snapshottask"] = parse_api(
-            data=self.data["snapshottask"],
+        self.ds["snapshottask"] = parse_api(
+            data=self.ds["snapshottask"],
             source=self.api.query("pool/snapshottask"),
             key="id",
             vals=[
@@ -973,10 +941,13 @@ class TrueNASControllerData(object):
     # ---------------------------
     #   get_app
     # ---------------------------
-    def get_app(self):
+    def get_app(self) -> None:
         """Get Apps from TrueNAS."""
-        self.data["app"] = parse_api(
-            data=self.data["app"],
+        if not self._is_scale:
+            return
+
+        self.ds["app"] = parse_api(
+            data=self.ds["app"],
             source=self.api.query("chart/release"),
             key="id",
             vals=[
@@ -993,5 +964,5 @@ class TrueNASControllerData(object):
             ],
         )
 
-        for uid, vals in self.data["app"].items():
-            self.data["app"][uid]["running"] = vals["status"] == "ACTIVE"
+        for uid, vals in self.ds["app"].items():
+            self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
