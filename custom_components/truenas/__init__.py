@@ -3,7 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
-from .truenas_controller import TrueNASControllerData
+from .coordinator import TrueNASControllerData
 
 
 # ---------------------------

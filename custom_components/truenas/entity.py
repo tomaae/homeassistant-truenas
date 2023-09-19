@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import ATTRIBUTION, DOMAIN
 from .helper import format_attribute
-from .truenas_controller import TrueNASControllerData
+from .coordinator import TrueNASControllerData
 
 _LOGGER = getLogger(__name__)
 

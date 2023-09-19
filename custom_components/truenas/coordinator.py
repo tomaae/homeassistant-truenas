@@ -20,7 +20,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from .apiparser import parse_api, utc_from_timestamp
 from .const import DOMAIN
 from .helper import as_local, b2gib
-from .truenas_api import TrueNASAPI
+from .api import TrueNASAPI
 
 _LOGGER = getLogger(__name__)
 

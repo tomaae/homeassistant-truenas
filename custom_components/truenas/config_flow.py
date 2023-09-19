@@ -24,7 +24,7 @@ from .const import (
     DEFAULT_SSL_VERIFY,
     DOMAIN,
 )
-from .truenas_api import TrueNASAPI
+from .api import TrueNASAPI
 
 _LOGGER = getLogger(__name__)
 

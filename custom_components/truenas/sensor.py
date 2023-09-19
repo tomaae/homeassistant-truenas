@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .model import TrueNASEntity, model_async_setup_entry
+from .entity import TrueNASEntity, model_async_setup_entry
 from .sensor_types import SENSOR_SERVICES, SENSOR_TYPES
 
 _LOGGER = getLogger(__name__)
