@@ -72,7 +72,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self._systemstats_errored = []
         self.datasets_hass_device_id = None
-        self.last_hwinfo_update = datetime(1970, 1, 1)
+        self.last_updatecheck_update = datetime(1970, 1, 1)
 
         self._is_scale = False
         self._is_virtual = False
@@ -89,10 +89,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     async def _async_update_data(self):
         """Update TrueNAS data."""
-        # delta = datetime.now().replace(microsecond=0) - self.last_hwinfo_update
-        # if self.api.has_reconnected() or delta.total_seconds() > 60 * 60 * 4:
-        #     await self.hass.async_add_executor_job(self.get_access)
-
         await self.hass.async_add_executor_job(self.get_systeminfo)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_systemstats)
@@ -116,6 +112,11 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_snapshottask)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_app)
+
+        delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
+        if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
+            await self.hass.async_add_executor_job(self.get_updatecheck)
+            self.last_updatecheck_update = datetime.now().replace(microsecond=0)
 
         if not self.api.connected():
             raise UpdateFailed("TrueNas Disconnected")
@@ -168,30 +169,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         )
         if not self.api.connected():
             return
-
-        self.ds["system_info"] = parse_api(
-            data=self.ds["system_info"],
-            source=self.api.query("update/check_available", method="post"),
-            vals=[
-                {
-                    "name": "update_status",
-                    "source": "status",
-                    "default": "unknown",
-                },
-                {
-                    "name": "update_version",
-                    "source": "version",
-                    "default": "unknown",
-                },
-            ],
-        )
-
-        if not self.api.connected():
-            return
-
-        self.ds["system_info"]["update_available"] = (
-            self.ds["system_info"]["update_status"] == "AVAILABLE"
-        )
 
         if not self.ds["system_info"]["update_available"]:
             self.ds["system_info"]["update_version"] = self.ds["system_info"]["version"]
@@ -280,6 +257,34 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "rx", "default": 0},
                 {"name": "tx", "default": 0},
             ],
+        )
+
+    # ---------------------------
+    #   get_updatecheck
+    # ---------------------------
+    def get_updatecheck(self) -> None:
+        self.ds["system_info"] = parse_api(
+            data=self.ds["system_info"],
+            source=self.api.query("update/check_available", method="post"),
+            vals=[
+                {
+                    "name": "update_status",
+                    "source": "status",
+                    "default": "unknown",
+                },
+                {
+                    "name": "update_version",
+                    "source": "version",
+                    "default": "unknown",
+                },
+            ],
+        )
+
+        if not self.api.connected():
+            return
+
+        self.ds["system_info"]["update_available"] = (
+            self.ds["system_info"]["update_status"] == "AVAILABLE"
         )
 
     # ---------------------------
