@@ -91,7 +91,7 @@ async def async_add_entities(
 class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
     """Define entity."""
 
-    # _attr_has_entity_name = True
+    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -110,6 +110,16 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
             self._data = coordinator.data[self.entity_description.data_path][self._uid]
         else:
             self._data = coordinator.data[self.entity_description.data_path]
+
+        platform = ep.async_get_current_platform()
+
+        dev_group = self.entity_description.ha_group
+        if self.entity_description.ha_group.startswith("data__"):
+            dev_group = self.entity_description.ha_group[6:]
+            if dev_group in self._data:
+                dev_group = self._data[dev_group]
+
+        self.entity_id = f"{platform.domain}.{self._inst.lower()}_{slugify(str(dev_group).lower())}_{slugify(str(self.name).lower())}"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -144,7 +154,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
         """Return a description for device registry."""
         dev_connection = DOMAIN
         dev_connection_value = f"{self._inst}_{self.entity_description.ha_group}"
-        dev_group = f"{self._inst}_{self.entity_description.ha_group}"
+        dev_group = self.entity_description.ha_group
         if self.entity_description.ha_group == "System":
             dev_connection_value = (
                 f"{self._inst}_{self.coordinator.data['system_info']['hostname']}"
@@ -153,7 +163,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
         if self.entity_description.ha_group.startswith("data__"):
             dev_group = self.entity_description.ha_group[6:]
             if dev_group in self._data:
-                dev_group = f"{self._inst}_{self._data[dev_group]}"
+                dev_group = self._data[dev_group]
                 dev_connection_value = dev_group
 
         if self.entity_description.ha_connection:
@@ -171,7 +181,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
             return DeviceInfo(
                 connections={(dev_connection, f"{dev_connection_value}")},
                 identifiers={(dev_connection, f"{dev_connection_value}")},
-                name=f"{self._inst} {dev_group}",
+                name=dev_group,
                 model=f"{self.coordinator.data['system_info']['system_product']}",
                 manufacturer=f"{self.coordinator.data['system_info']['system_manufacturer']}",
                 sw_version=f"{self.coordinator.data['system_info']['version']}",
@@ -180,7 +190,7 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
         else:
             return DeviceInfo(
                 connections={(dev_connection, f"{dev_connection_value}")},
-                default_name=f"{self._inst} {dev_group}",
+                default_name=dev_group,
                 default_model=f"{self.coordinator.data['system_info']['system_product']}",
                 default_manufacturer=f"{self.coordinator.data['system_info']['system_manufacturer']}",
                 via_device=(
