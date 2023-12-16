@@ -83,6 +83,10 @@ DEVICE_ATTRIBUTES_DISK = [
     "model",
     "rotationrate",
     "type",
+    "name",
+    "devname",
+    "zfs_guid",
+    "identifier",
 ]
 
 DEVICE_ATTRIBUTES_CPU = [
@@ -365,9 +369,9 @@ SENSOR_TYPES: tuple[TrueNASSensorEntityDescription, ...] = (
         ha_group="Disks",
         data_path="disk",
         data_attribute="temperature",
-        data_name="name",
+        data_name="identifier",
         data_uid="",
-        data_reference="devname",
+        data_reference="identifier",
         data_attributes_list=DEVICE_ATTRIBUTES_DISK,
     ),
     TrueNASSensorEntityDescription(

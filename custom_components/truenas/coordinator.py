@@ -741,7 +741,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self.ds["disk"] = parse_api(
             data=self.ds["disk"],
             source=self.api.query("disk"),
-            key="devname",
+            key="identifier",
             vals=[
                 {"name": "name", "default": "unknown"},
                 {"name": "devname", "default": "unknown"},
@@ -755,6 +755,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "model", "default": "unknown"},
                 {"name": "rotationrate", "default": "unknown"},
                 {"name": "type", "default": "unknown"},
+                {"name": "zfs_guid", "default": "unknown"},
+                {"name": "identifier", "default": "unknown"},
             ],
             ensure_vals=[
                 {"name": "temperature", "default": 0},
@@ -769,9 +771,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         )
 
         if temps:
-            for uid in self.ds["disk"]:
-                if uid in temps:
-                    self.ds["disk"][uid]["temperature"] = temps[uid]
+            for uid, vals in self.ds["disk"].items():
+                if vals["name"] in temps: #looks for devname here
+                    self.ds["disk"][uid]["temperature"] = temps[vals["name"]] #return devname temp to uid disk
+                    #I feel like this will break in the future when TrueNAS updates to a more sensible system. Currently their own long term stats are broken by the changing devnames.
 
     # ---------------------------
     #   get_jail
