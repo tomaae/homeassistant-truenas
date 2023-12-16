@@ -772,9 +772,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         if temps:
             for uid, vals in self.ds["disk"].items():
-                if vals["name"] in temps: #looks for devname here
-                    self.ds["disk"][uid]["temperature"] = temps[vals["name"]] #return devname temp to uid disk
-                    #I feel like this will break in the future when TrueNAS updates to a more sensible system. Currently their own long term stats are broken by the changing devnames.
+                if vals["name"] in temps:  # looks for devname here
+                    self.ds["disk"][uid]["temperature"] = temps[vals["name"]]
+                    # return devname temp to uid disk
+                    # I feel like this will break in the future when TrueNAS updates to a more sensible system. Currently their own long term stats are broken by the changing devnames.
 
     # ---------------------------
     #   get_jail
