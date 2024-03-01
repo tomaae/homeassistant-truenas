@@ -3,5 +3,6 @@
     "homeassistant": "2023.9.0",
     "render_readme": false,
     "zip_release": true,
+    "hide_default_branch": true,
     "filename": "truenas.zip"
 }
