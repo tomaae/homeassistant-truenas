@@ -142,23 +142,27 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             ensure_vals=[
                 {"name": "uptimeEpoch", "default": 0},
                 {"name": "cpu_temperature", "default": 0.0},
-                {"name": "load_shortterm", "default": 0.0},
-                {"name": "load_midterm", "default": 0.0},
-                {"name": "load_longterm", "default": 0.0},
+                {"name": "shortterm", "default": 0.0},
+                {"name": "midterm", "default": 0.0},
+                {"name": "longterm", "default": 0.0},
                 {"name": "cpu_interrupt", "default": 0.0},
                 {"name": "cpu_system", "default": 0.0},
                 {"name": "cpu_user", "default": 0.0},
                 {"name": "cpu_nice", "default": 0.0},
                 {"name": "cpu_idle", "default": 0.0},
                 {"name": "cpu_usage", "default": 0.0},
-                {"name": "cache_size-arc_value", "default": 0.0},
+                {"name": "arc_size", "default": 0.0},
                 {"name": "cache_size-L2_value", "default": 0.0},
                 {"name": "cache_ratio-arc_value", "default": 0},
                 {"name": "cache_ratio-L2_value", "default": 0},
+                {"name": "swap-free_value", "default": 0.0},
+                {"name": "swap-used_value", "default": 0.0},
+                {"name": "swap-total_value", "default": 0.0},
+                {"name": "swap-usage_percent", "default": 0},
                 {"name": "memory-used_value", "default": 0.0},
                 {"name": "memory-free_value", "default": 0.0},
                 {"name": "memory-cached_value", "default": 0.0},
-                {"name": "memory-buffered_value", "default": 0.0},
+                {"name": "memory-buffers_value", "default": 0.0},
                 {"name": "memory-total_value", "default": 0.0},
                 {"name": "memory-usage_percent", "default": 0},
                 {"name": "update_available", "type": "bool", "default": False},
@@ -298,12 +302,12 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "cputemp"},
                 {"name": "cpu"},
                 {"name": "arcsize"},
-                {"name": "arcratio"},
                 {"name": "memory"},
+                {"name": "swap"}
             ],
             "reporting_query": {
-                "start": "now-90s",
-                "end": "now-30s",
+                "start": "-60",
+                "end": "0",
                 "aggregate": True,
             },
         }
@@ -338,8 +342,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 tmp,
                             ],
                             "reporting_query": {
-                                "start": "now-90s",
-                                "end": "now-30s",
+                                "start": "-60",
+                                "end": "0",
                                 "aggregate": True,
                             },
                         },
@@ -355,23 +359,21 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.get_systemstats()
 
             return
+        #print(tmp_graph)
 
         for i in range(len(tmp_graph)):
             if "name" not in tmp_graph[i]:
                 continue
-
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
-                    self.ds["system_info"]["cpu_temperature"] = round(
-                        max(list(filter(None, tmp_graph[i]["aggregations"]["mean"]))), 1
-                    )
+                    self.ds["system_info"]["cpu_temperature"] = round(max(tmp_graph[i]["aggregations"]["mean"].values()),2)
                 else:
                     self.ds["system_info"]["cpu_temperature"] = 0.0
 
             # CPU load
             if tmp_graph[i]["name"] == "load":
-                tmp_arr = ("load_shortterm", "load_midterm", "load_longterm")
+                tmp_arr = ("shortterm", "midterm", "longterm")
                 self._systemstats_process(tmp_arr, tmp_graph[i], "")
 
             # CPU usage
@@ -405,19 +407,43 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         for tmp_load in tmp_arr:
                             self.ds["interface"][tmp_etc][tmp_load] = 0.0
 
-            # arcratio
+            # SWAPmemory
+            if tmp_graph[i]["name"] == "swap":
+                tmp_arr = (
+                    "used",
+                    "free"
+                )
+                self._systemstats_process(tmp_arr, tmp_graph[i], "swap")
+                self.ds["system_info"]["swap-total_value"] = round(
+                    self.ds["system_info"]["swap-used_value"]
+                    + self.ds["system_info"]["swap-free_value"],
+                    2,
+                )
+                if self.ds["system_info"]["swap-total_value"] > 0:
+                    self.ds["system_info"]["swap-usage_percent"] = round(
+                        100
+                        * (
+                            float(self.ds["system_info"]["swap-total_value"])
+                            - float(self.ds["system_info"]["swap-free_value"])
+                        )
+                        / float(self.ds["system_info"]["swap-total_value"]),
+                        0,
+                    )
+
+
+            # memory
             if tmp_graph[i]["name"] == "memory":
                 tmp_arr = (
-                    "memory-used_value",
-                    "memory-free_value",
-                    "memory-cached_value",
-                    "memory-buffered_value",
+                    "used",
+                    "free",
+                    "cached",
+                    "buffers",
                 )
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
                 self.ds["system_info"]["memory-total_value"] = round(
                     self.ds["system_info"]["memory-used_value"]
                     + self.ds["system_info"]["memory-free_value"]
-                    + self.ds["system_info"]["cache_size-arc_value"],
+                    + self.ds["system_info"]["memory-cached_value"],
                     2,
                 )
                 if self.ds["system_info"]["memory-total_value"] > 0:
@@ -433,8 +459,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
-                tmp_arr = ("cache_size-arc_value", "cache_size-L2_value")
-                self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
+                tmp_arr = ("arc_size")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
             # arcratio
             if tmp_graph[i]["name"] == "arcratio":
@@ -447,15 +473,31 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     def _systemstats_process(self, arr, graph, t) -> None:
         if "aggregations" in graph:
             for e in range(len(graph["legend"])):
-                tmp_var = graph["legend"][e]
-                if tmp_var in arr:
-                    tmp_val = graph["aggregations"]["mean"][e] or 0.0
+                tmp_var = graph["legend"]
+                if tmp_var[e] in arr:
+                    tmp_val = graph["aggregations"]["mean"][tmp_var[e]] or 0.0
+                    if t == "swap":
+                        if tmp_var[e] == "free":
+                            self.ds["system_info"]["swap-free_value"] = round(tmp_val/1024, 2)
+                        elif tmp_var[e] == "used":
+                            self.ds["system_info"]["swap-used_value"] = round(tmp_val/1024, 2)
                     if t == "memory":
-                        self.ds["system_info"][tmp_var] = tmp_val
+                        if tmp_var[e] == "free":
+                            self.ds["system_info"]["memory-free_value"] = round(tmp_val/1024, 2)
+                        elif tmp_var[e] == "used":
+                            self.ds["system_info"]["memory-used_value"] = round(tmp_val/1024, 2)
+                        elif tmp_var[e] == "cached":
+                            self.ds["system_info"]["memory-cached_value"] = round(tmp_val/1024, 2)
+                        elif tmp_var[e] == "buffers":
+                            self.ds["system_info"]["memory-buffers_value"] = round(tmp_val, 2)
+                        else:
+                            print("Nothing.")
+                    elif t == "arcsize":
+                        self.ds["system_info"]["arc_size"] = round(float(tmp_val), 2)
                     elif t == "cpu":
-                        self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
+                        self.ds["system_info"][f"cpu_{tmp_var[e]}"] = round(tmp_val, 2)
                     else:
-                        self.ds["system_info"][tmp_var] = round(tmp_val, 2)
+                        self.ds["system_info"][tmp_var[e]] = round(tmp_val, 2)
         else:
             for tmp_load in arr:
                 if t == "cpu":
