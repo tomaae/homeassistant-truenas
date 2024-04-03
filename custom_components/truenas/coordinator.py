@@ -525,11 +525,11 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                         if self._is_scale and self._version_major >= 23:
                             if tmp_var == "free":
-                                self.ds["system_info"]["memory-used_value"] = round(
+                                self.ds["system_info"]["memory-free_value"] = round(
                                     tmp_val * 1024 * 1024
                                 )
                             elif tmp_var == "used":
-                                self.ds["system_info"]["memory-free_value"] = round(
+                                self.ds["system_info"]["memory-used_value"] = round(
                                     tmp_val * 1024 * 1024
                                 )
                             elif tmp_var == "cached":
