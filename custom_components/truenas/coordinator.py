@@ -655,10 +655,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self.ds["pool"] = parse_api(
             data=self.ds["pool"],
             source=self.api.query("boot/get_state"),
-            key="guid",
+            key="name",
             vals=[
-                {"name": "guid", "default": 0},
-                {"name": "id", "default": 0},
+                {"name": "guid", "default": "boot-pool"},
+                {"name": "id", "default": "boot-pool"},
                 {"name": "name", "default": "unknown"},
                 {"name": "path", "default": "unknown"},
                 {"name": "status", "default": "unknown"},
@@ -704,6 +704,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     "source": "scan/total_secs_left",
                     "default": 0,
                 },
+                {"name": "allocated", "default": 0},
+                {"name": "free", "default": 0},
             ],
             ensure_vals=[
                 {"name": "available_gib", "default": 0.0},
@@ -734,11 +736,16 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
 
             if vals["name"] in ["boot-pool", "freenas-boot"]:
-                self.ds["pool"][uid]["available_gib"] = vals["root_dataset_available"]
-
-                self.ds["pool"][uid]["total_gib"] = (
-                    vals["root_dataset_available"] + vals["root_dataset_used"]
-                )
+                if self._is_scale and self._version_major >= 23:
+                    self.ds["pool"][uid]["available_gib"] = vals["free"]
+                    self.ds["pool"][uid]["total_gib"] = vals["free"] + vals["allocated"]
+                else:
+                    self.ds["pool"][uid]["available_gib"] = vals[
+                        "root_dataset_available"
+                    ]
+                    self.ds["pool"][uid]["total_gib"] = (
+                        vals["root_dataset_available"] + vals["root_dataset_used"]
+                    )
 
                 self.ds["pool"][uid].pop("root_dataset")
 
