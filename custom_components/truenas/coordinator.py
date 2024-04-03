@@ -77,6 +77,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self._is_scale = False
         self._is_virtual = False
+        self._version_major = 0
 
     # ---------------------------
     #   connected
@@ -209,6 +210,15 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self._is_scale = bool(
             self.ds["system_info"]["version"].startswith("TrueNAS-SCALE-")
         )
+        if not self._version_major:
+            self._version_major = int(
+                self.ds["system_info"]
+                .get("version")
+                .removeprefix("TrueNAS-")
+                .removeprefix("SCALE-")
+                .split(".")[0]
+            )
+            print(self._version_major)
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
