@@ -407,9 +407,17 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
-                    self.ds["system_info"]["cpu_temperature"] = round(
-                        max(list(filter(None, tmp_graph[i]["aggregations"]["mean"]))), 1
-                    )
+                    if self._is_scale and self._version_major >= 23:
+                        self.ds["system_info"]["cpu_temperature"] = round(
+                            max(tmp_graph[i]["aggregations"]["mean"].values()), 2
+                        )
+                    else:
+                        self.ds["system_info"]["cpu_temperature"] = round(
+                            max(
+                                list(filter(None, tmp_graph[i]["aggregations"]["mean"]))
+                            ),
+                            1,
+                        )
                 else:
                     self.ds["system_info"]["cpu_temperature"] = 0.0
 
