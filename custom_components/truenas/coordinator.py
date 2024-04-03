@@ -469,7 +469,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     "memory-cached_value",
                     "memory-buffered_value",
                 )
-                print(tmp_graph[i])
                 if self._is_scale and self._version_major >= 23:
                     tmp_arr = (
                         "free",
