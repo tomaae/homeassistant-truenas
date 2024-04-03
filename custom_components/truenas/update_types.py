@@ -1,4 +1,5 @@
 """Definitions for TrueNAS update entities."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

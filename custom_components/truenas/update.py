@@ -1,4 +1,5 @@
 """TrueNAS binary sensor platform."""
+
 from __future__ import annotations
 
 from logging import getLogger
