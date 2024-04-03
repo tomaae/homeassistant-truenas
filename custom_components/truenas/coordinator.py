@@ -154,9 +154,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "cpu_idle", "default": 0.0},
                 {"name": "cpu_usage", "default": 0.0},
                 {"name": "cache_size-arc_value", "default": 0.0},
-                {"name": "cache_size-L2_value", "default": 0.0},
                 {"name": "cache_ratio-arc_value", "default": 0},
-                {"name": "cache_ratio-L2_value", "default": 0},
                 {"name": "memory-used_value", "default": 0.0},
                 {"name": "memory-free_value", "default": 0.0},
                 {"name": "memory-cached_value", "default": 0.0},
@@ -491,14 +489,14 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
-                tmp_arr = ("cache_size-arc_value", "cache_size-L2_value")
+                tmp_arr = "cache_size-arc_value"
                 if self._is_scale and self._version_major >= 23:
                     tmp_arr = "arc_size"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
             # arcratio
             if tmp_graph[i]["name"] == "arcratio":
-                tmp_arr = ("cache_ratio-arc_value", "cache_ratio-L2_value")
+                tmp_arr = "cache_ratio-arc_value"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "arcratio")
 
             # if tmp_graph[i]["name"] == "arcactualrate":
