@@ -218,7 +218,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 .removeprefix("SCALE-")
                 .split(".")[0]
             )
-            print(self._version_major)
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
