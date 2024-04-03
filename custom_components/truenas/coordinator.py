@@ -461,7 +461,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         for tmp_load in tmp_arr:
                             self.ds["interface"][tmp_etc][tmp_load] = 0.0
 
-            # arcratio
+            # memory
             if tmp_graph[i]["name"] == "memory":
                 tmp_arr = (
                     "memory-used_value",
@@ -469,12 +469,19 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     "memory-cached_value",
                     "memory-buffered_value",
                 )
+                print(tmp_graph[i])
+                if self._is_scale and self._version_major >= 23:
+                    tmp_arr = (
+                        "free",
+                        "used",
+                        "cached",
+                        "buffers",
+                    )
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
                 self.ds["system_info"]["memory-total_value"] = round(
                     self.ds["system_info"]["memory-used_value"]
                     + self.ds["system_info"]["memory-free_value"]
-                    + self.ds["system_info"]["cache_size-arc_value"],
-                    2,
+                    + self.ds["system_info"]["cache_size-arc_value"]
                 )
                 if self.ds["system_info"]["memory-total_value"] > 0:
                     self.ds["system_info"]["memory-usage_percent"] = round(
@@ -483,8 +490,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                             float(self.ds["system_info"]["memory-total_value"])
                             - float(self.ds["system_info"]["memory-free_value"])
                         )
-                        / float(self.ds["system_info"]["memory-total_value"]),
-                        0,
+                        / float(self.ds["system_info"]["memory-total_value"])
                     )
 
             # arcsize
@@ -517,7 +523,26 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
-                        self.ds["system_info"][tmp_var] = tmp_val
+
+                        if self._is_scale and self._version_major >= 23:
+                            if tmp_var == "free":
+                                self.ds["system_info"]["memory-used_value"] = round(
+                                    tmp_val * 1024 * 1024
+                                )
+                            elif tmp_var == "used":
+                                self.ds["system_info"]["memory-free_value"] = round(
+                                    tmp_val * 1024 * 1024
+                                )
+                            elif tmp_var == "cached":
+                                self.ds["system_info"]["memory-cached_value"] = round(
+                                    tmp_val * 1024 * 1024
+                                )
+                            elif tmp_var == "buffers":
+                                self.ds["system_info"]["memory-buffered_value"] = round(
+                                    tmp_val * 1024 * 1024
+                                )
+                        else:
+                            self.ds["system_info"][tmp_var] = tmp_val
                     elif t == "cpu":
                         self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
                     elif t == "load":
