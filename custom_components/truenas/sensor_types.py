@@ -91,10 +91,11 @@ DEVICE_ATTRIBUTES_DISK = [
 ]
 
 DEVICE_ATTRIBUTES_CPU = [
-    "cpu_interrupt",
+    "cpu_softirq",
     "cpu_system",
     "cpu_user",
     "cpu_nice",
+    "cpu_iowait",
     "cpu_idle",
 ]
 
@@ -280,7 +281,7 @@ SENSOR_TYPES: tuple[TrueNASSensorEntityDescription, ...] = (
         icon="mdi:memory",
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
-        suggested_display_precision=0,
+        suggested_display_precision=1,
         device_class=SensorDeviceClass.DATA_SIZE,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,

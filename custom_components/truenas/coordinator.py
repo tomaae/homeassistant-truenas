@@ -130,45 +130,86 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_systeminfo(self) -> None:
         """Get system info from TrueNAS."""
-        self.ds["system_info"] = parse_api(
-            data=self.ds["system_info"],
-            source=self.api.query("system/info"),
-            vals=[
-                {"name": "version", "default": "unknown"},
-                {"name": "hostname", "default": "unknown"},
-                {"name": "uptime_seconds", "default": 0},
-                {"name": "system_serial", "default": "unknown"},
-                {"name": "system_product", "default": "unknown"},
-                {"name": "system_manufacturer", "default": "unknown"},
-            ],
-            ensure_vals=[
-                {"name": "uptimeEpoch", "default": 0},
-                {"name": "cpu_temperature", "default": 0.0},
-                {"name": "load_shortterm", "default": 0.0},
-                {"name": "load_midterm", "default": 0.0},
-                {"name": "load_longterm", "default": 0.0},
-                {"name": "cpu_interrupt", "default": 0.0},
-                {"name": "cpu_system", "default": 0.0},
-                {"name": "cpu_user", "default": 0.0},
-                {"name": "cpu_nice", "default": 0.0},
-                {"name": "cpu_idle", "default": 0.0},
-                {"name": "cpu_usage", "default": 0.0},
-                {"name": "cache_size-arc_value", "default": 0.0},
-                {"name": "cache_size-L2_value", "default": 0.0},
-                {"name": "cache_ratio-arc_value", "default": 0},
-                {"name": "cache_ratio-L2_value", "default": 0},
-                {"name": "memory-used_value", "default": 0.0},
-                {"name": "memory-free_value", "default": 0.0},
-                {"name": "memory-cached_value", "default": 0.0},
-                {"name": "memory-buffered_value", "default": 0.0},
-                {"name": "memory-total_value", "default": 0.0},
-                {"name": "memory-usage_percent", "default": 0},
-                {"name": "update_available", "type": "bool", "default": False},
-                {"name": "update_progress", "default": 0},
-                {"name": "update_jobid", "default": 0},
-                {"name": "update_state", "default": "unknown"},
-            ],
-        )
+        if self._is_scale and self._version_major >= 23:
+            self.ds["system_info"] = parse_api(
+                data=self.ds["system_info"],
+                source=self.api.query("system/info"),
+                vals=[
+                    {"name": "version", "default": "unknown"},
+                    {"name": "hostname", "default": "unknown"},
+                    {"name": "uptime_seconds", "default": 0},
+                    {"name": "system_serial", "default": "unknown"},
+                    {"name": "system_product", "default": "unknown"},
+                    {"name": "system_manufacturer", "default": "unknown"},
+                ],
+                ensure_vals=[
+                    {"name": "uptimeEpoch", "default": 0},
+                    {"name": "cpu_temperature", "default": 0.0},
+                    {"name": "load_shortterm", "default": 0.0},
+                    {"name": "load_midterm", "default": 0.0},
+                    {"name": "load_longterm", "default": 0.0},
+                    {"name": "cpu_interrupt", "default": 0.0},
+                    {"name": "cpu_system", "default": 0.0},
+                    {"name": "cpu_user", "default": 0.0},
+                    {"name": "cpu_nice", "default": 0.0},
+                    {"name": "cpu_idle", "default": 0.0},
+                    {"name": "cpu_usage", "default": 0.0},
+                    {"name": "cache_size-arc_value", "default": 0.0},
+                    {"name": "cache_size-L2_value", "default": 0.0},
+                    {"name": "cache_ratio-arc_value", "default": 0},
+                    {"name": "cache_ratio-L2_value", "default": 0},
+                    {"name": "memory-used_value", "default": 0.0},
+                    {"name": "memory-free_value", "default": 0.0},
+                    {"name": "memory-cached_value", "default": 0.0},
+                    {"name": "memory-buffered_value", "default": 0.0},
+                    {"name": "memory-total_value", "default": 0.0},
+                    {"name": "memory-usage_percent", "default": 0},
+                    {"name": "update_available", "type": "bool", "default": False},
+                    {"name": "update_progress", "default": 0},
+                    {"name": "update_jobid", "default": 0},
+                    {"name": "update_state", "default": "unknown"},
+                ],
+            )
+        else:
+            self.ds["system_info"] = parse_api(
+                data=self.ds["system_info"],
+                source=self.api.query("system/info"),
+                vals=[
+                    {"name": "version", "default": "unknown"},
+                    {"name": "hostname", "default": "unknown"},
+                    {"name": "uptime_seconds", "default": 0},
+                    {"name": "system_serial", "default": "unknown"},
+                    {"name": "system_product", "default": "unknown"},
+                    {"name": "system_manufacturer", "default": "unknown"},
+                ],
+                ensure_vals=[
+                    {"name": "uptimeEpoch", "default": 0},
+                    {"name": "cpu_temperature", "default": 0.0},
+                    {"name": "load_shortterm", "default": 0.0},
+                    {"name": "load_midterm", "default": 0.0},
+                    {"name": "load_longterm", "default": 0.0},
+                    {"name": "cpu_interrupt", "default": 0.0},
+                    {"name": "cpu_system", "default": 0.0},
+                    {"name": "cpu_user", "default": 0.0},
+                    {"name": "cpu_nice", "default": 0.0},
+                    {"name": "cpu_idle", "default": 0.0},
+                    {"name": "cpu_usage", "default": 0.0},
+                    {"name": "cache_size-arc_value", "default": 0.0},
+                    {"name": "cache_size-L2_value", "default": 0.0},
+                    {"name": "cache_ratio-arc_value", "default": 0},
+                    {"name": "cache_ratio-L2_value", "default": 0},
+                    {"name": "memory-used_value", "default": 0.0},
+                    {"name": "memory-free_value", "default": 0.0},
+                    {"name": "memory-cached_value", "default": 0.0},
+                    {"name": "memory-buffered_value", "default": 0.0},
+                    {"name": "memory-total_value", "default": 0.0},
+                    {"name": "memory-usage_percent", "default": 0},
+                    {"name": "update_available", "type": "bool", "default": False},
+                    {"name": "update_progress", "default": 0},
+                    {"name": "update_jobid", "default": 0},
+                    {"name": "update_state", "default": "unknown"},
+                ],
+            )
         if not self.api.connected():
             return
 
@@ -317,6 +358,22 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 "aggregate": True,
             },
         }
+        if self._is_scale and self._version_major >= 23:
+            tmp_params = {
+                "graphs": [
+                    {"name": "load"},
+                    {"name": "cputemp"},
+                    {"name": "cpu"},
+                    {"name": "arcsize"},
+                    {"name": "arcactualrate"},
+                    {"name": "memory"},
+                ],
+                "reporting_query_netdata": {
+                    "start": "-90",
+                    "end": "-30",
+                    "aggregate": True,
+                },
+            }
 
         for uid, vals in self.ds["interface"].items():
             tmp_params["graphs"].append({"name": "interface", "identifier": uid})
@@ -331,8 +388,12 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not tmp_params["graphs"]:
             return
 
+        reporting_path = "reporting/get_data"
+        if self._is_scale and self._version_major >= 23:
+            reporting_path = "reporting/netdata_get_data"
+
         tmp_graph = self.api.query(
-            "reporting/get_data",
+            reporting_path,
             method="post",
             params=tmp_params,
         )
@@ -340,19 +401,33 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not isinstance(tmp_graph, list):
             if self.api.error == 500:
                 for tmp in tmp_params["graphs"]:
-                    tmp2 = self.api.query(
-                        "reporting/get_data",
-                        method="post",
-                        params={
+                    tmp_params2 = {
+                        "graphs": [
+                            tmp,
+                        ],
+                        "reporting_query": {
+                            "start": "now-90s",
+                            "end": "now-30s",
+                            "aggregate": True,
+                        },
+                    }
+
+                    if self._is_scale and self._version_major >= 23:
+                        tmp_params2 = {
                             "graphs": [
                                 tmp,
                             ],
-                            "reporting_query": {
-                                "start": "now-90s",
-                                "end": "now-30s",
+                            "reporting_query_netdata": {
+                                "start": "-90",
+                                "end": "-30",
                                 "aggregate": True,
                             },
-                        },
+                        }
+
+                    tmp2 = self.api.query(
+                        reporting_path,
+                        method="post",
+                        params=tmp_params2,
                     )
                     if not isinstance(tmp2, list) and self.api.error == 500:
                         self._systemstats_errored.append(tmp["name"])
@@ -382,11 +457,17 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU load
             if tmp_graph[i]["name"] == "load":
                 tmp_arr = ("load_shortterm", "load_midterm", "load_longterm")
-                self._systemstats_process(tmp_arr, tmp_graph[i], "")
+                if self._is_scale and self._version_major >= 23:
+                    tmp_arr = ("shortterm", "midterm", "longterm")
+
+                self._systemstats_process(tmp_arr, tmp_graph[i], "load")
 
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
                 tmp_arr = ("interrupt", "system", "user", "nice", "idle")
+                if self._is_scale and self._version_major >= 23:
+                    tmp_arr = ("softirq", "system", "user", "nice", "iowait", "idle")
+
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
                 self.ds["system_info"]["cpu_usage"] = round(
                     self.ds["system_info"]["cpu_system"]
@@ -444,12 +525,19 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
                 tmp_arr = ("cache_size-arc_value", "cache_size-L2_value")
-                self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
+                if self._is_scale and self._version_major >= 23:
+                    tmp_arr = "arc_size"
+                self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
             # arcratio
             if tmp_graph[i]["name"] == "arcratio":
                 tmp_arr = ("cache_ratio-arc_value", "cache_ratio-L2_value")
-                self._systemstats_process(tmp_arr, tmp_graph[i], "")
+                self._systemstats_process(tmp_arr, tmp_graph[i], "arcratio")
+
+            # if tmp_graph[i]["name"] == "arcactualrate":
+            #     print(tmp_graph[i])
+            #     tmp_arr = ("hits", "misses")
+            #     self._systemstats_process(tmp_arr, tmp_graph[i], "arcratio")
 
     # ---------------------------
     #   _systemstats_process
@@ -459,11 +547,36 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             for e in range(len(graph["legend"])):
                 tmp_var = graph["legend"][e]
                 if tmp_var in arr:
+                    if self._is_scale and self._version_major >= 23:
+                        e = tmp_var
+
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
                         self.ds["system_info"][tmp_var] = tmp_val
                     elif t == "cpu":
                         self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
+                    elif t == "load":
+                        if self._is_scale and self._version_major >= 23:
+                            self.ds["system_info"][f"load_{tmp_var}"] = round(
+                                tmp_val, 2
+                            )
+                        else:
+                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
+                    elif t == "arcsize":
+                        if self._is_scale and self._version_major >= 23:
+                            tmp_val = tmp_val * 1024 * 1024
+                            self.ds["system_info"]["cache_size-arc_value"] = round(
+                                tmp_val, 2
+                            )
+                        else:
+                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
+                    elif t == "arcratio":
+                        if self._is_scale and self._version_major >= 23:
+                            self.ds["system_info"]["cache_ratio-arc_value"] = round(
+                                tmp_val, 2
+                            )
+                        else:
+                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
                     else:
                         self.ds["system_info"][tmp_var] = round(tmp_val, 2)
         else:
