@@ -648,6 +648,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             ensure_vals=[
                 {"name": "available_gib", "default": 0.0},
                 {"name": "total_gib", "default": 0.0},
+                {"name": "usage", "default": 0.0},
             ],
         )
 
@@ -707,6 +708,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             ensure_vals=[
                 {"name": "available_gib", "default": 0.0},
                 {"name": "total_gib", "default": 0.0},
+                {"name": "usage", "default": 0.0},
             ],
         )
 
@@ -739,6 +741,14 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 )
 
                 self.ds["pool"][uid].pop("root_dataset")
+
+            self.ds["pool"][uid]["usage"] = round(
+                (
+                    self.ds["pool"][uid]["available_gib"]
+                    / self.ds["pool"][uid]["total_gib"]
+                )
+                * 100
+            )
 
     # ---------------------------
     #   get_dataset
