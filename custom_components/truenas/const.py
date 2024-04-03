@@ -1,4 +1,5 @@
 """Constants used by the TrueNAS integration."""
+
 import voluptuous as vol
 
 from homeassistant.const import Platform

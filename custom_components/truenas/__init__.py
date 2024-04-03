@@ -1,5 +1,7 @@
 """The TrueNAS integration."""
+
 from __future__ import annotations
+
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry

@@ -1,4 +1,5 @@
 """Config flow to configure TrueNAS."""
+
 from __future__ import annotations
 
 from logging import getLogger
