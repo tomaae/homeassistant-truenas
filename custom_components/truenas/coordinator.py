@@ -42,7 +42,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             self.hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=10),
+            update_interval=timedelta(seconds=60),
         )
 
         self.name = config_entry.data[CONF_NAME]
