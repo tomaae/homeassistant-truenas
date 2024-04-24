@@ -1,8 +1,6 @@
 {
     "name": "TrueNAS",
-    "homeassistant": "2023.9.0",
+    "homeassistant": "2024.3.0",
     "render_readme": false,
-    "zip_release": true,
-    "hide_default_branch": true,
-    "filename": "truenas.zip"
+    "zip_release": false
 }
