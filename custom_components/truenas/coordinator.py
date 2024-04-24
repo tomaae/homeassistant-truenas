@@ -870,7 +870,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             for device in device_registry.devices.values():
                 if (
                     self.config_entry.entry_id in device.config_entries
-                    and device.name.endswith(" Datasets")
+                    and device.name.endswith("Datasets")
                 ):
                     self.datasets_hass_device_id = device.id
                     _LOGGER.debug(f"datasets device: {device.name}")
@@ -887,7 +887,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             if (
                 entity.device_id == self.datasets_hass_device_id
                 and entity.unique_id.removeprefix(f"{self.name.lower()}-dataset-")
-                not in map(str.lower, self.ds["dataset"].keys())
+                not in map(
+                    lambda x: str.replace(x, "/", "_"),
+                    map(str.lower, self.ds["dataset"].keys()),
+                )
             ):
                 _LOGGER.debug(f"dataset to be removed: {entity.unique_id}")
                 entities_to_be_removed.append(entity.entity_id)
