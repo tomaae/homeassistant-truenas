@@ -154,7 +154,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "cpu_idle", "default": 0.0},
                 {"name": "cpu_usage", "default": 0.0},
                 {"name": "cache_size-arc_value", "default": 0.0},
-                {"name": "cache_ratio-arc_value", "default": 0},
                 {"name": "memory-used_value", "default": 0.0},
                 {"name": "memory-free_value", "default": 0.0},
                 {"name": "memory-cached_value", "default": 0.0},
@@ -306,7 +305,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "cputemp"},
                 {"name": "cpu"},
                 {"name": "arcsize"},
-                {"name": "arcratio"},
                 {"name": "memory"},
             ],
             "reporting_query": {
@@ -322,7 +320,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "cputemp"},
                     {"name": "cpu"},
                     {"name": "arcsize"},
-                    {"name": "arcactualrate"},
                     {"name": "memory"},
                 ],
                 "reporting_query_netdata": {
@@ -338,7 +335,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "cputemp"},
                     {"name": "cpu"},
                     {"name": "arcsize"},
-                    {"name": "arcactualrate"},
                     {"name": "memory"},
                 ],
                 "reporting_query": {
@@ -520,16 +516,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     tmp_arr = "arc_size"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
-            # arcratio
-            if tmp_graph[i]["name"] == "arcratio":
-                tmp_arr = "cache_ratio-arc_value"
-                self._systemstats_process(tmp_arr, tmp_graph[i], "arcratio")
-
-            # if tmp_graph[i]["name"] == "arcactualrate":
-            #     print(tmp_graph[i])
-            #     tmp_arr = ("hits", "misses")
-            #     self._systemstats_process(tmp_arr, tmp_graph[i], "arcratio")
-
     # ---------------------------
     #   _systemstats_process
     # ---------------------------
@@ -576,13 +562,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         if self._is_scale and self._version_major >= 23:
                             tmp_val = tmp_val * 1024 * 1024
                             self.ds["system_info"]["cache_size-arc_value"] = round(
-                                tmp_val, 2
-                            )
-                        else:
-                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
-                    elif t == "arcratio":
-                        if self._is_scale and self._version_major >= 23:
-                            self.ds["system_info"]["cache_ratio-arc_value"] = round(
                                 tmp_val, 2
                             )
                         else:
