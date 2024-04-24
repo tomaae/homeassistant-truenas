@@ -465,15 +465,43 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     tmp_graph[i]["legend"] = [
                         tmp.replace("if_octets_", "") for tmp in tmp_graph[i]["legend"]
                     ]
+                    if self._is_scale and self._version_major >= 23:
+                        tmp_graph[i]["legend"] = [
+                            tmp.replace("received", "rx")
+                            for tmp in tmp_graph[i]["legend"]
+                        ]
+                        tmp_graph[i]["legend"] = [
+                            tmp.replace("sent", "tx") for tmp in tmp_graph[i]["legend"]
+                        ]
+                        tmp_graph[i]["aggregations"]["mean"] = {
+                            k.replace("received", "rx"): v
+                            for k, v in tmp_graph[i]["aggregations"]["mean"].items()
+                        }
+                        tmp_graph[i]["aggregations"]["mean"] = {
+                            k.replace("sent", "tx"): v
+                            for k, v in tmp_graph[i]["aggregations"]["mean"].items()
+                        }
+
                     tmp_arr = ("rx", "tx")
                     if "aggregations" in tmp_graph[i]:
                         for e in range(len(tmp_graph[i]["legend"])):
                             tmp_var = tmp_graph[i]["legend"][e]
                             if tmp_var in tmp_arr:
-                                tmp_val = tmp_graph[i]["aggregations"]["mean"][e] or 0.0
-                                self.ds["interface"][tmp_etc][tmp_var] = round(
-                                    (tmp_val / 1024), 2
-                                )
+                                if self._is_scale and self._version_major >= 23:
+                                    tmp_val = (
+                                        tmp_graph[i]["aggregations"]["mean"][tmp_var]
+                                        or 0.0
+                                    )
+                                    self.ds["interface"][tmp_etc][tmp_var] = round(
+                                        (tmp_val * 0.12207), 2
+                                    )
+                                else:
+                                    tmp_val = (
+                                        tmp_graph[i]["aggregations"]["mean"][e] or 0.0
+                                    )
+                                    self.ds["interface"][tmp_etc][tmp_var] = round(
+                                        (tmp_val / 1024), 2
+                                    )
                     else:
                         for tmp_load in tmp_arr:
                             self.ds["interface"][tmp_etc][tmp_load] = 0.0
