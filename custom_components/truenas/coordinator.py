@@ -315,7 +315,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 "aggregate": True,
             },
         }
-        if self._is_scale and self._version_major >= 23:
+        if self._is_scale and self._version_major == 23:
             tmp_params = {
                 "graphs": [
                     {"name": "load"},
@@ -326,6 +326,22 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "memory"},
                 ],
                 "reporting_query_netdata": {
+                    "start": "-90",
+                    "end": "-30",
+                    "aggregate": True,
+                },
+            }
+        elif self._is_scale and self._version_major >= 24:
+            tmp_params = {
+                "graphs": [
+                    {"name": "load"},
+                    {"name": "cputemp"},
+                    {"name": "cpu"},
+                    {"name": "arcsize"},
+                    {"name": "arcactualrate"},
+                    {"name": "memory"},
+                ],
+                "reporting_query": {
                     "start": "-90",
                     "end": "-30",
                     "aggregate": True,
@@ -359,9 +375,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             if self.api.error == 500:
                 for tmp in tmp_params["graphs"]:
                     tmp_params2 = {
-                        "graphs": [
-                            tmp,
-                        ],
+                        "graphs": [tmp],
                         "reporting_query": {
                             "start": "now-90s",
                             "end": "now-30s",
@@ -369,15 +383,22 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         },
                     }
 
-                    if self._is_scale and self._version_major >= 23:
+                    if self._is_scale and self._version_major == 23:
                         tmp_params2 = {
-                            "graphs": [
-                                tmp,
-                            ],
+                            "graphs": [tmp],
                             "reporting_query_netdata": {
                                 "start": "-90",
                                 "end": "-30",
                                 "aggregate": True,
+                            },
+                        }
+                    elif self._is_scale and self._version_major >= 24:
+                        tmp_params2 = {
+                            "graphs": [tmp],
+                            "reporting_query": {
+                                "start": "-90",
+                                "end": "-30",
+                                "aggregate": "true",
                             },
                         }
 
