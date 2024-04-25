@@ -491,6 +491,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                     tmp_val = (
                                         tmp_graph[i]["aggregations"]["mean"][tmp_var]
                                         or 0.0
+                                        if tmp_var
+                                        in tmp_graph[i]["aggregations"]["mean"]
+                                        else 0.0
                                     )
                                     self.ds["interface"][tmp_etc][tmp_var] = round(
                                         (tmp_val * 0.12207), 2
@@ -498,6 +501,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 else:
                                     tmp_val = (
                                         tmp_graph[i]["aggregations"]["mean"][e] or 0.0
+                                        if e in tmp_graph[i]["aggregations"]["mean"]
+                                        else 0.0
                                     )
                                     self.ds["interface"][tmp_etc][tmp_var] = round(
                                         (tmp_val / 1024), 2
