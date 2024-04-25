@@ -782,13 +782,16 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                 self.ds["pool"][uid].pop("root_dataset")
 
-            self.ds["pool"][uid]["usage"] = round(
-                (
-                    self.ds["pool"][uid]["available_gib"]
-                    / self.ds["pool"][uid]["total_gib"]
+            if self.ds["pool"][uid]["total_gib"] > 0:
+                self.ds["pool"][uid]["usage"] = round(
+                    (
+                        self.ds["pool"][uid]["available_gib"]
+                        / self.ds["pool"][uid]["total_gib"]
+                    )
+                    * 100
                 )
-                * 100
-            )
+            else:
+                self.ds["pool"][uid]["usage"] = 0
 
     # ---------------------------
     #   get_dataset
