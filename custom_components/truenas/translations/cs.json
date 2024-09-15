@@ -1,0 +1,23 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Nastavení integrace TrueNAS.",
+                "data": {
+                    "name": "Název integrace",
+                    "host": "Hostitel",
+                    "api_key": "API klíč",
+                    "ssl": "Použít SSL",
+                    "verify_ssl": "Ověřit certifikát SSL"
+                }
+            }
+        },
+        "error": {
+            "name_exists": "Název již existuje.",
+            "401": "Žádná autorizace pro tento koncový bod.",
+            "404": "API nebylo na tomto hostiteli nalezeno.",
+            "500": "Interní error.",
+            "no_response": "Hostitel nereaguje."
+        }
+    }
+}
