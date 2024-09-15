@@ -64,11 +64,12 @@ class TrueNASAPI(object):
     #   query
     # ---------------------------
     def query(
-        self, service: str, method: str = "get", params: dict[str, Any] | None = {}
+        self, service: str, method: str = "get", params: dict[str, Any] | None = {}, can_error_offline: bool = False
     ) -> Optional(list):
         """Retrieve data from TrueNAS."""
         self.lock.acquire()
         error = False
+        data = None
         try:
             _LOGGER.debug(
                 "TrueNAS %s query: %s, %s, %s",
@@ -108,7 +109,7 @@ class TrueNASAPI(object):
         except Exception:
             error = True
 
-        if error:
+        if error and not can_error_offline:
             try:
                 errorcode = response.status_code
             except Exception:

@@ -272,7 +272,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     def get_updatecheck(self) -> None:
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("update/check_available", method="post"),
+            source=self.api.query("update/check_available", method="post", can_error_offline=True),
             vals=[
                 {
                     "name": "update_status",
