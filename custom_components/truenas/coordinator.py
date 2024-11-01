@@ -292,7 +292,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {
                     "name": "update_version",
                     "source": "version",
-                    "default": "unknown",
+                    "default": self.ds["system_info"]["version"],
                 },
             ],
         )
