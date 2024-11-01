@@ -1,0 +1,27 @@
+name: Lock
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: lock
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dessant/lock-threads@v3.0.0
+        with:
+          github-token: ${{ github.token }}
+          exclude-any-issue-labels: 'planned, help-wanted'
+          exclude-any-pr-labels: 'wip'
+          issue-inactive-days: "30"
+          issue-lock-reason: ""
+          pr-inactive-days: "7"
+          pr-lock-reason: ""

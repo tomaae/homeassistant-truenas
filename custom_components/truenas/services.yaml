@@ -1,0 +1,129 @@
+---
+cloudsync_run:
+  name: Cloudsync Run
+  description: Start a Clousync Job
+  target:
+    entity:
+      integration: truenas    
+      domain: sensor
+
+dataset_snapshot:
+  name: Dataset Snapshot
+  description: Create a Dataset Snapshot
+  target:
+    entity:
+      integration: truenas    
+      domain: sensor
+
+system_reboot:
+  name: Reboot TrueNAS
+  description: Reboot TrueNAS System (Target Uptime Sensor)
+  target:
+    entity:
+      integration: truenas    
+      domain: sensor
+
+system_shutdown:
+  name: Shutdown TrueNAS
+  description: Shutdown TrueNAS System (Target Uptime Sensor)
+  target:
+    entity:
+      integration: truenas    
+      domain: sensor
+
+service_start:
+  name: Service Start
+  description: Start a Service
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+service_stop:
+  name: Service Stop
+  description: Stop a Service
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+service_restart:
+  name: Service Restart
+  description: Restart a Service
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+service_reload:
+  name: Service Reload
+  description: Reload a Service
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+jail_start:
+  name: Jail Start
+  description: Start a Jail
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+jail_stop:
+  name: Jail Stop
+  description: Stop a Jail
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+jail_restart:
+  name: Jail Restart
+  description: Restart a Jail
+  target:
+    entity:
+      integration: truenas    
+      domain: binary_sensor
+
+vm_start:
+  name: VM Start
+  description: Start a VM
+  fields:
+    overcommit:
+      name: Overcommit Memory
+      description: Memory overcommitment allows the VM to launch even though there is insufficient free memory.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
+
+vm_stop:
+  name: VM Stop
+  description: Stop a VM
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
+
+app_start:
+  name: App Start
+  description: Start a app
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor
+
+app_stop:
+  name: App Stop
+  description: Stop a app
+  target:
+    entity:
+      integration: truenas
+      domain: binary_sensor

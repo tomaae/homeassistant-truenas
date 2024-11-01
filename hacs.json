@@ -1,0 +1,6 @@
+{
+    "name": "TrueNAS",
+    "homeassistant": "2024.3.0",
+    "render_readme": false,
+    "zip_release": false
+}
