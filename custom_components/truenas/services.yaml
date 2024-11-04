@@ -7,6 +7,14 @@ cloudsync_run:
       integration: truenas    
       domain: sensor
 
+cloudsync_abort:
+  name: Cloudsync Abort
+  description: Abort a Clousync Job
+  target:
+    entity:
+      integration: truenas    
+      domain: sensor
+
 dataset_snapshot:
   name: Dataset Snapshot
   description: Create a Dataset Snapshot
