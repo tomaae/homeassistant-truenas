@@ -1123,6 +1123,39 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not self._is_scale:
             return
 
+        try:
+            app_data = self.api.query("chart/release")
+            if app_data is None:
+                _LOGGER.warning("Unable to fetch app data from TrueNAS SCALE")
+                return
+
+            self.ds["app"] = parse_api(
+                data=self.ds["app"],
+                source=app_data,
+                key="id",
+                vals=[
+                    {"name": "id", "default": 0},
+                    {"name": "name", "default": "unknown"},
+                    {"name": "human_version", "default": "unknown"},
+                    {"name": "update_available", "default": "unknown"},
+                    {"name": "container_images_update_available", "default": "unknown"},
+                    {"name": "portal", "source": "portals/open", "default": "unknown"},
+                    {"name": "status", "default": "unknown"},
+                ],
+                ensure_vals=[
+                    {"name": "running", "type": "bool", "default": False},
+                ],
+            )
+
+            for uid, vals in self.ds["app"].items():
+                self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
+        except Exception as e:
+            _LOGGER.error(f"Error fetching app data: {str(e)}")
+            self.ds["app"] = {}
+        """Get Apps from TrueNAS."""
+        if not self._is_scale:
+            return
+
         self.ds["app"] = parse_api(
             data=self.ds["app"],
             source=self.api.query("chart/release"),
