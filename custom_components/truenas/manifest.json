@@ -10,5 +10,5 @@
     "iot_class": "local_polling",
     "issue_tracker": "https://github.com/tomaae/homeassistant-truenas/issues",
     "requirements": [],
-    "version": "0.0.0"
+    "version": "1.3b2.2"
 }
