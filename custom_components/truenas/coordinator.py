@@ -208,23 +208,25 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self._is_scale = bool(
             self.ds["system_info"]["version"].startswith("TrueNAS-SCALE-")
         )
-        if not self._version_major:
-            self._version_major = int(
-                self.ds["system_info"]
-                .get("version")
-                .removeprefix("TrueNAS-")
-                .removeprefix("SCALE-")
-                .split(".")[0]
-            )
 
-        if not self._version_minor:
-            self._version_minor = int(
-                self.ds["system_info"]
-                .get("version")
-                .removeprefix("TrueNAS-")
-                .removeprefix("SCALE-")
-                .split(".")[1]
-            )
+        if self._is_scale:
+            if not self._version_major:
+                self._version_major = int(
+                    self.ds["system_info"]
+                    .get("version")
+                    .removeprefix("TrueNAS-")
+                    .removeprefix("SCALE-")
+                    .split(".")[0]
+                )
+
+            if not self._version_minor:
+                self._version_minor = int(
+                    self.ds["system_info"]
+                    .get("version")
+                    .removeprefix("TrueNAS-")
+                    .removeprefix("SCALE-")
+                    .split(".")[1]
+                )
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
