@@ -292,13 +292,19 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {
                     "name": "update_version",
                     "source": "version",
-                    "default": self.ds["system_info"]["version"],
+                    "default": "unknown",
                 },
             ],
         )
 
         if not self.api.connected():
             return
+
+        if (
+            self.ds["system_info"]["update_version"] == "unknown"
+            and self.ds["system_info"]["version"]
+        ):
+            self.ds["system_info"]["update_version"] = self.ds["system_info"]["version"]
 
         self.ds["system_info"]["update_available"] = (
             self.ds["system_info"]["update_status"] == "AVAILABLE"
