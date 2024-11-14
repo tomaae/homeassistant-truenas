@@ -1143,9 +1143,13 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 vals=[
                     {"name": "id", "default": 0},
                     {"name": "name", "default": "unknown"},
-                    {"name": "human_version", "default": "unknown"},
-                    {"name": "update_available", "default": "unknown"},
-                    {"name": "container_images_update_available", "default": "unknown"},
+                    {"name": "human_version", "type": "bool", "default": False},
+                    {"name": "update_available", "type": "bool", "default": False},
+                    {
+                        "name": "image_updates_available",
+                        "source": "container_images_update_available",
+                        "default": "unknown",
+                    },
                     {"name": "portal", "source": "portals/open", "default": "unknown"},
                     {"name": "status", "default": "unknown"},
                 ],
@@ -1166,8 +1170,17 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "id", "default": 0},
                     {"name": "name", "default": "unknown"},
                     {"name": "human_version", "default": "unknown"},
-                    {"name": "upgrade_available", "default": "unknown"},
-                    {"name": "image_updates_available", "default": "unknown"},
+                    {
+                        "name": "update_available",
+                        "source": "upgrade_available",
+                        "type": "bool",
+                        "default": False,
+                    },
+                    {
+                        "name": "image_updates_available",
+                        "type": "bool",
+                        "default": False,
+                    },
                     {
                         "name": "portal",
                         "source": "portals/Web UI",
