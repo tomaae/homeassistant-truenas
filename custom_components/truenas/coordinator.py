@@ -83,7 +83,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     #   connected
     # ---------------------------
-    def connected(self) -> str:
+    def connected(self) -> bool:
         """Return connected state."""
         return self.api.connected()
 
@@ -1133,7 +1133,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not self._is_scale:
             return
 
-        if self._version_major <= 23 or (self._version_major == 24 and self._version_minor < 10):
+        if self._version_major <= 23 or (
+            self._version_major == 24 and self._version_minor < 10
+        ):
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("chart/release"),
@@ -1151,7 +1153,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "running", "type": "bool", "default": False},
                 ],
             )
-    
+
             for uid, vals in self.ds["app"].items():
                 self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
 
@@ -1166,13 +1168,17 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "human_version", "default": "unknown"},
                     {"name": "upgrade_available", "default": "unknown"},
                     {"name": "image_updates_available", "default": "unknown"},
-                    {"name": "portal", "source": "portals/Web UI", "default": "unknown"},
+                    {
+                        "name": "portal",
+                        "source": "portals/Web UI",
+                        "default": "unknown",
+                    },
                     {"name": "state", "default": "unknown"},
                 ],
                 ensure_vals=[
                     {"name": "running", "type": "bool", "default": False},
                 ],
             )
-        
+
             for uid, vals in self.ds["app"].items():
                 self.ds["app"][uid]["running"] = vals["state"] == "RUNNING"
