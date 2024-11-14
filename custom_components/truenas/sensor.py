@@ -147,7 +147,7 @@ class TrueNASClousyncSensor(TrueNASSensor):
             self.coordinator.api.query, f"cloudsync/id/{self._data['id']}/sync", "post"
         )
 
-    async def abort(self) -> None:
+    async def stop(self) -> None:
         """Abort cloudsync job."""
         tmp_job = await self.hass.async_add_executor_job(
             self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
