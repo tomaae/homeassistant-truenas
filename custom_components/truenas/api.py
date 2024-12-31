@@ -120,7 +120,7 @@ class TrueNASAPI(object):
                     'TrueNAS %s unable to fetch data "%s" (%s)',
                     self._host,
                     service,
-                    error
+                    error,
                 )
                 self._connected = False
                 self._error = error
