@@ -123,7 +123,7 @@ class TrueNASAPI(object):
                     error,
                 )
                 self._connected = False
-                self._error = error
+                self._error = "no_response"
                 return None
 
             self._connected = True
