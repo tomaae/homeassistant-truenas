@@ -231,8 +231,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
             "VMware, Inc.",
+            "Microsoft Corporation",
         ] or self.ds["system_info"]["system_product"] in [
             "VirtualBox",
+            "Virtual Machine",
         ]
 
         if self.ds["system_info"]["uptime_seconds"] > 0:
