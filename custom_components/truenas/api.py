@@ -88,7 +88,7 @@ class TrueNASAPI(object):
                     headers=headers,
                     params=params,
                     verify=self._ssl_verify,
-                    timeout=10,
+                    timeout=30,
                 )
 
             elif method == "post":
@@ -97,7 +97,7 @@ class TrueNASAPI(object):
                     headers=headers,
                     json=params,
                     verify=self._ssl_verify,
-                    timeout=10,
+                    timeout=30,
                 )
 
             if response.status_code == 200:
