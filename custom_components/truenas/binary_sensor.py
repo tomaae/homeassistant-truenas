@@ -306,47 +306,47 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS Applications Binary Sensor."""
 
     async def start(self):
-        """Start a VM."""
-        tmp_vm = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"/chart/release/id/{self._data['id']}"
+        """Start an App."""
+        tmp_app = await self.hass.async_add_executor_job(
+            self.coordinator.api.query, f"/app/id/{self._data['id']}"
         )
 
-        if "status" not in tmp_vm:
-            _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
+        if tmp_app is None or "state" not in tmp_app:
+            _LOGGER.error("App %s (%s) invalid", self._data["name"], self._data["id"])
             return
 
-        if tmp_vm["status"] == "ACTIVE":
+        if tmp_app["state"] == "RUNNING":
             _LOGGER.warning(
-                "VM %s (%s) is not down", self._data["name"], self._data["id"]
+                "App %s (%s) is not down", self._data["name"], self._data["id"]
             )
             return
 
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
-            "/chart/release/scale",
+            "/app/start",
             "post",
-            {"release_name": self._data["id"], "scale_options": {"replica_count": 1}},
+            self._data["id"],
         )
 
     async def stop(self):
-        """Stop a VM."""
-        tmp_vm = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"/chart/release/id/{self._data['id']}"
+        """Stop an App."""
+        tmp_app = await self.hass.async_add_executor_job(
+            self.coordinator.api.query, f"/app/id/{self._data['id']}"
         )
 
-        if "status" not in tmp_vm:
-            _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
+        if tmp_app is None or "state" not in tmp_app:
+            _LOGGER.error("App %s (%s) invalid", self._data["name"], self._data["id"])
             return
 
-        if tmp_vm["status"] != "ACTIVE":
+        if tmp_app["state"] != "RUNNING":
             _LOGGER.warning(
-                "VM %s (%s) is not up", self._data["name"], self._data["id"]
+                "App %s (%s) is not up", self._data["name"], self._data["id"]
             )
             return
 
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
-            "/chart/release/scale",
+            "/app/stop",
             "post",
-            {"release_name": self._data["id"], "scale_options": {"replica_count": 0}},
+            self._data["id"],
         )
