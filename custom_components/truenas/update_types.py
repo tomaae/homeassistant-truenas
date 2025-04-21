@@ -22,13 +22,13 @@ class TrueNASUpdateEntityDescription(UpdateEntityDescription):
     data_uid: str | None = None
     data_reference: str | None = None
     data_attributes_list: List = field(default_factory=lambda: [])
-    func: str = "TrueNASUpdate"
+    func: str | None = None
 
 
 SENSOR_TYPES: tuple[TrueNASUpdateEntityDescription, ...] = (
     TrueNASUpdateEntityDescription(
         key="system_update",
-        name="Update",
+        name="",
         ha_group="System",
         title="TrueNAS",
         data_path="system_info",
@@ -36,6 +36,18 @@ SENSOR_TYPES: tuple[TrueNASUpdateEntityDescription, ...] = (
         data_name="",
         data_uid="",
         data_reference="",
+        func="TrueNASUpdate",
+    ),
+    TrueNASUpdateEntityDescription(
+        key="app_update",
+        name="",
+        ha_group="Apps",
+        data_path="app",
+        data_attribute="update_available",
+        data_name="name",
+        data_uid="id",
+        data_reference="id",
+        func="TrueNASAppUpdate",
     ),
 )
 
