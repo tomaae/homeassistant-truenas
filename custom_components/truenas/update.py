@@ -133,7 +133,6 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
             "post",
             {"app_name": self._data["id"]},
         )
-        await self.coordinator.async_refresh()
 
     @property
     def title(self) -> str | None:
