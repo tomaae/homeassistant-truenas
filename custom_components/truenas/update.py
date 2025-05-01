@@ -133,6 +133,12 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
             "post",
             {"app_name": self._data["id"]},
         )
+        await self.coordinator.async_refresh()
+
+    @property
+    def in_progress(self) -> bool:
+        """Return if update is in progress."""
+        return bool(self._data.get("update_jobid"))
 
     @property
     def title(self) -> str | None:
