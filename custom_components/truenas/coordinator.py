@@ -1180,6 +1180,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     {"name": "id", "default": 0},
                     {"name": "name", "default": "unknown"},
                     {"name": "human_version", "default": "unknown"},
+                    {"name": "version", "default": "unknown"},
+                    {"name": "latest_version", "default": "unknown"},
                     {
                         "name": "update_available",
                         "source": "upgrade_available",
