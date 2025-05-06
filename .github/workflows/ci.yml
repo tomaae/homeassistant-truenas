@@ -61,7 +61,7 @@ jobs:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
       - name: Security check - Bandit
-        uses: ioggstream/bandit-report-artifacts@v1
+        uses: ioggstream/bandit-report-artifacts@v1.7.4
         with:
           project_path: custom_components/truenas
           config_file: .github/bandit.yaml
