@@ -4,9 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-wheel = ">=0.34"
-pygithub = ">=1.47"
-homeassistant = ">=2023.9.0"
+mypy = ">=1.15"
+wheel = ">=0.45"
+pygithub = ">=2.6"
+homeassistant = ">=2025.4.0"
 
 
 [packages]
