@@ -123,6 +123,12 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
     @property
     def latest_version(self) -> str:
         """Latest version available for install."""
+        if self.coordinator._version_major == 24 and self.coordinator._version_minor == 10:
+            if self._data["update_available"]:
+                return "Update available"
+            else:
+                return self._data["version"]
+
         return self._data["latest_version"]
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
