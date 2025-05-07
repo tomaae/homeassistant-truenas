@@ -1043,6 +1043,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_vm(self) -> None:
         """Get VMs from TrueNAS."""
+        #print(self.api.query("virt/instance/query"))
+        if self._is_scale and self._version_major >= 25:
+            return
+
         self.ds["vm"] = parse_api(
             data=self.ds["vm"],
             source=self.api.query("vm"),
