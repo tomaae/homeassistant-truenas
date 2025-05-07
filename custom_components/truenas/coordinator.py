@@ -209,6 +209,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             self.ds["system_info"]["version"].startswith("TrueNAS-SCALE-")
         )
 
+        if not self._is_scale and "TrueNAS" not in self.ds["system_info"]["version"]:
+            self._is_scale = True
+
         if self._is_scale:
             if not self._version_major:
                 self._version_major = int(
@@ -1146,6 +1149,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if self._version_major <= 23 or (
             self._version_major == 24 and self._version_minor < 10
         ):
+            print("1")
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("chart/release"),
@@ -1171,7 +1175,42 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             for uid, vals in self.ds["app"].items():
                 self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
 
-        else:
+        elif self._version_major == 24 and self._version_minor == 10:
+            print("2")
+            self.ds["app"] = parse_api(
+                data=self.ds["app"],
+                source=self.api.query("app"),
+                key="id",
+                vals=[
+                    {"name": "id", "default": 0},
+                    {"name": "name", "default": "unknown"},
+                    {"name": "human_version", "default": "unknown"},
+                    {"name": "version", "default": "unknown"},
+                    {"name": "latest_version", "default": "unknown"},
+                    {
+                        "name": "update_available",
+                        "source": "upgrade_available",
+                        "type": "bool",
+                        "default": False,
+                    },
+                    {
+                        "name": "image_updates_available",
+                        "type": "bool",
+                        "default": False,
+                    },
+                    {
+                        "name": "portal",
+                        "source": "portals/Web UI",
+                        "default": "unknown",
+                    },
+                    {"name": "state", "default": "unknown"},
+                ],
+                ensure_vals=[
+                    {"name": "running", "type": "bool", "default": False},
+                ],
+            )
+        elif self._version_major >= 24:
+            print("3")
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("app"),
