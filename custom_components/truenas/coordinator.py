@@ -141,6 +141,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "system_serial", "default": "unknown"},
                 {"name": "system_product", "default": "unknown"},
                 {"name": "system_manufacturer", "default": "unknown"},
+                {"name": "physmem", "default": 0},
             ],
             ensure_vals=[
                 {"name": "uptimeEpoch", "default": 0},
@@ -580,16 +581,16 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         "buffers",
                     )
                 if self._is_scale and self._version_major >= 25:
-                    # tmp_arr = ("available")
-                    self.ds["system_info"]["memory-usage_percent"] = None
-                    continue
+                    tmp_arr = "available"
+                    self.ds["system_info"]["memory-total_value"] = round(self.ds["system_info"]["physmem"])
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
-                self.ds["system_info"]["memory-total_value"] = round(
-                    self.ds["system_info"]["memory-used_value"]
-                    + self.ds["system_info"]["memory-free_value"]
-                    + self.ds["system_info"]["cache_size-arc_value"]
-                )
+                if not self._is_scale or (self._is_scale and self._version_major <= 24):
+                    self.ds["system_info"]["memory-total_value"] = round(
+                        self.ds["system_info"]["memory-used_value"]
+                        + self.ds["system_info"]["memory-free_value"]
+                        + self.ds["system_info"]["cache_size-arc_value"]
+                    )
                 if self.ds["system_info"]["memory-total_value"] > 0:
                     self.ds["system_info"]["memory-usage_percent"] = round(
                         100
