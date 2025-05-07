@@ -322,6 +322,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_systemstats(self) -> None:
         """Get system statistics."""
+        report_epoch = int(datetime.now().replace(microsecond=0).timestamp())
         tmp_params = {
             "graphs": [
                 {"name": "load"},
@@ -351,7 +352,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     "aggregate": True,
                 },
             }
-        elif self._is_scale and self._version_major >= 24:
+        elif self._is_scale and self._version_major == 24:
             tmp_params = {
                 "graphs": [
                     {"name": "load"},
@@ -363,6 +364,21 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 "reporting_query": {
                     "start": "-90",
                     "end": "-30",
+                    "aggregate": True,
+                },
+            }
+        elif self._is_scale and self._version_major >= 25:
+            tmp_params = {
+                "graphs": [
+                    {"name": "load"},
+                    {"name": "cputemp"},
+                    {"name": "cpu"},
+                    {"name": "arcsize"},
+                    {"name": "memory"},
+                ],
+                "query": {
+                    "start": report_epoch - 30,
+                    "end": report_epoch - 90,
                     "aggregate": True,
                 },
             }
@@ -411,12 +427,21 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 "aggregate": True,
                             },
                         }
-                    elif self._is_scale and self._version_major >= 24:
+                    elif self._is_scale and self._version_major == 24:
                         tmp_params2 = {
                             "graphs": [tmp],
                             "reporting_query": {
                                 "start": "-90",
                                 "end": "-30",
+                                "aggregate": "true",
+                            },
+                        }
+                    elif self._is_scale and self._version_major >= 24:
+                        tmp_params2 = {
+                            "graphs": [tmp],
+                            "query": {
+                                "start": report_epoch - 30,
+                                "end": report_epoch - 90,
                                 "aggregate": "true",
                             },
                         }
@@ -470,15 +495,20 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
                 tmp_arr = ("interrupt", "system", "user", "nice", "idle")
-                if self._is_scale and self._version_major >= 23:
+                if self._is_scale and self._version_major >= 23 and self._version_major <= 24:
                     tmp_arr = ("softirq", "system", "user", "nice", "iowait", "idle")
+                elif self._is_scale and self._version_major >= 25:
+                    tmp_arr = "cpu"
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
-                self.ds["system_info"]["cpu_usage"] = round(
-                    self.ds["system_info"]["cpu_system"]
-                    + self.ds["system_info"]["cpu_user"],
-                    2,
-                )
+                if self._is_scale and self._version_major >= 25:
+                    self.ds["system_info"]["cpu_usage"] = round(self.ds["system_info"]["cpu_cpu"],2)
+                else:
+                    self.ds["system_info"]["cpu_usage"] = round(
+                        self.ds["system_info"]["cpu_system"]
+                        + self.ds["system_info"]["cpu_user"],
+                        2,
+                    )
 
             # Interface
             if tmp_graph[i]["name"] == "interface":
@@ -549,6 +579,11 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         "cached",
                         "buffers",
                     )
+                if self._is_scale and self._version_major >= 25:
+                    # tmp_arr = ("available")
+                    self.ds["system_info"]["memory-usage_percent"] = None
+                    continue
+
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
                 self.ds["system_info"]["memory-total_value"] = round(
                     self.ds["system_info"]["memory-used_value"]
@@ -585,8 +620,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
-
-                        if self._is_scale and self._version_major >= 23:
+                        if self._is_scale and self._version_major >= 23 and self._version_major <= 24:
                             if tmp_var == "free":
                                 self.ds["system_info"]["memory-free_value"] = round(
                                     tmp_val * 1024 * 1024
@@ -603,6 +637,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 self.ds["system_info"]["memory-buffered_value"] = round(
                                     tmp_val * 1024 * 1024
                                 )
+                        elif self._is_scale and self._version_major >= 25:
+                            if tmp_var == "available":
+                                self.ds["system_info"]["memory-free_value"] = round(tmp_val)
                         else:
                             self.ds["system_info"][tmp_var] = tmp_val
                     elif t == "cpu":
@@ -1149,7 +1186,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if self._version_major <= 23 or (
             self._version_major == 24 and self._version_minor < 10
         ):
-            print("1")
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("chart/release"),
@@ -1176,7 +1212,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
 
         elif self._version_major == 24 and self._version_minor == 10:
-            print("2")
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("app"),
@@ -1210,7 +1245,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 ],
             )
         elif self._version_major >= 24:
-            print("3")
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
                 source=self.api.query("app"),
