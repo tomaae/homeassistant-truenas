@@ -236,6 +236,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             "QEMU",
             "VMware, Inc.",
             "Microsoft Corporation",
+            "Xen",
         ] or self.ds["system_info"]["system_product"] in [
             "VirtualBox",
             "Virtual Machine",
