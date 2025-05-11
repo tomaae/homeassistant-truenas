@@ -4,15 +4,14 @@ from logging import getLogger
 from threading import Lock
 from typing import Any
 
-from requests import get as requests_get, post as requests_post
 from voluptuous import Optional
-from urllib3 import disable_warnings
-from urllib3.exceptions import InsecureRequestWarning
+import ssl
+import json
+from websockets.sync.client import connect, ClientConnection
 
 from homeassistant.core import HomeAssistant
 
 _LOGGER = getLogger(__name__)
-disable_warnings(InsecureRequestWarning)
 
 
 # ---------------------------
@@ -20,6 +19,7 @@ disable_warnings(InsecureRequestWarning)
 # ---------------------------
 class TrueNASAPI(object):
     """Handle all communication with TrueNAS."""
+    _ws: ClientConnection
 
     def __init__(
         self,
@@ -32,17 +32,88 @@ class TrueNASAPI(object):
         """Initialize the TrueNAS API."""
         self._hass = hass
         self._host = host
-        self._use_ssl = use_ssl
         self._api_key = api_key
-        self._protocol = "https" if self._use_ssl else "http"
         self._ssl_verify = verify_ssl
-        if not self._use_ssl:
-            self._ssl_verify = True
-        self._url = f"{self._protocol}://{self._host}/api/v2.0/"
+        self._url = f"wss://{self._host}/api/current"
+
+        self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        self._ssl_context.check_hostname = False
+        self._ssl_context.verify_mode = ssl.CERT_NONE
+        if verify_ssl:
+            self._ssl_context.check_hostname = True
+            self._ssl_context.verify_mode = ssl.CERT_REQUIRED
 
         self.lock = Lock()
         self._connected = False
         self._error = ""
+        self.connect()
+
+    # ---------------------------
+    #   connect
+    # ---------------------------
+    def connect(self) -> bool:
+        """Return connected boolean."""
+        self.lock.acquire()
+        self._connected = False
+        self._error = ""
+        try:
+            self._ws = connect(self._url, ssl=self._ssl_context)
+        except Exception as e:
+            if "Connection refused" in e.args:
+                self._error = "connection_refused"
+
+            if "No route to host" in e.args:
+                self._error = "invalid_hostname"
+
+            if "timed out while waiting for handshake response" in e.args:
+                self._error = "handshake_timeout"
+
+            if "404" in str(e):
+                self._error = "api_not_found"
+
+            _LOGGER.error("TrueNAS %s failed to connect (%s)", self._host, e)
+            self.lock.release()
+            return False
+
+        try:
+            payload = {
+                "method": "auth.login_with_api_key",
+                "jsonrpc": "2.0",
+                "id": 0,
+                "params": [self._api_key],
+            }
+            self._ws.send(json.dumps(payload))
+            message = self._ws.recv()
+            data = json.loads(message)
+            self._connected = data["result"]
+            if not self._connected:
+                self._error = "invalid_key"
+
+        except Exception as e:
+            _LOGGER.error("TrueNAS %s failed to login (%s)", self._host, e)
+            self.lock.release()
+            return False
+
+        self.lock.release()
+        return self._connected
+
+    # ---------------------------
+    #   disconnect
+    # ---------------------------
+    def disconnect(self) -> bool:
+        """Return connected boolean."""
+        self._ws.close()
+        self._connected = False
+        return self._connected
+
+    # ---------------------------
+    #   reconnect
+    # ---------------------------
+    def reconnect(self) -> bool:
+        """Return connected boolean."""
+        self.disconnect()
+        self.connect()
+        return self._connected
 
     # ---------------------------
     #   connected
@@ -56,7 +127,7 @@ class TrueNASAPI(object):
     # ---------------------------
     def connection_test(self) -> tuple:
         """Test connection."""
-        self.query("pool")
+        self.query("system.info")
 
         return self._connected, self._error
 
@@ -68,7 +139,7 @@ class TrueNASAPI(object):
     ) -> Optional(list):
         """Retrieve data from TrueNAS."""
         self.lock.acquire()
-        error = False
+        self._error = ""
         try:
             _LOGGER.debug(
                 "TrueNAS %s query: %s, %s, %s",
@@ -77,65 +148,36 @@ class TrueNASAPI(object):
                 method,
                 params,
             )
-
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self._api_key}",
+            payload = {
+                "method": service,
+                "jsonrpc": "2.0",
+                "id": 0,
+                "params": [],
             }
-            if method == "get":
-                response = requests_get(
-                    f"{self._url}{service}",
-                    headers=headers,
-                    params=params,
-                    verify=self._ssl_verify,
-                    timeout=10,
-                )
+            if params != {}:
+                payload["params"] = [params]
 
-            elif method == "post":
-                response = requests_post(
-                    f"{self._url}{service}",
-                    headers=headers,
-                    json=params,
-                    verify=self._ssl_verify,
-                    timeout=10,
-                )
-
-            if response.status_code == 200:
-                data = response.json()
-                _LOGGER.debug("TrueNAS %s query response: %s", self._host, data)
+            self._ws.send(json.dumps(payload))
+            message = self._ws.recv()
+            data = json.loads(message)
+            if "result" in data:
+                data = data["result"]
             else:
-                error = True
-        except Exception:
-            error = True
+                self._error = "malformed_result"
 
-        if error:
-            try:
-                errorcode = response.status_code
-            except Exception:
-                errorcode = "no_response"
-
+            _LOGGER.debug("TrueNAS %s query (%s) response: %s", self._host, service, data)
+        except Exception as e:
             _LOGGER.warning(
                 'TrueNAS %s unable to fetch data "%s" (%s)',
                 self._host,
                 service,
-                errorcode,
+                e,
             )
-
-            if (
-                errorcode != 500
-                and service != "reporting/get_data"
-                and service != "reporting/netdata_get_data"
-            ):
-                self._connected = False
-
-            self._error = errorcode
+            self._error = e
             self.lock.release()
             return None
 
-        self._connected = True
-        self._error = ""
         self.lock.release()
-
         return data
 
     @property
