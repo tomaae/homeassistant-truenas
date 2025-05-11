@@ -17,7 +17,13 @@
             "401": "Ошибка авторизации",
             "404": "API не найден",
             "500": "Внутренняя ошибка",
-            "no_response": "Хост не отвечает"
+            "no_response": "Хост не отвечает",
+            "invalid_key": "Login failed, invalid API key.",
+            "invalid_hostname": "Connection failed, invalid hostname.",
+            "connection_refused": "Connection failed, connection refused.",
+            "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
+            "api_not_found": "Connection failed, API not found.",
+            "malformed_result": "API response is malformed."
         }
     }
 }

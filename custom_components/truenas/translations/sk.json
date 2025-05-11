@@ -17,7 +17,13 @@
             "401": "Žiadna autorizácia pre tento koncový bod.",
             "404": "API sa na tomto hostiteľovi nenašlo.",
             "500": "Interný error.",
-            "no_response": "Hostiteľ nereaguje."
+            "no_response": "Hostiteľ nereaguje.",
+            "invalid_key": "Login failed, invalid API key.",
+            "invalid_hostname": "Connection failed, invalid hostname.",
+            "connection_refused": "Connection failed, connection refused.",
+            "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
+            "api_not_found": "Connection failed, API not found.",
+            "malformed_result": "API response is malformed."
         }
     }
 }
