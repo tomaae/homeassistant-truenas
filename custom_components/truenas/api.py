@@ -19,6 +19,7 @@ _LOGGER = getLogger(__name__)
 # ---------------------------
 class TrueNASAPI(object):
     """Handle all communication with TrueNAS."""
+
     _ws: ClientConnection
 
     def __init__(
@@ -166,7 +167,9 @@ class TrueNASAPI(object):
             else:
                 self._error = "malformed_result"
 
-            _LOGGER.debug("TrueNAS %s query (%s) response: %s", self._host, service, data)
+            _LOGGER.debug(
+                "TrueNAS %s query (%s) response: %s", self._host, service, data
+            )
         except Exception as e:
             _LOGGER.warning(
                 'TrueNAS %s unable to fetch data "%s" (%s)',
