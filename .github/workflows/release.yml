@@ -9,6 +9,8 @@ jobs:
   release_zip:
     name: Prepare release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -30,6 +32,8 @@ jobs:
   releasenotes:
     name: Prepare releasenotes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
