@@ -6,14 +6,14 @@
 # ---------------------------
 def format_attribute(attr: str) -> str:
     """Format attribute."""
-    res = attr.replace("_", " ")
-    res = res.replace("-", " ")
-    res = res.capitalize()
-    res = res.replace("zfs", "ZFS")
-    res = res.replace(" gib", " GiB")
-    res = res.replace("Cpu ", "CPU ")
-    res = res.replace("Vcpu ", "vCPU ")
-    res = res.replace("Vmware ", "VMware ")
-    res = res.replace("Ip4 ", "IP4 ")
-    res = res.replace("Ip6 ", "IP6 ")
-    return res
+    attr = attr.replace("_", " ")
+    attr = attr.replace("-", " ")
+    attr = attr.capitalize()
+    attr = attr.replace("zfs", "ZFS")
+    attr = attr.replace(" gib", " GiB")
+    attr = attr.replace("Cpu ", "CPU ")
+    attr = attr.replace("Vcpu ", "vCPU ")
+    attr = attr.replace("Vmware ", "VMware ")
+    attr = attr.replace("Ip4 ", "IP4 ")
+    attr = attr.replace("Ip6 ", "IP6 ")
+    return attr
