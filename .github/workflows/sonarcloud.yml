@@ -1,4 +1,6 @@
 name: SonarCloud
+permissions:
+  contents: read
 on:
   push:
     paths:
