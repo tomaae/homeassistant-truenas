@@ -77,6 +77,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self._is_scale = False
         self._is_virtual = False
+        self._is_jsonrpc = True
         self._version_major = 0
         self._version_minor = 0
 
@@ -92,33 +93,37 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     async def _async_update_data(self):
         """Update TrueNAS data."""
-        await self.hass.async_add_executor_job(self.get_systeminfo)
+        if not self.api.connected() and not self.api.connect():
+            return self.ds
+
         if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_systemstats)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_service)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_disk)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_dataset)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_pool)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_jail)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_vm)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_cloudsync)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_replication)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_snapshottask)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_app)
+            await self.hass.async_add_executor_job(self.get_systeminfo)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_systemstats)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_service)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_disk)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_dataset)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_pool)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_jail)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_vm)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_cloudsync)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_replication)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_snapshottask)
+        # if self.api.connected():
+        #     await self.hass.async_add_executor_job(self.get_app)
 
         delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
         if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
-            await self.hass.async_add_executor_job(self.get_updatecheck)
+            # await self.hass.async_add_executor_job(self.get_updatecheck)
             self.last_updatecheck_update = datetime.now().replace(microsecond=0)
 
         if not self.api.connected():
@@ -133,7 +138,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get system info from TrueNAS."""
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("system/info"),
+            source=self.api.query("system.info" if self._is_jsonrpc else "system/info"),
             vals=[
                 {"name": "version", "default": "unknown"},
                 {"name": "hostname", "default": "unknown"},
@@ -178,7 +183,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             self.ds["system_info"] = parse_api(
                 data=self.ds["system_info"],
                 source=self.api.query(
-                    "core/get_jobs",
+                    "core.get_jobs" if self._is_jsonrpc else "core/get_jobs",
                     method="get",
                     params={"id": self.ds["system_info"]["update_jobid"]},
                 ),
@@ -251,7 +256,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self.ds["interface"] = parse_api(
             data=self.ds["interface"],
-            source=self.api.query("interface"),
+            source=self.api.query(
+                "interface.query" if self._is_jsonrpc else "interface"
+            ),
             key="id",
             vals=[
                 {"name": "id", "default": "unknown"},
