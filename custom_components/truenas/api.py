@@ -39,11 +39,11 @@ class TrueNASAPI(object):
         self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         if verify_ssl:
-            self._ssl_context.check_hostname = False
-            self._ssl_context.verify_mode = ssl.CERT_NONE
-        else:
             self._ssl_context.check_hostname = True
             self._ssl_context.verify_mode = ssl.CERT_REQUIRED
+        else:
+            self._ssl_context.check_hostname = False
+            self._ssl_context.verify_mode = ssl.CERT_NONE
 
         self.lock = Lock()
         self._connected = False
