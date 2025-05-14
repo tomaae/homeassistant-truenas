@@ -35,11 +35,12 @@ class TrueNASAPI(object):
         self._api_key = api_key
         self._ssl_verify = verify_ssl
         self._url = f"wss://{self._host}/api/current"
-
         self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        self._ssl_context.check_hostname = False
-        self._ssl_context.verify_mode = ssl.CERT_NONE
+        self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         if verify_ssl:
+            self._ssl_context.check_hostname = False
+            self._ssl_context.verify_mode = ssl.CERT_NONE
+        else:
             self._ssl_context.check_hostname = True
             self._ssl_context.verify_mode = ssl.CERT_REQUIRED
 
