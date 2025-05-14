@@ -497,14 +497,20 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
                 tmp_arr = ("interrupt", "system", "user", "nice", "idle")
-                if self._is_scale and self._version_major >= 23 and self._version_major <= 24:
+                if (
+                    self._is_scale
+                    and self._version_major >= 23
+                    and self._version_major <= 24
+                ):
                     tmp_arr = ("softirq", "system", "user", "nice", "iowait", "idle")
                 elif self._is_scale and self._version_major >= 25:
                     tmp_arr = "cpu"
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
                 if self._is_scale and self._version_major >= 25:
-                    self.ds["system_info"]["cpu_usage"] = round(self.ds["system_info"]["cpu_cpu"],2)
+                    self.ds["system_info"]["cpu_usage"] = round(
+                        self.ds["system_info"]["cpu_cpu"], 2
+                    )
                 else:
                     self.ds["system_info"]["cpu_usage"] = round(
                         self.ds["system_info"]["cpu_system"]
@@ -583,7 +589,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     )
                 if self._is_scale and self._version_major >= 25:
                     tmp_arr = "available"
-                    self.ds["system_info"]["memory-total_value"] = round(self.ds["system_info"]["physmem"])
+                    self.ds["system_info"]["memory-total_value"] = round(
+                        self.ds["system_info"]["physmem"]
+                    )
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
                 if not self._is_scale or (self._is_scale and self._version_major <= 24):
@@ -622,7 +630,11 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
-                        if self._is_scale and self._version_major >= 23 and self._version_major <= 24:
+                        if (
+                            self._is_scale
+                            and self._version_major >= 23
+                            and self._version_major <= 24
+                        ):
                             if tmp_var == "free":
                                 self.ds["system_info"]["memory-free_value"] = round(
                                     tmp_val * 1024 * 1024
@@ -641,7 +653,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 )
                         elif self._is_scale and self._version_major >= 25:
                             if tmp_var == "available":
-                                self.ds["system_info"]["memory-free_value"] = round(tmp_val)
+                                self.ds["system_info"]["memory-free_value"] = round(
+                                    tmp_val
+                                )
                         else:
                             self.ds["system_info"][tmp_var] = tmp_val
                     elif t == "cpu":
@@ -1044,7 +1058,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_vm(self) -> None:
         """Get VMs from TrueNAS."""
-        #print(self.api.query("virt/instance/query"))
+        # print(self.api.query("virt/instance/query"))
         if self._is_scale and self._version_major >= 25:
             return
 
