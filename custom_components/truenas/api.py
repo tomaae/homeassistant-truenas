@@ -144,10 +144,9 @@ class TrueNASAPI(object):
         self._error = ""
         try:
             _LOGGER.debug(
-                "TrueNAS %s query: %s, %s, %s",
+                "TrueNAS %s query: %s, %s",
                 self._host,
                 service,
-                method,
                 params,
             )
             payload = {
@@ -166,6 +165,22 @@ class TrueNASAPI(object):
                 data = data["result"]
             else:
                 self._error = "malformed_result"
+
+            if "error" in data:
+                if "data" in data["error"] and "reason" in data["error"]["data"]:
+                    _LOGGER.error(
+                        "TrueNAS %s query (%s) error: %s",
+                        self._host,
+                        service,
+                        data["error"]["data"]["reason"],
+                    )
+                else:
+                    _LOGGER.error(
+                        "TrueNAS %s query (%s) error: %s",
+                        self._host,
+                        service,
+                        data["error"]["message"],
+                    )
 
             _LOGGER.debug(
                 "TrueNAS %s query (%s) response: %s", self._host, service, data
