@@ -123,7 +123,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
         if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
-            # await self.hass.async_add_executor_job(self.get_updatecheck)
+            await self.hass.async_add_executor_job(self.get_updatecheck)
             self.last_updatecheck_update = datetime.now().replace(microsecond=0)
 
         if not self.api.connected():
@@ -298,7 +298,14 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     def get_updatecheck(self) -> None:
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("update/check_available", method="post"),
+            source=self.api.query(
+                (
+                    "update.check_available"
+                    if self._is_jsonrpc
+                    else "update/check_available"
+                ),
+                method="post",
+            ),
             vals=[
                 {
                     "name": "update_status",
