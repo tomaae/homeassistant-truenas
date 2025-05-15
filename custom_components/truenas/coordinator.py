@@ -112,12 +112,12 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_jail)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_vm)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_cloudsync)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_replication)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_snapshottask)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_cloudsync)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_replication)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_snapshottask)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_app)
 
@@ -1103,7 +1103,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get cloudsync from TrueNAS."""
         self.ds["cloudsync"] = parse_api(
             data=self.ds["cloudsync"],
-            source=self.api.query("cloudsync"),
+            source=self.api.query(
+                "cloudsync.query" if self._is_jsonrpc else "cloudsync"
+            ),
             key="id",
             vals=[
                 {"name": "id", "default": "unknown"},
@@ -1142,7 +1144,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get replication from TrueNAS."""
         self.ds["replication"] = parse_api(
             data=self.ds["replication"],
-            source=self.api.query("replication"),
+            source=self.api.query(
+                "replication.query" if self._is_jsonrpc else "replication"
+            ),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
@@ -1184,7 +1188,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get replication from TrueNAS."""
         self.ds["snapshottask"] = parse_api(
             data=self.ds["snapshottask"],
-            source=self.api.query("pool/snapshottask"),
+            source=self.api.query(
+                "pool.snapshottask.query" if self._is_jsonrpc else "pool/snapshottask"
+            ),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
