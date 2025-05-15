@@ -118,8 +118,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_replication)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_snapshottask)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_app)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_app)
 
         delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
         if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
@@ -1284,7 +1284,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         elif self._version_major >= 24:
             self.ds["app"] = parse_api(
                 data=self.ds["app"],
-                source=self.api.query("app"),
+                source=self.api.query("app.query" if self._is_jsonrpc else "app"),
                 key="id",
                 vals=[
                     {"name": "id", "default": 0},
