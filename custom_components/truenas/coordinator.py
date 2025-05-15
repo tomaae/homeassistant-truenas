@@ -106,8 +106,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_disk)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_dataset)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_pool)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_pool)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_jail)
         # if self.api.connected():
@@ -724,7 +724,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get pools from TrueNAS."""
         self.ds["pool"] = parse_api(
             data=self.ds["pool"],
-            source=self.api.query("pool"),
+            source=self.api.query("pool.query" if self._is_jsonrpc else "pool"),
             key="guid",
             vals=[
                 {"name": "guid", "default": 0},
@@ -773,7 +773,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self.ds["pool"] = parse_api(
             data=self.ds["pool"],
-            source=self.api.query("boot/get_state"),
+            source=self.api.query(
+                "boot.get_state" if self._is_jsonrpc else "boot/get_state"
+            ),
             key="name",
             vals=[
                 {"name": "guid", "default": "boot-pool"},
