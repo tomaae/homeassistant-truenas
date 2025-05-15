@@ -108,10 +108,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_dataset)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_pool)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_jail)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_vm)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_jail)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_vm)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_cloudsync)
         # if self.api.connected():
@@ -1072,13 +1072,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_vm(self) -> None:
         """Get VMs from TrueNAS."""
-        # print(self.api.query("virt/instance/query"))
-        if self._is_scale and self._version_major >= 25:
-            return
-
+        # 25.x data: [{'id': 'test', 'name': 'test', 'type': 'VM', 'status': 'RUNNING', 'cpu': '1', 'memory': 1073741824, 'autostart': True, 'environment': {}, 'aliases': [{'type': 'INET', 'address': '10.46.230.107', 'netmask': 24}, {'type': 'INET6', 'address': 'fd42:b51f:fa2e:58ef:216:3eff:fecd:7def', 'netmask': 64}], 'image': {'architecture': 'amd64', 'description': 'Debian bookworm amd64 (20250428_05:24)', 'os': 'Debian', 'release': 'bookworm', 'serial': '20250428_05:24', 'type': 'disk-kvm.img', 'variant': 'default', 'secureboot': None}, 'userns_idmap': None, 'raw': None, 'vnc_enabled': True, 'vnc_port': 5900, 'vnc_password': None, 'secure_boot': False, 'root_disk_size': 10737418240, 'root_disk_io_bus': 'NVME', 'storage_pool': 'apps'}, {'id': 'testcontainer', 'name': 'testcontainer', 'type': 'CONTAINER', 'status': 'RUNNING', 'cpu': '1', 'memory': 536870912, 'autostart': True, 'environment': {}, 'aliases': [{'type': 'INET', 'address': '10.46.230.199', 'netmask': 24}, {'type': 'INET6', 'address': 'fd42:b51f:fa2e:58ef:216:3eff:fe0f:ee70', 'netmask': 64}], 'image': {'architecture': 'amd64', 'description': 'Alpine 3.19 amd64 (20250506_13:00)', 'os': 'Alpine', 'release': '3.19', 'serial': '20250506_13:00', 'type': 'squashfs', 'variant': 'default', 'secureboot': False}, 'userns_idmap': {'uid': {'hostid': 2147000001, 'maprange': 568, 'nsid': 0}, 'gid': {'hostid': 2147000001, 'maprange': 568, 'nsid': 0}}, 'raw': None, 'vnc_enabled': False, 'vnc_port': None, 'vnc_password': None, 'secure_boot': None, 'root_disk_size': None, 'root_disk_io_bus': None, 'storage_pool': 'apps'}]
         self.ds["vm"] = parse_api(
             data=self.ds["vm"],
-            source=self.api.query("vm"),
+            source=self.api.query("virt.instance.query" if self._is_jsonrpc else "vm"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
