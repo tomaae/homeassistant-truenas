@@ -102,8 +102,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         #     await self.hass.async_add_executor_job(self.get_systemstats)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_service)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_disk)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_disk)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_dataset)
         # if self.api.connected():
@@ -999,7 +999,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get disks from TrueNAS."""
         self.ds["disk"] = parse_api(
             data=self.ds["disk"],
-            source=self.api.query("disk"),
+            source=self.api.query("disk.query" if self._is_jsonrpc else "disk"),
             key="identifier",
             vals=[
                 {"name": "name", "default": "unknown"},
@@ -1024,9 +1024,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         # Get disk temperatures
         temps = self.api.query(
-            "disk/temperatures",
+            "disk.temperatures" if self._is_jsonrpc else "disk/temperatures",
             method="post",
-            params={"names": []},
+            params={} if self._is_jsonrpc else {"names": []},
         )
 
         if temps:
