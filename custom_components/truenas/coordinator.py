@@ -100,8 +100,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.get_systeminfo)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_systemstats)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_service)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_service)
         # if self.api.connected():
         #     await self.hass.async_add_executor_job(self.get_disk)
         # if self.api.connected():
@@ -409,6 +409,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if self._is_scale and self._version_major >= 23:
             reporting_path = "reporting/netdata_get_data"
 
+        if self._is_jsonrpc:
+            reporting_path = "reporting.netdata_get_data"
+
         tmp_graph = self.api.query(
             reporting_path,
             method="post",
@@ -698,7 +701,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get service info from TrueNAS."""
         self.ds["service"] = parse_api(
             data=self.ds["service"],
-            source=self.api.query("service"),
+            source=self.api.query("service.query" if self._is_jsonrpc else "service"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
