@@ -98,8 +98,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_systeminfo)
-        # if self.api.connected():
-        #     await self.hass.async_add_executor_job(self.get_systemstats)
+        if self.api.connected():
+            await self.hass.async_add_executor_job(self.get_systemstats)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_service)
         if self.api.connected():
@@ -339,78 +339,64 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     def get_systemstats(self) -> None:
         """Get system statistics."""
         report_epoch = int(datetime.now().replace(microsecond=0).timestamp())
-        tmp_params = {
-            "graphs": [
-                {"name": "load"},
-                {"name": "cputemp"},
-                {"name": "cpu"},
-                {"name": "arcsize"},
-                {"name": "memory"},
-            ],
-            "reporting_query": {
-                "start": "now-90s",
-                "end": "now-30s",
-                "aggregate": True,
-            },
-        }
-        if self._is_scale and self._version_major == 23:
-            tmp_params = {
-                "graphs": [
-                    {"name": "load"},
-                    {"name": "cputemp"},
-                    {"name": "cpu"},
-                    {"name": "arcsize"},
-                    {"name": "memory"},
-                ],
-                "reporting_query_netdata": {
-                    "start": "-90",
-                    "end": "-30",
-                    "aggregate": True,
-                },
-            }
-        elif self._is_scale and self._version_major == 24:
-            tmp_params = {
-                "graphs": [
-                    {"name": "load"},
-                    {"name": "cputemp"},
-                    {"name": "cpu"},
-                    {"name": "arcsize"},
-                    {"name": "memory"},
-                ],
-                "reporting_query": {
-                    "start": "-90",
-                    "end": "-30",
-                    "aggregate": True,
-                },
-            }
-        elif self._is_scale and self._version_major >= 25:
-            tmp_params = {
-                "graphs": [
-                    {"name": "load"},
-                    {"name": "cputemp"},
-                    {"name": "cpu"},
-                    {"name": "arcsize"},
-                    {"name": "memory"},
-                ],
-                "query": {
-                    "start": report_epoch - 30,
-                    "end": report_epoch - 90,
-                    "aggregate": True,
-                },
-            }
+        tmp_graphs = [
+            {"name": "load"},
+            {"name": "cputemp"},
+            {"name": "cpu"},
+            {"name": "arcsize"},
+            {"name": "memory"},
+        ]
 
         for uid, vals in self.ds["interface"].items():
-            tmp_params["graphs"].append({"name": "interface", "identifier": uid})
+            tmp_graphs.append({"name": "interface", "identifier": uid})
 
         if self._is_virtual:
-            tmp_params["graphs"].remove({"name": "cputemp"})
+            tmp_graphs.remove({"name": "cputemp"})
 
-        for tmp in tmp_params["graphs"]:
+        for tmp in tmp_graphs:
             if tmp["name"] in self._systemstats_errored:
-                tmp_params["graphs"].remove(tmp)
+                tmp_graphs.remove(tmp)
 
-        if not tmp_params["graphs"]:
+        if not tmp_graphs:
             return
+
+        if self._is_scale:
+            if self._version_major == 23:
+                tmp_params = {
+                    "graphs": tmp_graphs,
+                    "reporting_query_netdata": {
+                        "start": "-90",
+                        "end": "-30",
+                        "aggregate": True,
+                    },
+                }
+            elif self._version_major == 24:
+                tmp_params = {
+                    "graphs": tmp_graphs,
+                    "reporting_query": {
+                        "start": "-90",
+                        "end": "-30",
+                        "aggregate": True,
+                    },
+                }
+            elif self._version_major >= 25:
+                tmp_params = [
+                    tmp_graphs,
+                    {
+                        "start": report_epoch - 30,
+                        "end": report_epoch - 90,
+                        "aggregate": True,
+                    },
+                ]
+        else:
+            tmp_params = {
+                "graphs": tmp_graphs,
+                "reporting_query": {
+                    "start": "now-90s",
+                    "end": "now-30s",
+                    "aggregate": True,
+                },
+            }
 
         reporting_path = "reporting/get_data"
         if self._is_scale and self._version_major >= 23:
@@ -427,15 +413,18 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         if not isinstance(tmp_graph, list):
             if self.api.error == 500:
-                for tmp in tmp_params["graphs"]:
-                    tmp_params2 = {
-                        "graphs": [tmp],
-                        "reporting_query": {
-                            "start": "now-90s",
-                            "end": "now-30s",
-                            "aggregate": True,
-                        },
-                    }
+                for tmp in (
+                    tmp_params["graphs"] if self._version_major >= 25 else tmp_params[0]
+                ):
+                    if not self._is_scale:
+                        tmp_params2 = {
+                            "graphs": [tmp],
+                            "reporting_query": {
+                                "start": "now-90s",
+                                "end": "now-30s",
+                                "aggregate": True,
+                            },
+                        }
 
                     if self._is_scale and self._version_major == 23:
                         tmp_params2 = {
@@ -455,10 +444,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                                 "aggregate": "true",
                             },
                         }
-                    elif self._is_scale and self._version_major >= 24:
+                    elif self._is_scale and self._version_major >= 25:
                         tmp_params2 = {
-                            "graphs": [tmp],
-                            "query": {
+                            [tmp],
+                            {
                                 "start": report_epoch - 30,
                                 "end": report_epoch - 90,
                                 "aggregate": "true",
@@ -514,11 +503,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
                 tmp_arr = ("interrupt", "system", "user", "nice", "idle")
-                if (
-                    self._is_scale
-                    and self._version_major >= 23
-                    and self._version_major <= 24
-                ):
+                if self._is_scale and 23 <= self._version_major <= 24:
                     tmp_arr = ("softirq", "system", "user", "nice", "iowait", "idle")
                 elif self._is_scale and self._version_major >= 25:
                     tmp_arr = "cpu"
@@ -686,7 +671,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                             self.ds["system_info"][tmp_var] = round(tmp_val, 2)
                     elif t == "arcsize":
                         if self._is_scale and self._version_major >= 23:
-                            tmp_val = tmp_val * 1024 * 1024
+                            if self._version_major < 25:
+                                tmp_val = tmp_val * 1024 * 1024
                             self.ds["system_info"]["cache_size-arc_value"] = round(
                                 tmp_val, 2
                             )

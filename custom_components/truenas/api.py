@@ -156,7 +156,9 @@ class TrueNASAPI(object):
                 "params": [],
             }
             if params != {}:
-                payload["params"] = [params]
+                if type(params) is not list:
+                    params = [params]
+                payload["params"] = params
 
             self._ws.send(json.dumps(payload))
             message = self._ws.recv()
