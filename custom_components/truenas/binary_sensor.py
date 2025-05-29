@@ -137,47 +137,85 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
     """Define a TrueNAS VM Binary Sensor."""
 
     async def start(self, overcommit: bool = False):
-        """Start a VM."""
-        tmp_vm = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"vm/id/{self._data['id']}"
-        )
+        """Start a VM."""  # virt.instance.start
+        if self.coordinator._version_major >= 25:
+            tmp_vm = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "virt.instance.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_vm = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"vm/id/{self._data['id']}"
+            )
 
         if "status" not in tmp_vm:
             _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
             return
 
-        if tmp_vm["status"]["state"] != "STOPPED":
+        if (
+            self.coordinator._version_major < 25
+            and tmp_vm["status"]["state"] != "STOPPED"
+        ) or (self.coordinator._version_major >= 25 and tmp_vm["status"] != "STOPPED"):
             _LOGGER.warning(
                 "VM %s (%s) is not down", self._data["name"], self._data["id"]
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            f"vm/id/{self._data['id']}/start",
-            "post",
-            {"overcommit": overcommit},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "virt.instance.start",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                f"vm/id/{self._data['id']}/start",
+                "post",
+                {"overcommit": overcommit},
+            )
 
     async def stop(self):
         """Stop a VM."""
-        tmp_vm = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"vm/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_vm = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "virt.instance.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_vm = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"vm/id/{self._data['id']}"
+            )
 
         if "status" not in tmp_vm:
             _LOGGER.error("VM %s (%s) invalid", self._data["name"], self._data["id"])
             return
 
-        if tmp_vm["status"]["state"] != "RUNNING":
+        if (
+            self.coordinator._version_major < 25
+            and tmp_vm["status"]["state"] != "RUNNING"
+        ) or (self.coordinator._version_major >= 25 and tmp_vm["status"] != "RUNNING"):
             _LOGGER.warning(
                 "VM %s (%s) is not up", self._data["name"], self._data["id"]
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"vm/id/{self._data['id']}/stop", "post"
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "virt.instance.stop",
+                "post",
+                [self._data["id"], {"timeout": 0, "force": True}],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"vm/id/{self._data['id']}/stop", "post"
+            )
 
 
 # ---------------------------
@@ -188,9 +226,17 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
 
     async def start(self):
         """Start a Service."""
-        tmp_service = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"service/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"service/id/{self._data['id']}"
+            )
 
         if "state" not in tmp_service:
             _LOGGER.error(
@@ -206,19 +252,35 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "service/start",
-            "post",
-            {"service": self._data["service"]},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.start",
+                "post",
+                [self._data["service"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service/start",
+                "post",
+                {"service": self._data["service"]},
+            )
         await self.coordinator.async_refresh()
 
     async def stop(self):
         """Stop a Service."""
-        tmp_service = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"service/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"service/id/{self._data['id']}"
+            )
 
         if "state" not in tmp_service:
             _LOGGER.error(
@@ -234,19 +296,35 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "service/stop",
-            "post",
-            {"service": self._data["service"]},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.stop",
+                "post",
+                [self._data["service"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service/stop",
+                "post",
+                {"service": self._data["service"]},
+            )
         await self.coordinator.async_refresh()
 
     async def restart(self):
         """Restart a Service."""
-        tmp_service = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"service/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"service/id/{self._data['id']}"
+            )
 
         if "state" not in tmp_service:
             _LOGGER.error(
@@ -262,19 +340,35 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "service/restart",
-            "post",
-            {"service": self._data["service"]},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.restart",
+                "post",
+                [self._data["service"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service/restart",
+                "post",
+                {"service": self._data["service"]},
+            )
         await self.coordinator.async_refresh()
 
     async def reload(self):
         """Reload a Service."""
-        tmp_service = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"service/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_service = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"service/id/{self._data['id']}"
+            )
 
         if "state" not in tmp_service:
             _LOGGER.error(
@@ -290,12 +384,20 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "service/reload",
-            "post",
-            {"service": self._data["service"]},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service.reload",
+                "post",
+                [self._data["service"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "service/reload",
+                "post",
+                {"service": self._data["service"]},
+            )
         await self.coordinator.async_refresh()
 
 
@@ -307,9 +409,17 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
 
     async def start(self):
         """Start an App."""
-        tmp_app = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"/app/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_app = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_app = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"/app/id/{self._data['id']}"
+            )
 
         if tmp_app is None or "state" not in tmp_app:
             _LOGGER.error("App %s (%s) invalid", self._data["name"], self._data["id"])
@@ -321,18 +431,34 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "/app/start",
-            "post",
-            self._data["id"],
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app.start",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "/app/start",
+                "post",
+                self._data["id"],
+            )
 
     async def stop(self):
         """Stop an App."""
-        tmp_app = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"/app/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_app = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_app = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"/app/id/{self._data['id']}"
+            )
 
         if tmp_app is None or "state" not in tmp_app:
             _LOGGER.error("App %s (%s) invalid", self._data["name"], self._data["id"])
@@ -344,9 +470,17 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "/app/stop",
-            "post",
-            self._data["id"],
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app.stop",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "/app/stop",
+                "post",
+                self._data["id"],
+            )

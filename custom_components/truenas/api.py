@@ -162,27 +162,30 @@ class TrueNASAPI(object):
 
             self._ws.send(json.dumps(payload))
             message = self._ws.recv()
-            data = json.loads(message)
-            if "result" in data:
-                data = data["result"]
-            else:
-                self._error = "malformed_result"
-
-            if "error" in data:
-                if "data" in data["error"] and "reason" in data["error"]["data"]:
-                    _LOGGER.error(
-                        "TrueNAS %s query (%s) error: %s",
-                        self._host,
-                        service,
-                        data["error"]["data"]["reason"],
-                    )
+            if message.startswith("{"):
+                data = json.loads(message)
+                if "result" in data:
+                    data = data["result"]
                 else:
-                    _LOGGER.error(
-                        "TrueNAS %s query (%s) error: %s",
-                        self._host,
-                        service,
-                        data["error"]["message"],
-                    )
+                    self._error = "malformed_result"
+
+                if (type(data) is list or type(data) is dict) and "error" in data:
+                    if "data" in data["error"] and "reason" in data["error"]["data"]:
+                        _LOGGER.error(
+                            "TrueNAS %s query (%s) error: %s",
+                            self._host,
+                            service,
+                            data["error"]["data"]["reason"],
+                        )
+                    else:
+                        _LOGGER.error(
+                            "TrueNAS %s query (%s) error: %s",
+                            self._host,
+                            service,
+                            data["error"]["message"],
+                        )
+            else:
+                data = message
 
             _LOGGER.debug(
                 "TrueNAS %s query (%s) response: %s", self._host, service, data
