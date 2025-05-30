@@ -148,9 +148,17 @@ class TrueNASClousyncSensor(TrueNASSensor):
 
     async def start(self) -> None:
         """Run cloudsync job."""
-        tmp_job = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_job = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "cloudsync.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_job = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
+            )
 
         if "job" not in tmp_job:
             _LOGGER.error(
@@ -159,7 +167,10 @@ class TrueNASClousyncSensor(TrueNASSensor):
                 self._data["id"],
             )
             return
-        if tmp_job["job"]["state"] in ["WAITING", "RUNNING"]:
+        if "state" in tmp_job["job"] and tmp_job["job"]["state"] in [
+            "WAITING",
+            "RUNNING",
+        ]:
             _LOGGER.warning(
                 "Clousync job %s (%s) is already running",
                 self._data["description"],
@@ -167,15 +178,33 @@ class TrueNASClousyncSensor(TrueNASSensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"cloudsync/id/{self._data['id']}/sync", "post"
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "cloudsync.sync",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                f"cloudsync/id/{self._data['id']}/sync",
+                "post",
+            )
 
     async def stop(self) -> None:
         """Abort cloudsync job."""
-        tmp_job = await self.hass.async_add_executor_job(
-            self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
-        )
+        if self.coordinator._version_major >= 25:
+            tmp_job = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "cloudsync.get_instance",
+                "get",
+                [self._data["id"]],
+            )
+        else:
+            tmp_job = await self.hass.async_add_executor_job(
+                self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
+            )
 
         if "job" not in tmp_job:
             _LOGGER.error(
@@ -184,7 +213,10 @@ class TrueNASClousyncSensor(TrueNASSensor):
                 self._data["id"],
             )
             return
-        if tmp_job["job"]["state"] not in ["WAITING", "RUNNING"]:
+        if "state" in tmp_job["job"] and tmp_job["job"]["state"] not in [
+            "WAITING",
+            "RUNNING",
+        ]:
             _LOGGER.warning(
                 "Clousync job %s (%s) is not running",
                 self._data["description"],
@@ -192,9 +224,17 @@ class TrueNASClousyncSensor(TrueNASSensor):
             )
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            f"cloudsync/id/{self._data['id']}/abort",
-            "post",
-            None,
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "cloudsync.abort",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                f"cloudsync/id/{self._data['id']}/abort",
+                "post",
+                None,
+            )
