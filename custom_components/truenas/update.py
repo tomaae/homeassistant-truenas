@@ -144,12 +144,27 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
-        self._data["update_jobid"] = await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "app/upgrade",
-            "post",
-            {"app_name": self._data["id"]},
-        )
+        if self.coordinator._version_major >= 25:
+            if self.coordinator.data["app"][self._data["id"]]["state"] != "RUNNING":
+                _LOGGER.error(
+                    "In order to upgrade an app %s, it must not be in stopped state.",
+                    self._data["id"],
+                )
+                return
+
+            self._data["update_jobid"] = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app.upgrade",
+                "post",
+                [self._data["id"]],
+            )
+        else:
+            self._data["update_jobid"] = await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "app/upgrade",
+                "post",
+                {"app_name": self._data["id"]},
+            )
         await self.coordinator.async_refresh()
 
     @property
