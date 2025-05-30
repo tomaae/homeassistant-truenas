@@ -827,6 +827,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "usage", "default": 0.0},
             ],
         )
+        if not self.api.connected():
+            return
 
         # Process pools
         tmp_dataset_available = {}

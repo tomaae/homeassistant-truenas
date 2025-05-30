@@ -197,6 +197,7 @@ class TrueNASAPI(object):
                 service,
                 e,
             )
+            self.disconnect()
             self._error = e
             self.lock.release()
             return None
