@@ -15,6 +15,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Get version number
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/} # Remove refs/tags/
+          TAG_NAME=${TAG_NAME#v}            # Remove leading v if present
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+      - name: Update version number in manifest
+        run: |
+          python3 /home/runner/work/homeassistant-truenas/homeassistant-truenas/.github/update_version.py --version $TAG_NAME
+
       - name: Zip truenas dir
         run: |
           cd /home/runner/work/homeassistant-truenas/homeassistant-truenas/custom_components/truenas
