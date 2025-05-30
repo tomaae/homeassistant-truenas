@@ -84,19 +84,35 @@ class TrueNASUptimeSensor(TrueNASSensor):
 
     async def restart(self) -> None:
         """Restart TrueNAS systen."""
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "system/reboot",
-            "post",
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "system.reboot",
+                "post",
+                ["Home Assistant Integration"],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "system/reboot",
+                "post",
+            )
 
     async def stop(self) -> None:
         """Shutdown TrueNAS systen."""
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "system/shutdown",
-            "post",
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "system.shutdown",
+                "post",
+                ["Home Assistant Integration"],
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "system/shutdown",
+                "post",
+            )
 
 
 # ---------------------------
