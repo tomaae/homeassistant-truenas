@@ -185,7 +185,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 source=self.api.query(
                     "core.get_jobs" if self._is_jsonrpc else "core/get_jobs",
                     method="get",
-                    params={"id": self.ds["system_info"]["update_jobid"]},
+                    params=[[["id", "=", self.ds["system_info"]["update_jobid"]]]],
                 ),
                 vals=[
                     {

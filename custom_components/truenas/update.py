@@ -78,9 +78,11 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
         """Install an update."""
         if self.coordinator._version_major >= 25:
             self._data["update_jobid"] = await self.hass.async_add_executor_job(
-                self.coordinator.api.query, "update.update"
+                self.coordinator.api.query,
+                "update.update",
+                "post",
+                {"reboot": True},
             )
-            print(self._data["update_jobid"])
         else:
             self._data["update_jobid"] = await self.hass.async_add_executor_job(
                 self.coordinator.api.query,
