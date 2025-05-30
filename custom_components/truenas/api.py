@@ -48,7 +48,6 @@ class TrueNASAPI(object):
         self.lock = Lock()
         self._connected = False
         self._error = ""
-        self.connect()
 
     # ---------------------------
     #   connect
@@ -129,6 +128,7 @@ class TrueNASAPI(object):
     # ---------------------------
     def connection_test(self) -> tuple:
         """Test connection."""
+        self.connect()
         self.query("system.info")
 
         return self._connected, self._error
@@ -140,6 +140,9 @@ class TrueNASAPI(object):
         self, service: str, method: str = "get", params: dict[str, Any] | None = {}
     ) -> Optional(list):
         """Retrieve data from TrueNAS."""
+        if not self.connected():
+            self.connect()
+
         self.lock.acquire()
         self._error = ""
         try:
