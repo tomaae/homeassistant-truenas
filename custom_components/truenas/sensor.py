@@ -124,12 +124,20 @@ class TrueNASDatasetSensor(TrueNASSensor):
     async def snapshot(self) -> None:
         """Create dataset snapshot."""
         ts = datetime.now().isoformat(sep="_", timespec="microseconds")
-        await self.hass.async_add_executor_job(
-            self.coordinator.api.query,
-            "zfs/snapshot",
-            "post",
-            {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
-        )
+        if self.coordinator._version_major >= 25:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "zfs.snapshot.create",
+                "post",
+                {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
+            )
+        else:
+            await self.hass.async_add_executor_job(
+                self.coordinator.api.query,
+                "zfs/snapshot",
+                "post",
+                {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
+            )
 
 
 # ---------------------------
