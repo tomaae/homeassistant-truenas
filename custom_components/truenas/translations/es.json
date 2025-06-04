@@ -19,11 +19,11 @@
             "500": "Error Interno.",
             "no_response": "No hay respuesta del anfitrión.",
             "invalid_key": "Login failed, invalid API key.",
-            "invalid_hostname": "Connection failed, invalid hostname.",
-            "connection_refused": "Connection failed, connection refused.",
-            "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
-            "api_not_found": "Connection failed, API not found.",
-            "malformed_result": "API response is malformed."
+            "invalid_hostname": "Conexión fallida, nombre del host inválido.",
+            "connection_refused": "Conexión fallida, conexión rechazada.",
+            "handshake_timeout": "Conexión fallida, se agotó el tiempo de espera para la respuesta.",
+            "api_not_found": "Conexión fallida, no se encontró el API.",
+            "malformed_result": "La respuesta de la API está mal formada."
         }
     }
 }

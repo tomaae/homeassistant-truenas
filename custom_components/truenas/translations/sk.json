@@ -18,12 +18,12 @@
             "404": "API sa na tomto hostiteľovi nenašlo.",
             "500": "Interný error.",
             "no_response": "Hostiteľ nereaguje.",
-            "invalid_key": "Login failed, invalid API key.",
-            "invalid_hostname": "Connection failed, invalid hostname.",
-            "connection_refused": "Connection failed, connection refused.",
-            "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
-            "api_not_found": "Connection failed, API not found.",
-            "malformed_result": "API response is malformed."
+            "invalid_key": "Prihlásenie zlyhalo, neplatný kľúč API.",
+            "invalid_hostname": "Pripojenie zlyhalo, neplatné meno hostiteľa.",
+            "connection_refused": "Pripojenie zlyhalo, pripojenie bolo odmietnuté.",
+            "handshake_timeout": "Pripojenie zlyhalo, počas čakania na odpoveď na podanie ruky došlo k časovému oneskoreniu.",
+            "api_not_found": "Pripojenie zlyhalo, API sa nenašlo.",
+            "malformed_result": "Odpoveď API je chybná."
         }
     }
 }
