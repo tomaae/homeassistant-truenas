@@ -7,7 +7,6 @@
                     "name": "Názov integrácie",
                     "host": "Hostiteľ",
                     "api_key": "API kľúč",
-                    "ssl": "Použiť SSL",
                     "verify_ssl": "Overte certifikát SSL"
                 }
             }
