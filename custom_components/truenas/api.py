@@ -43,6 +43,7 @@ class TrueNASAPI(object):
         self.lock = Lock()
         self._connected = False
         self._error = ""
+        self._error_logged = False
 
     # ---------------------------
     #   connect
@@ -67,7 +68,10 @@ class TrueNASAPI(object):
             if "404" in str(e):
                 self._error = "api_not_found"
 
-            _LOGGER.error("TrueNAS %s failed to connect (%s)", self._host, e)
+            if not self._error_logged:
+                _LOGGER.error("TrueNAS %s failed to connect (%s)", self._host, e)
+
+            self._error_logged = True
             self.lock.release()
             return False
 
@@ -86,11 +90,15 @@ class TrueNASAPI(object):
                 self._error = "invalid_key"
 
         except Exception as e:
-            _LOGGER.error("TrueNAS %s failed to login (%s)", self._host, e)
+            if not self._error_logged:
+                _LOGGER.error("TrueNAS %s failed to login (%s)", self._host, e)
+
+            self._error_logged = True
             self.lock.release()
             return False
 
         self.lock.release()
+        self._error_logged = False
         return self._connected
 
     # ---------------------------
