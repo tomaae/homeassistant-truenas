@@ -7,7 +7,6 @@
                     "name": "Name of the integration",
                     "host": "Host",
                     "api_key": "API key",
-                    "ssl": "Use SSL",
                     "verify_ssl": "Verify SSL certificate"
                 }
             }
