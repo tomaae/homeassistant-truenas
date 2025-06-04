@@ -42,12 +42,11 @@ DEVICE_ATTRIBUTES_POOL = [
 ]
 
 DEVICE_ATTRIBUTES_VM = [
-    "description",
-    "vcpus",
+    "type",
+    "cpu",
     "memory",
     "autostart",
-    "cores",
-    "threads",
+    "image",
 ]
 
 DEVICE_ATTRIBUTES_SERVICE = [
