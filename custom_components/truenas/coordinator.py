@@ -855,7 +855,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "autostart", "type": "bool", "default": False},
                 {"name": "cores", "default": 0},
                 {"name": "threads", "default": 0},
-                {"name": "state", "source": "status/state", "default": "unknown"},
+                {"name": "status", "default": "unknown"},
             ],
             ensure_vals=[
                 {"name": "running", "type": "bool", "default": False},
@@ -863,7 +863,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         )
 
         for uid, vals in self.ds["vm"].items():
-            self.ds["vm"][uid]["running"] = vals["state"] == "RUNNING"
+            self.ds["vm"][uid]["running"] = vals["status"] == "RUNNING"
 
     # ---------------------------
     #   get_cloudsync
