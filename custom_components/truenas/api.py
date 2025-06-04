@@ -9,8 +9,6 @@ import ssl
 import json
 from websockets.sync.client import connect, ClientConnection
 
-from homeassistant.core import HomeAssistant
-
 _LOGGER = getLogger(__name__)
 
 
@@ -24,13 +22,11 @@ class TrueNASAPI(object):
 
     def __init__(
         self,
-        hass: HomeAssistant,
         host: str,
         api_key: str,
         verify_ssl: bool = True,
     ) -> None:
         """Initialize the TrueNAS API."""
-        self._hass = hass
         self._host = host
         self._api_key = api_key
         self._ssl_verify = verify_ssl

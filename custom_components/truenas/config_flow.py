@@ -67,7 +67,6 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
             # Test connection
             api = await self.hass.async_add_executor_job(
                 TrueNASAPI,
-                self.hass,
                 user_input[CONF_HOST],
                 user_input[CONF_API_KEY],
                 user_input[CONF_VERIFY_SSL],

@@ -60,7 +60,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         }
 
         self.api = TrueNASAPI(
-            hass,
             config_entry.data[CONF_HOST],
             config_entry.data[CONF_API_KEY],
             config_entry.data[CONF_VERIFY_SSL],
