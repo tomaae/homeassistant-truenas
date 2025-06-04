@@ -87,7 +87,6 @@ class TrueNASUptimeSensor(TrueNASSensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "system.reboot",
-            "post",
             ["Home Assistant Integration"],
         )
 
@@ -96,7 +95,6 @@ class TrueNASUptimeSensor(TrueNASSensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "system.shutdown",
-            "post",
             ["Home Assistant Integration"],
         )
 
@@ -113,7 +111,6 @@ class TrueNASDatasetSensor(TrueNASSensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "zfs.snapshot.create",
-            "post",
             {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
         )
 
@@ -129,7 +126,6 @@ class TrueNASClousyncSensor(TrueNASSensor):
         tmp_job = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "cloudsync.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -154,7 +150,6 @@ class TrueNASClousyncSensor(TrueNASSensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "cloudsync.sync",
-            "post",
             [self._data["id"]],
         )
 
@@ -163,7 +158,6 @@ class TrueNASClousyncSensor(TrueNASSensor):
         tmp_job = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "cloudsync.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -188,6 +182,5 @@ class TrueNASClousyncSensor(TrueNASSensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "cloudsync.abort",
-            "post",
             [self._data["id"]],
         )

@@ -139,9 +139,7 @@ class TrueNASAPI(object):
     # ---------------------------
     #   query
     # ---------------------------
-    def query(
-        self, service: str, method: str = "get", params: dict[str, Any] | None = {}
-    ) -> Optional(list):
+    def query(self, service: str, params: dict[str, Any] | None = {}) -> Optional(list):
         """Retrieve data from TrueNAS."""
         if not self.connected():
             self.connect()

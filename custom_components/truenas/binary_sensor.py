@@ -69,7 +69,6 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "virt.instance.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -86,7 +85,6 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "virt.instance.start",
-            "post",
             [self._data["id"]],
         )
 
@@ -95,7 +93,6 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         tmp_vm = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "virt.instance.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -112,7 +109,6 @@ class TrueNASVMBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "virt.instance.stop",
-            "post",
             [self._data["id"], {"timeout": 0, "force": True}],
         )
 
@@ -128,7 +124,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -149,7 +144,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.start",
-            "post",
             [self._data["service"]],
         )
 
@@ -160,7 +154,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -181,7 +174,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.stop",
-            "post",
             [self._data["service"]],
         )
         await self.coordinator.async_refresh()
@@ -191,7 +183,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -212,7 +203,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.restart",
-            "post",
             [self._data["service"]],
         )
 
@@ -223,7 +213,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         tmp_service = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -244,7 +233,6 @@ class TrueNASServiceBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "service.reload",
-            "post",
             [self._data["service"]],
         )
 
@@ -262,7 +250,6 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
         tmp_app = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "app.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -279,7 +266,6 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "app.start",
-            "post",
             [self._data["id"]],
         )
 
@@ -288,7 +274,6 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
         tmp_app = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "app.get_instance",
-            "get",
             [self._data["id"]],
         )
 
@@ -305,6 +290,5 @@ class TrueNASAppBinarySensor(TrueNASBinarySensor):
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "app.stop",
-            "post",
             [self._data["id"]],
         )

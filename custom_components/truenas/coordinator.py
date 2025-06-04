@@ -174,7 +174,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 data=self.ds["system_info"],
                 source=self.api.query(
                     "core.get_jobs",
-                    method="get",
                     params=[[["id", "=", self.ds["system_info"]["update_jobid"]]]],
                 ),
                 vals=[
@@ -278,10 +277,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     def get_updatecheck(self) -> None:
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query(
-                "update.check_available",
-                method="post",
-            ),
+            source=self.api.query("update.check_available"),
             vals=[
                 {
                     "name": "update_status",
@@ -349,7 +345,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         tmp_graph = self.api.query(
             reporting_path,
-            method="post",
             params=tmp_params,
         )
 
@@ -367,7 +362,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                     tmp2 = self.api.query(
                         reporting_path,
-                        method="post",
                         params=tmp_params2,
                     )
                     if not isinstance(tmp2, list) and self.api.error == 500:
@@ -824,7 +818,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         # Get disk temperatures
         temps = self.api.query(
             "disk.temperatures",
-            method="post",
             params={},
         )
 

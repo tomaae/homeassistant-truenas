@@ -79,7 +79,6 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
         self._data["update_jobid"] = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "update.update",
-            "post",
             {"reboot": True},
         )
         await self.coordinator.async_refresh()
@@ -137,7 +136,6 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
         self._data["update_jobid"] = await self.hass.async_add_executor_job(
             self.coordinator.api.query,
             "app.upgrade",
-            "post",
             [self._data["id"]],
         )
         await self.coordinator.async_refresh()
