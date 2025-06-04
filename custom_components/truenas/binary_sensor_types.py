@@ -61,6 +61,7 @@ DEVICE_ATTRIBUTES_APP = [
     "human_version",
     "update_available",
     "image_updates_available",
+    "custom_app",
     "portal",
 ]
 

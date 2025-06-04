@@ -989,6 +989,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "human_version", "default": "unknown"},
                 {"name": "version", "default": "unknown"},
                 {"name": "latest_version", "default": "unknown"},
+                {"name": "custom_app", "type": "bool", "default": False},
                 {
                     "name": "update_available",
                     "source": "upgrade_available",
