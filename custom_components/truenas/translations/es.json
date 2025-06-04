@@ -7,7 +7,6 @@
                     "name": "Nombre de la integración",
                     "host": "Anfitrión",
                     "api_key": "Clave API",
-                    "ssl": "Usar SSL",
                     "verify_ssl": "Verificar certificado SSL"
                 }
             }
