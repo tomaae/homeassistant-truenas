@@ -85,8 +85,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     async def _async_update_data(self):
         """Update TrueNAS data."""
-        if not self.api.connected() and not self.api.connect():
-            return self.ds
+        if not self.api.connected():
+            self.api.connect()
 
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_systeminfo)
