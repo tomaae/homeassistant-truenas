@@ -76,20 +76,12 @@ class TrueNASUpdate(TrueNASEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
-        if self.coordinator._version_major >= 25:
-            self._data["update_jobid"] = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "update.update",
-                "post",
-                {"reboot": True},
-            )
-        else:
-            self._data["update_jobid"] = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "update/update",
-                "post",
-                {"reboot": True},
-            )
+        self._data["update_jobid"] = await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "update.update",
+            "post",
+            {"reboot": True},
+        )
         await self.coordinator.async_refresh()
 
     @property
@@ -131,40 +123,23 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
     @property
     def latest_version(self) -> str:
         """Latest version available for install."""
-        if (
-            self.coordinator._version_major == 24
-            and self.coordinator._version_minor == 10
-        ):
-            if self._data["update_available"]:
-                return "Update available"
-            else:
-                return self._data["version"]
-
-        return self._data["latest_version"]
+        return self._data["version"]
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
-        if self.coordinator._version_major >= 25:
-            if self.coordinator.data["app"][self._data["id"]]["state"] != "RUNNING":
-                _LOGGER.error(
-                    "In order to upgrade an app %s, it must not be in stopped state.",
-                    self._data["id"],
-                )
-                return
+        if self.coordinator.data["app"][self._data["id"]]["state"] != "RUNNING":
+            _LOGGER.error(
+                "In order to upgrade an app %s, it must not be in stopped state.",
+                self._data["id"],
+            )
+            return
 
-            self._data["update_jobid"] = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "app.upgrade",
-                "post",
-                [self._data["id"]],
-            )
-        else:
-            self._data["update_jobid"] = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "app/upgrade",
-                "post",
-                {"app_name": self._data["id"]},
-            )
+        self._data["update_jobid"] = await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "app.upgrade",
+            "post",
+            [self._data["id"]],
+        )
         await self.coordinator.async_refresh()
 
     @property

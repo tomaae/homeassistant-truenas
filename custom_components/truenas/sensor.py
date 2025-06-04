@@ -84,35 +84,21 @@ class TrueNASUptimeSensor(TrueNASSensor):
 
     async def restart(self) -> None:
         """Restart TrueNAS systen."""
-        if self.coordinator._version_major >= 25:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "system.reboot",
-                "post",
-                ["Home Assistant Integration"],
-            )
-        else:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "system/reboot",
-                "post",
-            )
+        await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "system.reboot",
+            "post",
+            ["Home Assistant Integration"],
+        )
 
     async def stop(self) -> None:
         """Shutdown TrueNAS systen."""
-        if self.coordinator._version_major >= 25:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "system.shutdown",
-                "post",
-                ["Home Assistant Integration"],
-            )
-        else:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "system/shutdown",
-                "post",
-            )
+        await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "system.shutdown",
+            "post",
+            ["Home Assistant Integration"],
+        )
 
 
 # ---------------------------
@@ -124,20 +110,12 @@ class TrueNASDatasetSensor(TrueNASSensor):
     async def snapshot(self) -> None:
         """Create dataset snapshot."""
         ts = datetime.now().isoformat(sep="_", timespec="microseconds")
-        if self.coordinator._version_major >= 25:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "zfs.snapshot.create",
-                "post",
-                {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
-            )
-        else:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "zfs/snapshot",
-                "post",
-                {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
-            )
+        await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "zfs.snapshot.create",
+            "post",
+            {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
+        )
 
 
 # ---------------------------
@@ -148,17 +126,12 @@ class TrueNASClousyncSensor(TrueNASSensor):
 
     async def start(self) -> None:
         """Run cloudsync job."""
-        if self.coordinator._version_major >= 25:
-            tmp_job = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "cloudsync.get_instance",
-                "get",
-                [self._data["id"]],
-            )
-        else:
-            tmp_job = await self.hass.async_add_executor_job(
-                self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
-            )
+        tmp_job = await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "cloudsync.get_instance",
+            "get",
+            [self._data["id"]],
+        )
 
         if "job" not in tmp_job:
             _LOGGER.error(
@@ -178,33 +151,21 @@ class TrueNASClousyncSensor(TrueNASSensor):
             )
             return
 
-        if self.coordinator._version_major >= 25:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "cloudsync.sync",
-                "post",
-                [self._data["id"]],
-            )
-        else:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                f"cloudsync/id/{self._data['id']}/sync",
-                "post",
-            )
+        await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "cloudsync.sync",
+            "post",
+            [self._data["id"]],
+        )
 
     async def stop(self) -> None:
         """Abort cloudsync job."""
-        if self.coordinator._version_major >= 25:
-            tmp_job = await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "cloudsync.get_instance",
-                "get",
-                [self._data["id"]],
-            )
-        else:
-            tmp_job = await self.hass.async_add_executor_job(
-                self.coordinator.api.query, f"cloudsync/id/{self._data['id']}"
-            )
+        tmp_job = await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "cloudsync.get_instance",
+            "get",
+            [self._data["id"]],
+        )
 
         if "job" not in tmp_job:
             _LOGGER.error(
@@ -224,17 +185,9 @@ class TrueNASClousyncSensor(TrueNASSensor):
             )
             return
 
-        if self.coordinator._version_major >= 25:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                "cloudsync.abort",
-                "post",
-                [self._data["id"]],
-            )
-        else:
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.query,
-                f"cloudsync/id/{self._data['id']}/abort",
-                "post",
-                None,
-            )
+        await self.hass.async_add_executor_job(
+            self.coordinator.api.query,
+            "cloudsync.abort",
+            "post",
+            [self._data["id"]],
+        )

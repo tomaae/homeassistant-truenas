@@ -27,7 +27,6 @@ class TrueNASAPI(object):
         hass: HomeAssistant,
         host: str,
         api_key: str,
-        use_ssl: bool = False,
         verify_ssl: bool = True,
     ) -> None:
         """Initialize the TrueNAS API."""

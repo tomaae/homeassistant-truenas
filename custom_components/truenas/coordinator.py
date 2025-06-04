@@ -8,15 +8,12 @@ from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.entity_registry import async_entries_for_config_entry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_HOST,
     CONF_NAME,
-    CONF_SSL,
     CONF_VERIFY_SSL,
 )
 
@@ -55,7 +52,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             "dataset": {},
             "system_info": {},
             "service": {},
-            "jail": {},
             "vm": {},
             "cloudsync": {},
             "replication": {},
@@ -67,7 +63,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             hass,
             config_entry.data[CONF_HOST],
             config_entry.data[CONF_API_KEY],
-            config_entry.data[CONF_SSL],
             config_entry.data[CONF_VERIFY_SSL],
         )
 
@@ -75,9 +70,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self.datasets_hass_device_id = None
         self.last_updatecheck_update = datetime(1970, 1, 1)
 
-        self._is_scale = False
         self._is_virtual = False
-        self._is_jsonrpc = True
         self._version_major = 0
         self._version_minor = 0
 
@@ -109,8 +102,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_pool)
         if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_jail)
-        if self.api.connected():
             await self.hass.async_add_executor_job(self.get_vm)
         if self.api.connected():
             await self.hass.async_add_executor_job(self.get_cloudsync)
@@ -138,7 +129,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get system info from TrueNAS."""
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("system.info" if self._is_jsonrpc else "system/info"),
+            source=self.api.query("system.info"),
             vals=[
                 {"name": "version", "default": "unknown"},
                 {"name": "hostname", "default": "unknown"},
@@ -183,7 +174,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             self.ds["system_info"] = parse_api(
                 data=self.ds["system_info"],
                 source=self.api.query(
-                    "core.get_jobs" if self._is_jsonrpc else "core/get_jobs",
+                    "core.get_jobs",
                     method="get",
                     params=[[["id", "=", self.ds["system_info"]["update_jobid"]]]],
                 ),
@@ -211,31 +202,23 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["system_info"]["update_jobid"] = 0
                 self.ds["system_info"]["update_state"] = "unknown"
 
-        self._is_scale = bool(
-            self.ds["system_info"]["version"].startswith("TrueNAS-SCALE-")
-        )
+        if not self._version_major:
+            self._version_major = int(
+                self.ds["system_info"]
+                .get("version")
+                .removeprefix("TrueNAS-")
+                .removeprefix("SCALE-")
+                .split(".")[0]
+            )
 
-        if not self._is_scale and "TrueNAS" not in self.ds["system_info"]["version"]:
-            self._is_scale = True
-
-        if self._is_scale:
-            if not self._version_major:
-                self._version_major = int(
-                    self.ds["system_info"]
-                    .get("version")
-                    .removeprefix("TrueNAS-")
-                    .removeprefix("SCALE-")
-                    .split(".")[0]
-                )
-
-            if not self._version_minor:
-                self._version_minor = int(
-                    self.ds["system_info"]
-                    .get("version")
-                    .removeprefix("TrueNAS-")
-                    .removeprefix("SCALE-")
-                    .split(".")[1]
-                )
+        if not self._version_minor:
+            self._version_minor = int(
+                self.ds["system_info"]
+                .get("version")
+                .removeprefix("TrueNAS-")
+                .removeprefix("SCALE-")
+                .split(".")[1]
+            )
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
@@ -256,9 +239,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self.ds["interface"] = parse_api(
             data=self.ds["interface"],
-            source=self.api.query(
-                "interface.query" if self._is_jsonrpc else "interface"
-            ),
+            source=self.api.query("interface.query"),
             key="id",
             vals=[
                 {"name": "id", "default": "unknown"},
@@ -299,11 +280,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
             source=self.api.query(
-                (
-                    "update.check_available"
-                    if self._is_jsonrpc
-                    else "update/check_available"
-                ),
+                "update.check_available",
                 method="post",
             ),
             vals=[
@@ -360,50 +337,16 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not tmp_graphs:
             return
 
-        if self._is_scale:
-            if self._version_major == 23:
-                tmp_params = {
-                    "graphs": tmp_graphs,
-                    "reporting_query_netdata": {
-                        "start": "-90",
-                        "end": "-30",
-                        "aggregate": True,
-                    },
-                }
-            elif self._version_major == 24:
-                tmp_params = {
-                    "graphs": tmp_graphs,
-                    "reporting_query": {
-                        "start": "-90",
-                        "end": "-30",
-                        "aggregate": True,
-                    },
-                }
-            elif self._version_major >= 25:
-                tmp_params = [
-                    tmp_graphs,
-                    {
-                        "start": report_epoch - 30,
-                        "end": report_epoch - 90,
-                        "aggregate": True,
-                    },
-                ]
-        else:
-            tmp_params = {
-                "graphs": tmp_graphs,
-                "reporting_query": {
-                    "start": "now-90s",
-                    "end": "now-30s",
-                    "aggregate": True,
-                },
-            }
+        tmp_params = [
+            tmp_graphs,
+            {
+                "start": report_epoch - 30,
+                "end": report_epoch - 90,
+                "aggregate": True,
+            },
+        ]
 
-        reporting_path = "reporting/get_data"
-        if self._is_scale and self._version_major >= 23:
-            reporting_path = "reporting/netdata_get_data"
-
-        if self._is_jsonrpc:
-            reporting_path = "reporting.netdata_get_data"
+        reporting_path = "reporting.netdata_get_data"
 
         tmp_graph = self.api.query(
             reporting_path,
@@ -413,46 +356,15 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         if not isinstance(tmp_graph, list):
             if self.api.error == 500:
-                for tmp in (
-                    tmp_params["graphs"] if self._version_major >= 25 else tmp_params[0]
-                ):
-                    if not self._is_scale:
-                        tmp_params2 = {
-                            "graphs": [tmp],
-                            "reporting_query": {
-                                "start": "now-90s",
-                                "end": "now-30s",
-                                "aggregate": True,
-                            },
-                        }
-
-                    if self._is_scale and self._version_major == 23:
-                        tmp_params2 = {
-                            "graphs": [tmp],
-                            "reporting_query_netdata": {
-                                "start": "-90",
-                                "end": "-30",
-                                "aggregate": True,
-                            },
-                        }
-                    elif self._is_scale and self._version_major == 24:
-                        tmp_params2 = {
-                            "graphs": [tmp],
-                            "reporting_query": {
-                                "start": "-90",
-                                "end": "-30",
-                                "aggregate": "true",
-                            },
-                        }
-                    elif self._is_scale and self._version_major >= 25:
-                        tmp_params2 = {
-                            [tmp],
-                            {
-                                "start": report_epoch - 30,
-                                "end": report_epoch - 90,
-                                "aggregate": "true",
-                            },
-                        }
+                for tmp in tmp_params["graphs"]:
+                    tmp_params2 = {
+                        [tmp],
+                        {
+                            "start": report_epoch - 30,
+                            "end": report_epoch - 90,
+                            "aggregate": "true",
+                        },
+                    }
 
                     tmp2 = self.api.query(
                         reporting_path,
@@ -478,130 +390,70 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
                 if "aggregations" in tmp_graph[i]:
-                    if self._is_scale and self._version_major >= 23:
-                        self.ds["system_info"]["cpu_temperature"] = round(
-                            max(tmp_graph[i]["aggregations"]["mean"].values()), 2
-                        )
-                    else:
-                        self.ds["system_info"]["cpu_temperature"] = round(
-                            max(
-                                list(filter(None, tmp_graph[i]["aggregations"]["mean"]))
-                            ),
-                            1,
-                        )
+                    self.ds["system_info"]["cpu_temperature"] = round(
+                        max(tmp_graph[i]["aggregations"]["mean"].values()), 2
+                    )
                 else:
                     self.ds["system_info"]["cpu_temperature"] = 0.0
 
             # CPU load
             if tmp_graph[i]["name"] == "load":
-                tmp_arr = ("load_shortterm", "load_midterm", "load_longterm")
-                if self._is_scale and self._version_major >= 23:
-                    tmp_arr = ("shortterm", "midterm", "longterm")
-
+                tmp_arr = ("shortterm", "midterm", "longterm")
                 self._systemstats_process(tmp_arr, tmp_graph[i], "load")
 
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
-                tmp_arr = ("interrupt", "system", "user", "nice", "idle")
-                if self._is_scale and 23 <= self._version_major <= 24:
-                    tmp_arr = ("softirq", "system", "user", "nice", "iowait", "idle")
-                elif self._is_scale and self._version_major >= 25:
-                    tmp_arr = "cpu"
-
+                tmp_arr = "cpu"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
-                if self._is_scale and self._version_major >= 25:
-                    self.ds["system_info"]["cpu_usage"] = round(
-                        self.ds["system_info"]["cpu_cpu"], 2
-                    )
-                else:
-                    self.ds["system_info"]["cpu_usage"] = round(
-                        self.ds["system_info"]["cpu_system"]
-                        + self.ds["system_info"]["cpu_user"],
-                        2,
-                    )
+                self.ds["system_info"]["cpu_usage"] = round(
+                    self.ds["system_info"]["cpu_cpu"], 2
+                )
 
             # Interface
             if tmp_graph[i]["name"] == "interface":
                 tmp_etc = tmp_graph[i]["identifier"]
                 if tmp_etc in self.ds["interface"]:
-                    # 12->13 API change
                     tmp_graph[i]["legend"] = [
-                        tmp.replace("if_octets_", "") for tmp in tmp_graph[i]["legend"]
+                        tmp.replace("received", "rx") for tmp in tmp_graph[i]["legend"]
                     ]
-                    if self._is_scale and self._version_major >= 23:
-                        tmp_graph[i]["legend"] = [
-                            tmp.replace("received", "rx")
-                            for tmp in tmp_graph[i]["legend"]
-                        ]
-                        tmp_graph[i]["legend"] = [
-                            tmp.replace("sent", "tx") for tmp in tmp_graph[i]["legend"]
-                        ]
-                        tmp_graph[i]["aggregations"]["mean"] = {
-                            k.replace("received", "rx"): v
-                            for k, v in tmp_graph[i]["aggregations"]["mean"].items()
-                        }
-                        tmp_graph[i]["aggregations"]["mean"] = {
-                            k.replace("sent", "tx"): v
-                            for k, v in tmp_graph[i]["aggregations"]["mean"].items()
-                        }
+                    tmp_graph[i]["legend"] = [
+                        tmp.replace("sent", "tx") for tmp in tmp_graph[i]["legend"]
+                    ]
+                    tmp_graph[i]["aggregations"]["mean"] = {
+                        k.replace("received", "rx"): v
+                        for k, v in tmp_graph[i]["aggregations"]["mean"].items()
+                    }
+                    tmp_graph[i]["aggregations"]["mean"] = {
+                        k.replace("sent", "tx"): v
+                        for k, v in tmp_graph[i]["aggregations"]["mean"].items()
+                    }
 
                     tmp_arr = ("rx", "tx")
                     if "aggregations" in tmp_graph[i]:
                         for e in range(len(tmp_graph[i]["legend"])):
                             tmp_var = tmp_graph[i]["legend"][e]
                             if tmp_var in tmp_arr:
-                                if self._is_scale and self._version_major >= 23:
-                                    tmp_val = (
-                                        tmp_graph[i]["aggregations"]["mean"][tmp_var]
-                                        or 0.0
-                                        if tmp_var
-                                        in tmp_graph[i]["aggregations"]["mean"]
-                                        else 0.0
-                                    )
-                                    self.ds["interface"][tmp_etc][tmp_var] = round(
-                                        (tmp_val * 0.12207), 2
-                                    )
-                                else:
-                                    tmp_val = (
-                                        tmp_graph[i]["aggregations"]["mean"][e] or 0.0
-                                        if e in tmp_graph[i]["aggregations"]["mean"]
-                                        else 0.0
-                                    )
-                                    self.ds["interface"][tmp_etc][tmp_var] = round(
-                                        (tmp_val / 1024), 2
-                                    )
+                                tmp_val = (
+                                    tmp_graph[i]["aggregations"]["mean"][tmp_var] or 0.0
+                                    if tmp_var in tmp_graph[i]["aggregations"]["mean"]
+                                    else 0.0
+                                )
+                                self.ds["interface"][tmp_etc][tmp_var] = round(
+                                    (tmp_val * 0.12207), 2
+                                )
+
                     else:
                         for tmp_load in tmp_arr:
                             self.ds["interface"][tmp_etc][tmp_load] = 0.0
 
             # memory
             if tmp_graph[i]["name"] == "memory":
-                tmp_arr = (
-                    "memory-used_value",
-                    "memory-free_value",
-                    "memory-cached_value",
-                    "memory-buffered_value",
+                tmp_arr = "available"
+                self.ds["system_info"]["memory-total_value"] = round(
+                    self.ds["system_info"]["physmem"]
                 )
-                if self._is_scale and self._version_major >= 23:
-                    tmp_arr = (
-                        "free",
-                        "used",
-                        "cached",
-                        "buffers",
-                    )
-                if self._is_scale and self._version_major >= 25:
-                    tmp_arr = "available"
-                    self.ds["system_info"]["memory-total_value"] = round(
-                        self.ds["system_info"]["physmem"]
-                    )
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
-                if not self._is_scale or (self._is_scale and self._version_major <= 24):
-                    self.ds["system_info"]["memory-total_value"] = round(
-                        self.ds["system_info"]["memory-used_value"]
-                        + self.ds["system_info"]["memory-free_value"]
-                        + self.ds["system_info"]["cache_size-arc_value"]
-                    )
                 if self.ds["system_info"]["memory-total_value"] > 0:
                     self.ds["system_info"]["memory-usage_percent"] = round(
                         100
@@ -614,9 +466,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
-                tmp_arr = "cache_size-arc_value"
-                if self._is_scale and self._version_major >= 23:
-                    tmp_arr = "arc_size"
+                tmp_arr = "arc_size"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
     # ---------------------------
@@ -627,57 +477,20 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             for e in range(len(graph["legend"])):
                 tmp_var = graph["legend"][e]
                 if tmp_var in arr:
-                    if self._is_scale and self._version_major >= 23:
-                        e = tmp_var
+                    e = tmp_var
 
                     tmp_val = graph["aggregations"]["mean"][e] or 0.0
                     if t == "memory":
-                        if (
-                            self._is_scale
-                            and self._version_major >= 23
-                            and self._version_major <= 24
-                        ):
-                            if tmp_var == "free":
-                                self.ds["system_info"]["memory-free_value"] = round(
-                                    tmp_val * 1024 * 1024
-                                )
-                            elif tmp_var == "used":
-                                self.ds["system_info"]["memory-used_value"] = round(
-                                    tmp_val * 1024 * 1024
-                                )
-                            elif tmp_var == "cached":
-                                self.ds["system_info"]["memory-cached_value"] = round(
-                                    tmp_val * 1024 * 1024
-                                )
-                            elif tmp_var == "buffers":
-                                self.ds["system_info"]["memory-buffered_value"] = round(
-                                    tmp_val * 1024 * 1024
-                                )
-                        elif self._is_scale and self._version_major >= 25:
-                            if tmp_var == "available":
-                                self.ds["system_info"]["memory-free_value"] = round(
-                                    tmp_val
-                                )
-                        else:
-                            self.ds["system_info"][tmp_var] = tmp_val
+                        if tmp_var == "available":
+                            self.ds["system_info"]["memory-free_value"] = round(tmp_val)
                     elif t == "cpu":
                         self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
                     elif t == "load":
-                        if self._is_scale and self._version_major >= 23:
-                            self.ds["system_info"][f"load_{tmp_var}"] = round(
-                                tmp_val, 2
-                            )
-                        else:
-                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
+                        self.ds["system_info"][f"load_{tmp_var}"] = round(tmp_val, 2)
                     elif t == "arcsize":
-                        if self._is_scale and self._version_major >= 23:
-                            if self._version_major < 25:
-                                tmp_val = tmp_val * 1024 * 1024
-                            self.ds["system_info"]["cache_size-arc_value"] = round(
-                                tmp_val, 2
-                            )
-                        else:
-                            self.ds["system_info"][tmp_var] = round(tmp_val, 2)
+                        self.ds["system_info"]["cache_size-arc_value"] = round(
+                            tmp_val, 2
+                        )
                     else:
                         self.ds["system_info"][tmp_var] = round(tmp_val, 2)
         else:
@@ -694,7 +507,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get service info from TrueNAS."""
         self.ds["service"] = parse_api(
             data=self.ds["service"],
-            source=self.api.query("service.query" if self._is_jsonrpc else "service"),
+            source=self.api.query("service.query"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
@@ -717,7 +530,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get pools from TrueNAS."""
         self.ds["pool"] = parse_api(
             data=self.ds["pool"],
-            source=self.api.query("pool.query" if self._is_jsonrpc else "pool"),
+            source=self.api.query("pool.query"),
             key="guid",
             vals=[
                 {"name": "guid", "default": 0},
@@ -766,9 +579,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         self.ds["pool"] = parse_api(
             data=self.ds["pool"],
-            source=self.api.query(
-                "boot.get_state" if self._is_jsonrpc else "boot/get_state"
-            ),
+            source=self.api.query("boot.get_state"),
             key="name",
             vals=[
                 {"name": "guid", "default": "boot-pool"},
@@ -852,16 +663,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
 
             if vals["name"] in ["boot-pool", "freenas-boot"]:
-                if self._is_scale and self._version_major >= 23:
-                    self.ds["pool"][uid]["available_gib"] = vals["free"]
-                    self.ds["pool"][uid]["total_gib"] = vals["free"] + vals["allocated"]
-                else:
-                    self.ds["pool"][uid]["available_gib"] = vals[
-                        "root_dataset_available"
-                    ]
-                    self.ds["pool"][uid]["total_gib"] = (
-                        vals["root_dataset_available"] + vals["root_dataset_used"]
-                    )
+                self.ds["pool"][uid]["available_gib"] = vals["free"]
+                self.ds["pool"][uid]["total_gib"] = vals["free"] + vals["allocated"]
 
                 self.ds["pool"][uid].pop("root_dataset")
 
@@ -883,9 +686,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get datasets from TrueNAS."""
         self.ds["dataset"] = parse_api(
             data={},
-            source=self.api.query(
-                "pool.dataset.query" if self._is_jsonrpc else "pool/dataset"
-            ),
+            source=self.api.query("pool.dataset.query"),
             key="id",
             vals=[
                 {"name": "id", "default": "unknown"},
@@ -998,7 +799,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get disks from TrueNAS."""
         self.ds["disk"] = parse_api(
             data=self.ds["disk"],
-            source=self.api.query("disk.query" if self._is_jsonrpc else "disk"),
+            source=self.api.query("disk.query"),
             key="identifier",
             vals=[
                 {"name": "name", "default": "unknown"},
@@ -1023,9 +824,9 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         # Get disk temperatures
         temps = self.api.query(
-            "disk.temperatures" if self._is_jsonrpc else "disk/temperatures",
+            "disk.temperatures",
             method="post",
-            params={} if self._is_jsonrpc else {"names": []},
+            params={},
         )
 
         if temps:
@@ -1036,33 +837,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                     # I feel like this will break in the future when TrueNAS updates to a more sensible system. Currently their own long term stats are broken by the changing devnames.
 
     # ---------------------------
-    #   get_jail
-    # ---------------------------
-    def get_jail(self) -> None:
-        """Get jails from TrueNAS."""
-        if self._is_scale:
-            return
-
-        self.ds["jail"] = parse_api(
-            data=self.ds["jail"],
-            source=self.api.query("jail"),
-            key="id",
-            vals=[
-                {"name": "id", "default": "unknown"},
-                {"name": "comment", "default": "unknown"},
-                {"name": "host_hostname", "default": "unknown"},
-                {"name": "jail_zfs_dataset", "default": "unknown"},
-                {"name": "last_started", "default": "unknown"},
-                {"name": "ip4_addr", "default": "unknown"},
-                {"name": "ip6_addr", "default": "unknown"},
-                {"name": "release", "default": "unknown"},
-                {"name": "state", "type": "bool", "default": False},
-                {"name": "type", "default": "unknown"},
-                {"name": "plugin_name", "default": "unknown"},
-            ],
-        )
-
-    # ---------------------------
     #   get_vm
     # ---------------------------
     def get_vm(self) -> None:
@@ -1070,7 +844,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         # 25.x data: [{'id': 'test', 'name': 'test', 'type': 'VM', 'status': 'RUNNING', 'cpu': '1', 'memory': 1073741824, 'autostart': True, 'environment': {}, 'aliases': [{'type': 'INET', 'address': '10.46.230.107', 'netmask': 24}, {'type': 'INET6', 'address': 'fd42:b51f:fa2e:58ef:216:3eff:fecd:7def', 'netmask': 64}], 'image': {'architecture': 'amd64', 'description': 'Debian bookworm amd64 (20250428_05:24)', 'os': 'Debian', 'release': 'bookworm', 'serial': '20250428_05:24', 'type': 'disk-kvm.img', 'variant': 'default', 'secureboot': None}, 'userns_idmap': None, 'raw': None, 'vnc_enabled': True, 'vnc_port': 5900, 'vnc_password': None, 'secure_boot': False, 'root_disk_size': 10737418240, 'root_disk_io_bus': 'NVME', 'storage_pool': 'apps'}, {'id': 'testcontainer', 'name': 'testcontainer', 'type': 'CONTAINER', 'status': 'RUNNING', 'cpu': '1', 'memory': 536870912, 'autostart': True, 'environment': {}, 'aliases': [{'type': 'INET', 'address': '10.46.230.199', 'netmask': 24}, {'type': 'INET6', 'address': 'fd42:b51f:fa2e:58ef:216:3eff:fe0f:ee70', 'netmask': 64}], 'image': {'architecture': 'amd64', 'description': 'Alpine 3.19 amd64 (20250506_13:00)', 'os': 'Alpine', 'release': '3.19', 'serial': '20250506_13:00', 'type': 'squashfs', 'variant': 'default', 'secureboot': False}, 'userns_idmap': {'uid': {'hostid': 2147000001, 'maprange': 568, 'nsid': 0}, 'gid': {'hostid': 2147000001, 'maprange': 568, 'nsid': 0}}, 'raw': None, 'vnc_enabled': False, 'vnc_port': None, 'vnc_password': None, 'secure_boot': None, 'root_disk_size': None, 'root_disk_io_bus': None, 'storage_pool': 'apps'}]
         self.ds["vm"] = parse_api(
             data=self.ds["vm"],
-            source=self.api.query("virt.instance.query" if self._is_jsonrpc else "vm"),
+            source=self.api.query("virt.instance.query"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
@@ -1098,9 +872,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get cloudsync from TrueNAS."""
         self.ds["cloudsync"] = parse_api(
             data=self.ds["cloudsync"],
-            source=self.api.query(
-                "cloudsync.query" if self._is_jsonrpc else "cloudsync"
-            ),
+            source=self.api.query("cloudsync.query"),
             key="id",
             vals=[
                 {"name": "id", "default": "unknown"},
@@ -1139,9 +911,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get replication from TrueNAS."""
         self.ds["replication"] = parse_api(
             data=self.ds["replication"],
-            source=self.api.query(
-                "replication.query" if self._is_jsonrpc else "replication"
-            ),
+            source=self.api.query("replication.query"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
@@ -1183,9 +953,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         """Get replication from TrueNAS."""
         self.ds["snapshottask"] = parse_api(
             data=self.ds["snapshottask"],
-            source=self.api.query(
-                "pool.snapshottask.query" if self._is_jsonrpc else "pool/snapshottask"
-            ),
+            source=self.api.query("pool.snapshottask.query"),
             key="id",
             vals=[
                 {"name": "id", "default": 0},
@@ -1212,103 +980,38 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_app(self) -> None:
         """Get Apps from TrueNAS."""
-        if not self._is_scale:
-            return
+        self.ds["app"] = parse_api(
+            data=self.ds["app"],
+            source=self.api.query("app.query"),
+            key="id",
+            vals=[
+                {"name": "id", "default": 0},
+                {"name": "name", "default": "unknown"},
+                {"name": "human_version", "default": "unknown"},
+                {"name": "version", "default": "unknown"},
+                {"name": "latest_version", "default": "unknown"},
+                {
+                    "name": "update_available",
+                    "source": "upgrade_available",
+                    "type": "bool",
+                    "default": False,
+                },
+                {
+                    "name": "image_updates_available",
+                    "type": "bool",
+                    "default": False,
+                },
+                {
+                    "name": "portal",
+                    "source": "portals/Web UI",
+                    "default": "unknown",
+                },
+                {"name": "state", "default": "unknown"},
+            ],
+            ensure_vals=[
+                {"name": "running", "type": "bool", "default": False},
+            ],
+        )
 
-        if self._version_major <= 23 or (
-            self._version_major == 24 and self._version_minor < 10
-        ):
-            self.ds["app"] = parse_api(
-                data=self.ds["app"],
-                source=self.api.query("chart/release"),
-                key="id",
-                vals=[
-                    {"name": "id", "default": 0},
-                    {"name": "name", "default": "unknown"},
-                    {"name": "human_version", "type": "bool", "default": False},
-                    {"name": "update_available", "type": "bool", "default": False},
-                    {
-                        "name": "image_updates_available",
-                        "source": "container_images_update_available",
-                        "default": "unknown",
-                    },
-                    {"name": "portal", "source": "portals/open", "default": "unknown"},
-                    {"name": "status", "default": "unknown"},
-                ],
-                ensure_vals=[
-                    {"name": "running", "type": "bool", "default": False},
-                ],
-            )
-
-            for uid, vals in self.ds["app"].items():
-                self.ds["app"][uid]["running"] = vals["status"] == "ACTIVE"
-
-        elif self._version_major == 24 and self._version_minor == 10:
-            self.ds["app"] = parse_api(
-                data=self.ds["app"],
-                source=self.api.query("app"),
-                key="id",
-                vals=[
-                    {"name": "id", "default": 0},
-                    {"name": "name", "default": "unknown"},
-                    {"name": "human_version", "default": "unknown"},
-                    {"name": "version", "default": "unknown"},
-                    {"name": "latest_version", "default": "unknown"},
-                    {
-                        "name": "update_available",
-                        "source": "upgrade_available",
-                        "type": "bool",
-                        "default": False,
-                    },
-                    {
-                        "name": "image_updates_available",
-                        "type": "bool",
-                        "default": False,
-                    },
-                    {
-                        "name": "portal",
-                        "source": "portals/Web UI",
-                        "default": "unknown",
-                    },
-                    {"name": "state", "default": "unknown"},
-                ],
-                ensure_vals=[
-                    {"name": "running", "type": "bool", "default": False},
-                ],
-            )
-        elif self._version_major >= 24:
-            self.ds["app"] = parse_api(
-                data=self.ds["app"],
-                source=self.api.query("app.query" if self._is_jsonrpc else "app"),
-                key="id",
-                vals=[
-                    {"name": "id", "default": 0},
-                    {"name": "name", "default": "unknown"},
-                    {"name": "human_version", "default": "unknown"},
-                    {"name": "version", "default": "unknown"},
-                    {"name": "latest_version", "default": "unknown"},
-                    {
-                        "name": "update_available",
-                        "source": "upgrade_available",
-                        "type": "bool",
-                        "default": False,
-                    },
-                    {
-                        "name": "image_updates_available",
-                        "type": "bool",
-                        "default": False,
-                    },
-                    {
-                        "name": "portal",
-                        "source": "portals/Web UI",
-                        "default": "unknown",
-                    },
-                    {"name": "state", "default": "unknown"},
-                ],
-                ensure_vals=[
-                    {"name": "running", "type": "bool", "default": False},
-                ],
-            )
-
-            for uid, vals in self.ds["app"].items():
-                self.ds["app"][uid]["running"] = vals["state"] == "RUNNING"
+        for uid, vals in self.ds["app"].items():
+            self.ds["app"][uid]["running"] = vals["state"] == "RUNNING"

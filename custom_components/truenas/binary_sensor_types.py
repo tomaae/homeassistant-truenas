@@ -11,9 +11,6 @@ from homeassistant.components.binary_sensor import (
 from .const import (
     SCHEMA_SERVICE_APP_START,
     SCHEMA_SERVICE_APP_STOP,
-    SCHEMA_SERVICE_JAIL_RESTART,
-    SCHEMA_SERVICE_JAIL_START,
-    SCHEMA_SERVICE_JAIL_STOP,
     SCHEMA_SERVICE_SERVICE_RELOAD,
     SCHEMA_SERVICE_SERVICE_RESTART,
     SCHEMA_SERVICE_SERVICE_START,
@@ -22,9 +19,6 @@ from .const import (
     SCHEMA_SERVICE_VM_STOP,
     SERVICE_APP_START,
     SERVICE_APP_STOP,
-    SERVICE_JAIL_RESTART,
-    SERVICE_JAIL_START,
-    SERVICE_JAIL_STOP,
     SERVICE_SERVICE_RELOAD,
     SERVICE_SERVICE_RESTART,
     SERVICE_SERVICE_START,
@@ -45,17 +39,6 @@ DEVICE_ATTRIBUTES_POOL = [
     "scrub_secs_left",
     "available_gib",
     "total_gib",
-]
-
-DEVICE_ATTRIBUTES_JAIL = [
-    "comment",
-    "jail_zfs_dataset",
-    "last_started",
-    "ip4_addr",
-    "ip6_addr",
-    "release",
-    "type",
-    "plugin_name",
 ]
 
 DEVICE_ATTRIBUTES_VM = [
@@ -118,22 +101,6 @@ SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
         data_attributes_list=DEVICE_ATTRIBUTES_POOL,
     ),
     TrueNASBinarySensorEntityDescription(
-        key="jail",
-        name="",
-        icon_enabled="mdi:layers",
-        icon_disabled="mdi:layers-off",
-        device_class=None,
-        entity_category=None,
-        ha_group="Jails",
-        data_path="jail",
-        data_is_on="state",
-        data_name="host_hostname",
-        data_uid="",
-        data_reference="id",
-        data_attributes_list=DEVICE_ATTRIBUTES_JAIL,
-        func="TrueNASJailBinarySensor",
-    ),
-    TrueNASBinarySensorEntityDescription(
         key="vm",
         name="",
         icon_enabled="mdi:server",
@@ -184,9 +151,6 @@ SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
 )
 
 SENSOR_SERVICES = [
-    [SERVICE_JAIL_START, SCHEMA_SERVICE_JAIL_START, "start"],
-    [SERVICE_JAIL_STOP, SCHEMA_SERVICE_JAIL_STOP, "stop"],
-    [SERVICE_JAIL_RESTART, SCHEMA_SERVICE_JAIL_RESTART, "restart"],
     [SERVICE_VM_START, SCHEMA_SERVICE_VM_START, "start"],
     [SERVICE_VM_STOP, SCHEMA_SERVICE_VM_STOP, "stop"],
     [SERVICE_SERVICE_START, SCHEMA_SERVICE_SERVICE_START, "start"],
