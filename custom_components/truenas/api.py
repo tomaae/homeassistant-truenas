@@ -135,7 +135,8 @@ class TrueNASAPI(object):
     def connection_test(self) -> tuple:
         """Test connection."""
         self.connect()
-        self.query("system.info")
+        if self.connected():
+            self.query("system.info")
 
         return self._connected, self._error
 
