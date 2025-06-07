@@ -56,13 +56,25 @@ class TrueNASAPI(object):
         try:
             self._ws = connect(self._url, ssl=self._ssl_context)
         except Exception as e:
+            if "CERTIFICATE_VERIFY_FAILED" in str(e.args):
+                self._error = "certificate_verify_failed"
+
+            if "The plain HTTP request was sent to HTTPS port" in str(e.args):
+                self._error = "http_used"
+
+            if "TLSV1_UNRECOGNIZED_NAME" in str(e.args):
+                self._error = "tlsv1_not_supported"
+
+            if "No WebSocket UPGRADE" in str(e.args):
+                self._error = "websocket_not_supported"
+
             if "No address associated with hostname" in e.args:
                 self._error = "unknown_hostname"
 
             if "Connection refused" in e.args:
                 self._error = "connection_refused"
 
-            if "No route to host" in e.args:
+            if "No route to host" in e.args or "Name or service not known" in str(e):
                 self._error = "invalid_hostname"
 
             if "timed out while waiting for handshake response" in e.args:
