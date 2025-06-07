@@ -56,6 +56,9 @@ class TrueNASAPI(object):
         try:
             self._ws = connect(self._url, ssl=self._ssl_context)
         except Exception as e:
+            if "No address associated with hostname" in e.args:
+                self._error = "unknown_hostname"
+
             if "Connection refused" in e.args:
                 self._error = "connection_refused"
 
