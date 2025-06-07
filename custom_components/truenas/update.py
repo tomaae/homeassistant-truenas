@@ -122,7 +122,7 @@ class TrueNASAppUpdate(TrueNASEntity, UpdateEntity):
     @property
     def latest_version(self) -> str:
         """Latest version available for install."""
-        return self._data["version"]
+        return self._data["latest_version"]
 
     async def async_install(self, version: str, backup: bool, **kwargs: Any) -> None:
         """Install an update."""
