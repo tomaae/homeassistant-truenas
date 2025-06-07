@@ -22,7 +22,12 @@
             "connection_refused": "Connection failed, connection refused.",
             "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
             "api_not_found": "Connection failed, API not found.",
-            "malformed_result": "API response is malformed."
+            "malformed_result": "API response is malformed.",
+            "certificate_verify_failed": "Certificate verification failed.",
+            "http_used": "The plain HTTP request was sent to HTTPS port. Reverse proxy?",
+            "tlsv1_not_supported": "TLSv1 not supported. Reverse proxy?",
+            "websocket_not_supported": "WebSocket not supported. Reverse proxy?",
+            "unknown_hostname": "Unknown hostname, check DNS."
         }
     }
 }
