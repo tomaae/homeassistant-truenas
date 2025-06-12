@@ -9,6 +9,14 @@
                     "api_key": "API key",
                     "verify_ssl": "Verify SSL certificate"
                 }
+            },
+            "reconfigure": {
+                "description": "Reconfigure TrueNAS integration.",
+                "data": {
+                    "host": "Host",
+                    "api_key": "API key",
+                    "verify_ssl": "Verify SSL certificate"
+                }
             }
         },
         "error": {
@@ -28,6 +36,9 @@
             "handshake_timeout": "Connection failed, timed out while waiting for handshake response.",
             "api_not_found": "Connection failed, API not found.",
             "malformed_result": "API response is malformed."
+        },
+        "abort": {
+            "reconfigure_successful": "Reconfigure successful."
         }
     }
 }
