@@ -9,6 +9,14 @@
                     "api_key": "Chave API",
                     "verify_ssl": "Verificar certificado SSL"
                 }
+            },
+            "reconfigure": {
+                "description": "Reconfigure TrueNAS integration.",
+                "data": {
+                    "host": "Host",
+                    "api_key": "API key",
+                    "verify_ssl": "Verify SSL certificate"
+                }
             }
         },
         "error": {
@@ -28,6 +36,9 @@
             "tlsv1_not_supported": "TLSv1 not supported. Reverse proxy?",
             "websocket_not_supported": "WebSocket not supported. Reverse proxy?",
             "unknown_hostname": "Unknown hostname, check DNS."
+        },
+        "abort": {
+            "reconfigure_successful": "Reconfigure successful."
         }
     }
 }
