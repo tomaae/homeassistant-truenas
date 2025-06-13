@@ -21,10 +21,6 @@
         },
         "error": {
             "name_exists": "Name already exists.",
-            "401": "No authorization for this endpoint.",
-            "404": "API not found on this host.",
-            "500": "Internal error.",
-            "no_response": "No response from host.",
             "invalid_key": "Login failed, invalid API key.",
             "invalid_hostname": "Connection failed, invalid hostname.",
             "connection_refused": "Connection failed, connection refused.",

@@ -21,10 +21,6 @@
         },
         "error": {
             "name_exists": "Nombre ya existente.",
-            "401": "No hay autorización para este extremo.",
-            "404": "API no encontrada en este host.",
-            "500": "Error Interno.",
-            "no_response": "No hay respuesta del anfitrión.",
             "invalid_key": "Login failed, invalid API key.",
             "invalid_hostname": "Conexión fallida, nombre del host inválido.",
             "connection_refused": "Conexión fallida, conexión rechazada.",

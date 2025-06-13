@@ -21,10 +21,6 @@
         },
         "error": {
             "name_exists": "Názov už existuje.",
-            "401": "Žiadna autorizácia pre tento koncový bod.",
-            "404": "API sa na tomto hostiteľovi nenašlo.",
-            "500": "Interný error.",
-            "no_response": "Hostiteľ nereaguje.",
             "invalid_key": "Prihlásenie zlyhalo, neplatný kľúč API.",
             "invalid_hostname": "Pripojenie zlyhalo, neplatné meno hostiteľa.",
             "connection_refused": "Pripojenie zlyhalo, pripojenie bolo odmietnuté.",
