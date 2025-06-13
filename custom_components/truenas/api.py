@@ -54,7 +54,9 @@ class TrueNASAPI(object):
         self._connected = False
         self._error = ""
         try:
-            self._ws = connect(self._url, ssl=self._ssl_context, max_size=16777216)
+            self._ws = connect(
+                self._url, ssl=self._ssl_context, max_size=16777216, ping_interval=20
+            )
         except Exception as e:
             if "CERTIFICATE_VERIFY_FAILED" in str(e.args):
                 self._error = "certificate_verify_failed"
