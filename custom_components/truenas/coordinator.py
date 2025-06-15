@@ -564,8 +564,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 },
             ],
             ensure_vals=[
-                {"name": "available_gib", "default": 0.0},
-                {"name": "total_gib", "default": 0.0},
+                {"name": "available", "default": 0.0},
+                {"name": "total", "default": 0.0},
                 {"name": "usage", "default": 0.0},
             ],
         )
@@ -626,8 +626,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "free", "default": 0},
             ],
             ensure_vals=[
-                {"name": "available_gib", "default": 0.0},
-                {"name": "total_gib", "default": 0.0},
+                {"name": "available", "default": 0.0},
+                {"name": "total", "default": 0.0},
                 {"name": "usage", "default": 0.0},
             ],
         )
@@ -648,25 +648,20 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         for uid, vals in self.ds["pool"].items():
             if vals["path"] in tmp_dataset_available:
-                self.ds["pool"][uid]["available_gib"] = tmp_dataset_available[
-                    vals["path"]
-                ]
+                self.ds["pool"][uid]["available"] = tmp_dataset_available[vals["path"]]
 
             if vals["path"] in tmp_dataset_total:
-                self.ds["pool"][uid]["total_gib"] = tmp_dataset_total[vals["path"]]
+                self.ds["pool"][uid]["total"] = tmp_dataset_total[vals["path"]]
 
             if vals["name"] in ["boot-pool", "freenas-boot"]:
-                self.ds["pool"][uid]["available_gib"] = vals["free"]
-                self.ds["pool"][uid]["total_gib"] = vals["free"] + vals["allocated"]
+                self.ds["pool"][uid]["available"] = vals["free"]
+                self.ds["pool"][uid]["total"] = vals["free"] + vals["allocated"]
 
                 self.ds["pool"][uid].pop("root_dataset")
 
-            if self.ds["pool"][uid]["total_gib"] > 0:
+            if self.ds["pool"][uid]["total"] > 0:
                 self.ds["pool"][uid]["usage"] = round(
-                    (
-                        self.ds["pool"][uid]["available_gib"]
-                        / self.ds["pool"][uid]["total_gib"]
-                    )
+                    (self.ds["pool"][uid]["available"] / self.ds["pool"][uid]["total"])
                     * 100
                 )
             else:
@@ -740,13 +735,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 {"name": "used", "source": "used/parsed", "default": 0},
                 {"name": "available", "source": "available/parsed", "default": 0},
             ],
-            ensure_vals=[
-                {"name": "used_gb", "default": 0},
-            ],
         )
-
-        for uid, vals in self.ds["dataset"].items():
-            self.ds["dataset"][uid]["used_gb"] = vals["used"]
 
         if len(self.ds["dataset"]) == 0:
             return
