@@ -661,7 +661,13 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             if self.ds["pool"][uid]["total"] > 0:
                 self.ds["pool"][uid]["usage"] = round(
-                    (self.ds["pool"][uid]["available"] / self.ds["pool"][uid]["total"])
+                    (
+                        (
+                            self.ds["pool"][uid]["total"]
+                            - self.ds["pool"][uid]["available"]
+                        )
+                        / self.ds["pool"][uid]["total"]
+                    )
                     * 100
                 )
             else:
