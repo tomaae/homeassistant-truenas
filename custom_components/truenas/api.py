@@ -54,7 +54,10 @@ class TrueNASAPI(object):
             self._error = ""
             try:
                 self._ws = connect(
-                    self._url, ssl=self._ssl_context, max_size=16777216, ping_interval=20
+                    self._url,
+                    ssl=self._ssl_context,
+                    max_size=16777216,
+                    ping_interval=20,
                 )
             except Exception as e:
                 if "CERTIFICATE_VERIFY_FAILED" in str(e.args):
@@ -75,7 +78,9 @@ class TrueNASAPI(object):
                 if "Connection refused" in e.args:
                     self._error = "connection_refused"
 
-                if "No route to host" in e.args or "Name or service not known" in str(e):
+                if "No route to host" in e.args or "Name or service not known" in str(
+                    e
+                ):
                     self._error = "invalid_hostname"
 
                 if "timed out while waiting for handshake response" in e.args:
@@ -119,7 +124,7 @@ class TrueNASAPI(object):
     # ---------------------------
     def disconnect(self) -> bool:
         """Return connected boolean."""
-        if hasattr(self, '_ws') and self._ws:
+        if hasattr(self, "_ws") and self._ws:
             self._ws.close()
 
         self._connected = False
@@ -190,7 +195,10 @@ class TrueNASAPI(object):
                         self._error = "malformed_result"
 
                     if (type(data) is list or type(data) is dict) and "error" in data:
-                        if "data" in data["error"] and "reason" in data["error"]["data"]:
+                        if (
+                            "data" in data["error"]
+                            and "reason" in data["error"]["data"]
+                        ):
                             _LOGGER.error(
                                 "TrueNAS %s query (%s) error: %s",
                                 self._host,
