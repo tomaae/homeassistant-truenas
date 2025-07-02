@@ -50,73 +50,70 @@ class TrueNASAPI(object):
     # ---------------------------
     def connect(self) -> bool:
         """Return connected boolean."""
-        self.lock.acquire()
-        self._connected = False
-        self._error = ""
-        try:
-            self._ws = connect(
-                self._url, ssl=self._ssl_context, max_size=16777216, ping_interval=20
-            )
-        except Exception as e:
-            if "CERTIFICATE_VERIFY_FAILED" in str(e.args):
-                self._error = "certificate_verify_failed"
+        with self.lock:
+            self._connected = False
+            self._error = ""
+            try:
+                self._ws = connect(
+                    self._url, ssl=self._ssl_context, max_size=16777216, ping_interval=20
+                )
+            except Exception as e:
+                if "CERTIFICATE_VERIFY_FAILED" in str(e.args):
+                    self._error = "certificate_verify_failed"
 
-            if "The plain HTTP request was sent to HTTPS port" in str(e.args):
-                self._error = "http_used"
+                if "The plain HTTP request was sent to HTTPS port" in str(e.args):
+                    self._error = "http_used"
 
-            if "TLSV1_UNRECOGNIZED_NAME" in str(e.args):
-                self._error = "tlsv1_not_supported"
+                if "TLSV1_UNRECOGNIZED_NAME" in str(e.args):
+                    self._error = "tlsv1_not_supported"
 
-            if "No WebSocket UPGRADE" in str(e.args):
-                self._error = "websocket_not_supported"
+                if "No WebSocket UPGRADE" in str(e.args):
+                    self._error = "websocket_not_supported"
 
-            if "No address associated with hostname" in e.args:
-                self._error = "unknown_hostname"
+                if "No address associated with hostname" in e.args:
+                    self._error = "unknown_hostname"
 
-            if "Connection refused" in e.args:
-                self._error = "connection_refused"
+                if "Connection refused" in e.args:
+                    self._error = "connection_refused"
 
-            if "No route to host" in e.args or "Name or service not known" in str(e):
-                self._error = "invalid_hostname"
+                if "No route to host" in e.args or "Name or service not known" in str(e):
+                    self._error = "invalid_hostname"
 
-            if "timed out while waiting for handshake response" in e.args:
-                self._error = "handshake_timeout"
+                if "timed out while waiting for handshake response" in e.args:
+                    self._error = "handshake_timeout"
 
-            if "404" in str(e):
-                self._error = "api_not_found"
+                if "404" in str(e):
+                    self._error = "api_not_found"
 
-            if not self._error_logged:
-                _LOGGER.error("TrueNAS %s failed to connect (%s)", self._host, e)
+                if not self._error_logged:
+                    _LOGGER.error("TrueNAS %s failed to connect (%s)", self._host, e)
 
-            self._error_logged = True
-            self.lock.release()
-            return False
+                self._error_logged = True
+                return False
 
-        try:
-            payload = {
-                "method": "auth.login_with_api_key",
-                "jsonrpc": "2.0",
-                "id": 0,
-                "params": [self._api_key],
-            }
-            self._ws.send(json.dumps(payload))
-            message = self._ws.recv()
-            data = json.loads(message)
-            self._connected = data["result"]
-            if not self._connected:
-                self._error = "invalid_key"
+            try:
+                payload = {
+                    "method": "auth.login_with_api_key",
+                    "jsonrpc": "2.0",
+                    "id": 0,
+                    "params": [self._api_key],
+                }
+                self._ws.send(json.dumps(payload))
+                message = self._ws.recv()
+                data = json.loads(message)
+                self._connected = data["result"]
+                if not self._connected:
+                    self._error = "invalid_key"
 
-        except Exception as e:
-            if not self._error_logged:
-                _LOGGER.error("TrueNAS %s failed to login (%s)", self._host, e)
+            except Exception as e:
+                if not self._error_logged:
+                    _LOGGER.error("TrueNAS %s failed to login (%s)", self._host, e)
 
-            self._error_logged = True
-            self.lock.release()
-            return False
+                self._error_logged = True
+                return False
 
-        self.lock.release()
-        self._error_logged = False
-        return self._connected
+            self._error_logged = False
+            return self._connected
 
     # ---------------------------
     #   disconnect
@@ -157,75 +154,73 @@ class TrueNASAPI(object):
     # ---------------------------
     #   query
     # ---------------------------
-    def query(self, service: str, params: dict[str, Any] | None = {}) -> Optional(list):
+    def query(self, service: str, params: dict[str, Any] | None = {}) -> list | None:
         """Retrieve data from TrueNAS."""
         if not self.connected():
             self.connect()
 
-        self.lock.acquire()
-        self._error = ""
-        try:
-            _LOGGER.debug(
-                "TrueNAS %s query: %s, %s",
-                self._host,
-                service,
-                params,
-            )
-            payload = {
-                "method": service,
-                "jsonrpc": "2.0",
-                "id": 0,
-                "params": [],
-            }
-            if params != {}:
-                if type(params) is not list:
-                    params = [params]
-                payload["params"] = params
+        with self.lock:
+            self._error = ""
+            try:
+                _LOGGER.debug(
+                    "TrueNAS %s query: %s, %s",
+                    self._host,
+                    service,
+                    params,
+                )
+                payload = {
+                    "method": service,
+                    "jsonrpc": "2.0",
+                    "id": 0,
+                    "params": [],
+                }
+                if params != {}:
+                    if type(params) is not list:
+                        params = [params]
+                    payload["params"] = params
 
-            self._ws.send(json.dumps(payload))
-            message = self._ws.recv()
-            if message.startswith("{"):
-                data = json.loads(message)
-                if "result" in data:
-                    data = data["result"]
-                else:
-                    self._error = "malformed_result"
-
-                if (type(data) is list or type(data) is dict) and "error" in data:
-                    if "data" in data["error"] and "reason" in data["error"]["data"]:
-                        _LOGGER.error(
-                            "TrueNAS %s query (%s) error: %s",
-                            self._host,
-                            service,
-                            data["error"]["data"]["reason"],
-                        )
+                self._ws.send(json.dumps(payload))
+                message = self._ws.recv()
+                if message.startswith("{"):
+                    data = json.loads(message)
+                    if "result" in data:
+                        data = data["result"]
                     else:
-                        _LOGGER.error(
-                            "TrueNAS %s query (%s) error: %s",
-                            self._host,
-                            service,
-                            data["error"]["message"],
-                        )
-            else:
-                data = message
+                        self._error = "malformed_result"
 
-            _LOGGER.debug(
-                "TrueNAS %s query (%s) response: %s", self._host, service, data
-            )
-        except Exception as e:
-            _LOGGER.warning(
-                'TrueNAS %s unable to fetch data "%s" (%s)',
-                self._host,
-                service,
-                e,
-            )
-            self.disconnect()
-            self._error = e
-            self.lock.release()
-            return None
+                    if (type(data) is list or type(data) is dict) and "error" in data:
+                        if "data" in data["error"] and "reason" in data["error"]["data"]:
+                            _LOGGER.error(
+                                "TrueNAS %s query (%s) error: %s",
+                                self._host,
+                                service,
+                                data["error"]["data"]["reason"],
+                            )
+                        else:
+                            _LOGGER.error(
+                                "TrueNAS %s query (%s) error: %s",
+                                self._host,
+                                service,
+                                data["error"]["message"],
+                            )
+                else:
+                    data = message
 
-        self.lock.release()
-        return data
+                _LOGGER.debug(
+                    "TrueNAS %s query (%s) response: %s", self._host, service, data
+                )
+            except Exception as e:
+                _LOGGER.warning(
+                    'TrueNAS %s unable to fetch data "%s" (%s)',
+                    self._host,
+                    service,
+                    e,
+                )
+                self.disconnect()
+                self._error = e
+                return None
+
+            return data
 
     @property
     def error(self):
