@@ -88,28 +88,23 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if not self.api.connected():
             self.api.connect()
 
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_systeminfo)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_systemstats)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_service)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_disk)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_dataset)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_pool)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_vm)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_cloudsync)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_replication)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_snapshottask)
-        if self.api.connected():
-            await self.hass.async_add_executor_job(self.get_app)
+        jobs = [
+            self.get_systeminfo,
+            self.get_systemstats,
+            self.get_service,
+            self.get_disk,
+            self.get_dataset,
+            self.get_pool,
+            self.get_vm,
+            self.get_cloudsync,
+            self.get_replication,
+            self.get_snapshottask,
+            self.get_app,
+        ]
+
+        for job in jobs:
+            if self.api.connected():
+                await self.hass.async_add_executor_job(job)
 
         delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
         if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
