@@ -4,7 +4,6 @@ from logging import getLogger
 from threading import Lock
 from typing import Any
 
-from voluptuous import Optional
 import ssl
 import json
 from websockets.sync.client import connect, ClientConnection
@@ -122,7 +121,7 @@ class TrueNASAPI(object):
         """Return connected boolean."""
         if hasattr(self, '_ws') and self._ws:
             self._ws.close()
-            
+
         self._connected = False
         return self._connected
 
@@ -219,7 +218,7 @@ class TrueNASAPI(object):
                     e,
                 )
                 self.disconnect()
-                self._error = e
+                self._error = str(e)
                 return None
 
             return data
