@@ -120,7 +120,9 @@ class TrueNASAPI(object):
     # ---------------------------
     def disconnect(self) -> bool:
         """Return connected boolean."""
-        self._ws.close()
+        if hasattr(self, '_ws') and self._ws:
+            self._ws.close()
+            
         self._connected = False
         return self._connected
 
