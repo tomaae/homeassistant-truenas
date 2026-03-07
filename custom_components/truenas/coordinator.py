@@ -473,7 +473,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 if tmp_var in arr:
                     e = tmp_var
 
-                    tmp_val = graph["aggregations"]["mean"].get(e, 0.0) or 0.0
+                    tmp_val = graph["aggregations"]["mean"].get(e) or 0.0
                     if t == "memory":
                         if tmp_var == "available":
                             self.ds["system_info"]["memory-free_value"] = round(tmp_val)
