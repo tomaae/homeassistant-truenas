@@ -377,7 +377,10 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # CPU temperature
             if tmp_graph[i]["name"] == "cputemp":
-                if "aggregations" in tmp_graph[i]:
+                if (
+                    "aggregations" in tmp_graph[i]
+                    and tmp_graph[i]["aggregations"].get("mean")
+                ):
                     self.ds["system_info"]["cpu_temperature"] = round(
                         max(tmp_graph[i]["aggregations"]["mean"].values()), 2
                     )
@@ -394,7 +397,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 tmp_arr = "cpu"
                 self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
                 self.ds["system_info"]["cpu_usage"] = round(
-                    self.ds["system_info"]["cpu_cpu"], 2
+                    self.ds["system_info"].get("cpu_cpu", 0.0), 2
                 )
 
             # Interface
@@ -443,11 +446,14 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
                 if self.ds["system_info"]["memory-total_value"] > 0:
+                    memory_free = float(
+                        self.ds["system_info"].get("memory-free_value", 0)
+                    )
                     self.ds["system_info"]["memory-usage_percent"] = round(
                         100
                         * (
                             float(self.ds["system_info"]["memory-total_value"])
-                            - float(self.ds["system_info"]["memory-free_value"])
+                            - memory_free
                         )
                         / float(self.ds["system_info"]["memory-total_value"])
                     )
@@ -467,7 +473,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 if tmp_var in arr:
                     e = tmp_var
 
-                    tmp_val = graph["aggregations"]["mean"][e] or 0.0
+                    tmp_val = graph["aggregations"]["mean"].get(e, 0.0) or 0.0
                     if t == "memory":
                         if tmp_var == "available":
                             self.ds["system_info"]["memory-free_value"] = round(tmp_val)
