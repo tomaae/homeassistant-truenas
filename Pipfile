@@ -8,6 +8,9 @@ mypy = ">=1.15"
 wheel = ">=0.45"
 pygithub = ">=2.6"
 homeassistant = ">=2025.4.0"
+pytest = ">=8.3"
+pytest-homeassistant-custom-component = ">=0.13.250"
 
 
 [packages]
+websockets = ">=15.0.1"
