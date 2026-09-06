@@ -110,7 +110,7 @@ class TrueNASDatasetSensor(TrueNASSensor):
         ts = datetime.now().isoformat(sep="_", timespec="microseconds")
         await self.hass.async_add_executor_job(
             self.coordinator.api.query,
-            "zfs.snapshot.create",
+            "pool.snapshot.create",
             {"dataset": f"{self._data['name']}", "name": f"custom-{ts}"},
         )
 
