@@ -39,6 +39,9 @@ def from_entry(entry, param, default="") -> str:
     else:
         return default
 
+    if ret is None:
+        return default
+
     if default != "":
         if isinstance(ret, str):
             ret = str(ret)

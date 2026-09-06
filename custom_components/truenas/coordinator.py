@@ -997,3 +997,5 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         for uid, vals in self.ds["app"].items():
             self.ds["app"][uid]["running"] = vals["state"] == "RUNNING"
+            if vals["latest_version"] == "unknown":
+                self.ds["app"][uid]["latest_version"] = vals["version"]
