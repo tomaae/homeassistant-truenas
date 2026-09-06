@@ -107,20 +107,24 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "name_exists"
 
             # Test connection
-            api = await self.hass.async_add_executor_job(
-                TrueNASAPI,
-                truenas_config[CONF_HOST],
-                truenas_config[CONF_API_KEY],
-                truenas_config[CONF_VERIFY_SSL],
-            )
+            try:
+                api = await self.hass.async_add_executor_job(
+                    TrueNASAPI,
+                    truenas_config[CONF_HOST],
+                    truenas_config[CONF_API_KEY],
+                    truenas_config[CONF_VERIFY_SSL],
+                )
+            except ValueError as err:
+                errors[CONF_HOST] = "invalid_hostname"
+                _LOGGER.error("TrueNAS invalid host (%s)", err)
+            else:
+                conn, errorcode = await self.hass.async_add_executor_job(
+                    api.connection_test
+                )
 
-            conn, errorcode = await self.hass.async_add_executor_job(
-                api.connection_test
-            )
-
-            if not conn:
-                errors[CONF_HOST] = errorcode
-                _LOGGER.error("TrueNAS connection error (%s)", errorcode)
+                if not conn:
+                    errors[CONF_HOST] = errorcode
+                    _LOGGER.error("TrueNAS connection error (%s)", errorcode)
 
             # Save instance
             if not errors:
@@ -145,20 +149,24 @@ class TrueNASConfigFlow(ConfigFlow, domain=DOMAIN):
             truenas_config.update(user_input)
 
             # Test connection
-            api = await self.hass.async_add_executor_job(
-                TrueNASAPI,
-                truenas_config[CONF_HOST],
-                truenas_config[CONF_API_KEY],
-                truenas_config[CONF_VERIFY_SSL],
-            )
+            try:
+                api = await self.hass.async_add_executor_job(
+                    TrueNASAPI,
+                    truenas_config[CONF_HOST],
+                    truenas_config[CONF_API_KEY],
+                    truenas_config[CONF_VERIFY_SSL],
+                )
+            except ValueError as err:
+                errors[CONF_HOST] = "invalid_hostname"
+                _LOGGER.error("TrueNAS invalid host (%s)", err)
+            else:
+                conn, errorcode = await self.hass.async_add_executor_job(
+                    api.connection_test
+                )
 
-            conn, errorcode = await self.hass.async_add_executor_job(
-                api.connection_test
-            )
-
-            if not conn:
-                errors[CONF_HOST] = errorcode
-                _LOGGER.error("TrueNAS connection error (%s)", errorcode)
+                if not conn:
+                    errors[CONF_HOST] = errorcode
+                    _LOGGER.error("TrueNAS connection error (%s)", errorcode)
 
             # Save instance
             if not errors:

@@ -3,12 +3,54 @@
 from logging import getLogger
 from threading import Lock
 from typing import Any
+from urllib.parse import urlsplit
 
 import ssl
 import json
 from websockets.sync.client import connect, ClientConnection
 
 _LOGGER = getLogger(__name__)
+
+DEFAULT_API_PATH = "/api/current"
+
+# Accepted host schemes and the websocket scheme they map to.
+SCHEME_MAP = {
+    "http": "ws",
+    "ws": "ws",
+    "https": "wss",
+    "wss": "wss",
+}
+
+
+# ---------------------------
+#   build_api_url
+# ---------------------------
+def build_api_url(host: str) -> str:
+    """Build the JSON-RPC websocket URL for a user supplied host.
+
+    Accepts a bare host ("truenas.local", "10.0.0.1:8443") as well as a full
+    URL ("http://10.0.0.1", "https://truenas.local/api/current"). A bare host
+    keeps the previous wss:// default, so existing entries are unaffected.
+
+    Raises ValueError when the host cannot be turned into a URL.
+    """
+    host = host.strip()
+    scheme = "wss"
+    if "://" in host:
+        raw_scheme, _, host = host.partition("://")
+        scheme = SCHEME_MAP.get(raw_scheme.lower(), "")
+        if not scheme:
+            raise ValueError(f"unsupported scheme in host: {raw_scheme}")
+
+    split = urlsplit(f"//{host.rstrip('/')}")
+    if not split.hostname:
+        raise ValueError(f"no host in: {host}")
+
+    # Raises ValueError on a non numeric port.
+    _ = split.port
+
+    path = split.path.rstrip("/") or DEFAULT_API_PATH
+    return f"{scheme}://{split.netloc}{path}"
 
 
 # ---------------------------
@@ -29,7 +71,8 @@ class TrueNASAPI(object):
         self._host = host
         self._api_key = api_key
         self._ssl_verify = verify_ssl
-        self._url = f"wss://{self._host}/api/current"
+        self._url = build_api_url(host)
+        self._use_tls = self._url.startswith("wss://")
         self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         if verify_ssl:
@@ -55,7 +98,7 @@ class TrueNASAPI(object):
             try:
                 self._ws = connect(
                     self._url,
-                    ssl=self._ssl_context,
+                    ssl=self._ssl_context if self._use_tls else None,
                     max_size=16777216,
                     ping_interval=20,
                 )
@@ -78,8 +121,10 @@ class TrueNASAPI(object):
                 if "Connection refused" in e.args:
                     self._error = "connection_refused"
 
-                if "No route to host" in e.args or "Name or service not known" in str(
-                    e
+                if (
+                    "No route to host" in e.args
+                    or "Host is unreachable" in str(e)
+                    or "Name or service not known" in str(e)
                 ):
                     self._error = "invalid_hostname"
 

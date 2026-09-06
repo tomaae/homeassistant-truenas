@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.exceptions import ConfigEntryError
 
 from .const import (
     DOMAIN,
@@ -26,7 +27,11 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
 # ---------------------------
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up TrueNAS config entry."""
-    coordinator = TrueNASCoordinator(hass, config_entry)
+    try:
+        coordinator = TrueNASCoordinator(hass, config_entry)
+    except ValueError as err:
+        raise ConfigEntryError(f"Invalid TrueNAS host: {err}") from err
+
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[config_entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)

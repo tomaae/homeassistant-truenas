@@ -5,7 +5,7 @@
                 "description": "Set up TrueNAS integration.",
                 "data": {
                     "name": "Name of the integration",
-                    "host": "Host",
+                    "host": "Host, optionally with scheme and port (e.g. http://10.0.0.1:81)",
                     "api_key": "API key",
                     "verify_ssl": "Verify SSL certificate"
                 }
@@ -13,7 +13,7 @@
             "reconfigure": {
                 "description": "Reconfigure TrueNAS integration.",
                 "data": {
-                    "host": "Host",
+                    "host": "Host, optionally with scheme and port (e.g. http://10.0.0.1:81)",
                     "api_key": "API key",
                     "verify_ssl": "Verify SSL certificate"
                 }
