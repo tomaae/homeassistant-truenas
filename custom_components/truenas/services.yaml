@@ -71,30 +71,6 @@ service_reload:
       integration: truenas    
       domain: binary_sensor
 
-jail_start:
-  name: Jail Start
-  description: Start a Jail
-  target:
-    entity:
-      integration: truenas    
-      domain: binary_sensor
-
-jail_stop:
-  name: Jail Stop
-  description: Stop a Jail
-  target:
-    entity:
-      integration: truenas    
-      domain: binary_sensor
-
-jail_restart:
-  name: Jail Restart
-  description: Restart a Jail
-  target:
-    entity:
-      integration: truenas    
-      domain: binary_sensor
-
 vm_start:
   name: VM Start
   description: Start a VM
