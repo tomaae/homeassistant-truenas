@@ -4,8 +4,8 @@ from logging import getLogger
 from threading import Lock
 from typing import Any
 
-import ssl
 import json
+from homeassistant.util.ssl import client_context, client_context_no_verify
 from websockets.sync.client import connect, ClientConnection
 
 _LOGGER = getLogger(__name__)
@@ -30,14 +30,11 @@ class TrueNASAPI(object):
         self._api_key = api_key
         self._ssl_verify = verify_ssl
         self._url = f"wss://{self._host}/api/current"
-        self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
-        if verify_ssl:
-            self._ssl_context.check_hostname = True
-            self._ssl_context.verify_mode = ssl.CERT_REQUIRED
-        else:
-            self._ssl_context.check_hostname = False
-            self._ssl_context.verify_mode = ssl.CERT_NONE
+        # Home Assistant's contexts carry the system trust store; a bare
+        # ssl.SSLContext has no CA certificates and can never verify anything.
+        self._ssl_context = (
+            client_context() if verify_ssl else client_context_no_verify()
+        )
 
         self.lock = Lock()
         self._connected = False
