@@ -11,3 +11,4 @@ homeassistant = ">=2025.4.0"
 
 
 [packages]
+websockets = ">=15.0.1"

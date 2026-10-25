@@ -65,7 +65,6 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             config_entry.data[CONF_VERIFY_SSL],
         )
 
-        self._systemstats_errored = []
         self.datasets_hass_device_id = None
         self.last_updatecheck_update = datetime(1970, 1, 1)
 
@@ -270,9 +269,25 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     #   get_updatecheck
     # ---------------------------
     def get_updatecheck(self) -> None:
+        if (self._version_major, self._version_minor) >= (25, 10):
+            response = self.api.query("update.status")
+            if not isinstance(response, dict) or response.get("code") != "NORMAL":
+                self.ds["system_info"]["update_status"] = "unknown"
+                return
+            new_version = (response.get("status") or {}).get("new_version")
+            source = {
+                "status": "AVAILABLE" if new_version else "UNAVAILABLE",
+                "version": (
+                    new_version["version"]
+                    if new_version
+                    else self.ds["system_info"]["version"]
+                ),
+            }
+        else:
+            source = self.api.query("update.check_available")
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("update.check_available"),
+            source=source,
             vals=[
                 {
                     "name": "update_status",
@@ -320,23 +335,23 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         if self._is_virtual:
             tmp_graphs.remove({"name": "cputemp"})
 
-        for tmp in tmp_graphs:
-            if tmp["name"] in self._systemstats_errored:
-                tmp_graphs.remove(tmp)
-
         if not tmp_graphs:
             return
 
         tmp_params = [
             tmp_graphs,
             {
-                "start": report_epoch - 30,
-                "end": report_epoch - 90,
+                "start": report_epoch - 90,
+                "end": report_epoch - 30,
                 "aggregate": True,
             },
         ]
 
-        reporting_path = "reporting.netdata_get_data"
+        reporting_path = (
+            "reporting.get_data"
+            if (self._version_major, self._version_minor) >= (25, 10)
+            else "reporting.netdata_get_data"
+        )
 
         tmp_graph = self.api.query(
             reporting_path,
@@ -344,32 +359,22 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         )
 
         if not isinstance(tmp_graph, list):
-            if self.api.error == 500:
-                for tmp in tmp_params["graphs"]:
-                    tmp_params2 = {
-                        [tmp],
-                        {
-                            "start": report_epoch - 30,
-                            "end": report_epoch - 90,
-                            "aggregate": "true",
-                        },
-                    }
-
-                    tmp2 = self.api.query(
-                        reporting_path,
-                        params=tmp_params2,
-                    )
-                    if not isinstance(tmp2, list) and self.api.error == 500:
-                        self._systemstats_errored.append(tmp["name"])
-
+            tmp_graph = []
+            failed_graphs = []
+            for graph in tmp_graphs:
+                result = self.api.query(reporting_path, params=[[graph], tmp_params[1]])
+                if isinstance(result, list):
+                    tmp_graph.extend(result)
+                else:
+                    failed_graphs.append(graph)
+                    if not self.api.connected():
+                        break
+            if failed_graphs:
                 _LOGGER.warning(
-                    "TrueNAS %s fetching following graphs failed, check your NAS: %s",
+                    "TrueNAS %s fetching following graphs failed this poll: %s",
                     self.host,
-                    self._systemstats_errored,
+                    failed_graphs,
                 )
-                self.get_systemstats()
-
-            return
 
         for i in range(len(tmp_graph)):
             if "name" not in tmp_graph[i]:
@@ -391,11 +396,33 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # CPU usage
             if tmp_graph[i]["name"] == "cpu":
-                tmp_arr = "cpu"
-                self._systemstats_process(tmp_arr, tmp_graph[i], "cpu")
-                self.ds["system_info"]["cpu_usage"] = round(
-                    self.ds["system_info"]["cpu_cpu"], 2
-                )
+                means = tmp_graph[i].get("aggregations", {}).get("mean", {})
+                if "cpu" in means:
+                    for component in (
+                        "interrupt",
+                        "softirq",
+                        "system",
+                        "user",
+                        "nice",
+                        "iowait",
+                        "idle",
+                    ):
+                        self.ds["system_info"][f"cpu_{component}"] = None
+                    value = means["cpu"]
+                    self.ds["system_info"]["cpu_usage"] = (
+                        round(value, 2) if value is not None else None
+                    )
+                else:
+                    self._systemstats_process(
+                        ("softirq", "system", "user", "nice", "iowait", "idle"),
+                        tmp_graph[i],
+                        "cpu",
+                    )
+                    self.ds["system_info"]["cpu_usage"] = round(
+                        self.ds["system_info"]["cpu_system"]
+                        + self.ds["system_info"]["cpu_user"],
+                        2,
+                    )
 
             # Interface
             if tmp_graph[i]["name"] == "interface":
@@ -436,13 +463,18 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
             # memory
             if tmp_graph[i]["name"] == "memory":
-                tmp_arr = "available"
+                tmp_arr = ("available", "free", "used", "cached", "buffers")
                 self.ds["system_info"]["memory-total_value"] = round(
                     self.ds["system_info"]["physmem"]
                 )
 
+                for field in ("free", "used", "cached", "buffered"):
+                    self.ds["system_info"][f"memory-{field}_value"] = None
                 self._systemstats_process(tmp_arr, tmp_graph[i], "memory")
-                if self.ds["system_info"]["memory-total_value"] > 0:
+                if (
+                    self.ds["system_info"]["memory-total_value"] > 0
+                    and self.ds["system_info"]["memory-free_value"] is not None
+                ):
                     self.ds["system_info"]["memory-usage_percent"] = round(
                         100
                         * (
@@ -451,10 +483,12 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         )
                         / float(self.ds["system_info"]["memory-total_value"])
                     )
+                else:
+                    self.ds["system_info"]["memory-usage_percent"] = None
 
             # arcsize
             if tmp_graph[i]["name"] == "arcsize":
-                tmp_arr = "arc_size"
+                tmp_arr = ("size", "arc_size")
                 self._systemstats_process(tmp_arr, tmp_graph[i], "arcsize")
 
     # ---------------------------
@@ -467,17 +501,36 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 if tmp_var in arr:
                     e = tmp_var
 
-                    tmp_val = graph["aggregations"]["mean"][e] or 0.0
+                    tmp_val = graph["aggregations"]["mean"][e]
+                    if t != "memory" and tmp_val is None:
+                        tmp_val = 0.0
                     if t == "memory":
                         if tmp_var == "available":
-                            self.ds["system_info"]["memory-free_value"] = round(tmp_val)
+                            self.ds["system_info"]["memory-cached_value"] = None
+                            self.ds["system_info"]["memory-buffered_value"] = None
+                            self.ds["system_info"]["memory-free_value"] = (
+                                round(tmp_val) if tmp_val is not None else None
+                            )
+                            self.ds["system_info"]["memory-used_value"] = (
+                                round(self.ds["system_info"]["physmem"] - tmp_val)
+                                if tmp_val is not None
+                                else None
+                            )
+                        else:
+                            field = "buffered" if tmp_var == "buffers" else tmp_var
+                            self.ds["system_info"][f"memory-{field}_value"] = (
+                                round(tmp_val * 1024 * 1024)
+                                if tmp_val is not None
+                                else None
+                            )
                     elif t == "cpu":
                         self.ds["system_info"][f"cpu_{tmp_var}"] = round(tmp_val, 2)
                     elif t == "load":
                         self.ds["system_info"][f"load_{tmp_var}"] = round(tmp_val, 2)
                     elif t == "arcsize":
                         self.ds["system_info"]["cache_size-arc_value"] = round(
-                            tmp_val, 2
+                            tmp_val * 1024 * 1024 if tmp_var == "arc_size" else tmp_val,
+                            2,
                         )
                     else:
                         self.ds["system_info"][tmp_var] = round(tmp_val, 2)
