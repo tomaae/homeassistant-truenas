@@ -5,10 +5,12 @@ on:
     paths:
       - 'custom_components/**'
       - 'tests/**'
+      - 'tests/**'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - 'custom_components/**'
+      - 'tests/**'
       - 'tests/**'
   workflow_dispatch:
 
@@ -55,6 +57,9 @@ jobs:
   #       run: |
   #         pip install pytest
   #         pytest
+
+      - name: Test device metadata
+        run: python -m unittest discover -s tests -v
 
   security:
     name: Security check - Bandit
