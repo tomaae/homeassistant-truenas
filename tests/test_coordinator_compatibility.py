@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.truenas.coordinator import TrueNASCoordinator
 
@@ -524,3 +525,66 @@ def test_system_info_recovers_after_rpc_error(coordinator):
     assert coordinator.ds["system_info"]["version"] == "26.0.0"
     assert coordinator.ds["system_info"]["physmem"] == 16384 * MIB
     assert (coordinator._version_major, coordinator._version_minor) == (26, 0)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        {"error": {"code": -32000}},
+        {},
+        {"version": "unknown"},
+        {"version": None},
+        {"version": "25"},
+    ],
+)
+def test_initial_system_info_failure_rejects_refresh_and_recovers(
+    coordinator, response
+):
+    coordinator.ds["system_info"] = {}
+    coordinator._version_major = coordinator._version_minor = 0
+    coordinator.last_updatecheck_update = datetime(1970, 1, 1)
+    for name in (
+        "get_systemstats",
+        "get_service",
+        "get_disk",
+        "get_dataset",
+        "get_pool",
+        "get_vm",
+        "get_cloudsync",
+        "get_replication",
+        "get_snapshottask",
+        "get_app",
+    ):
+        setattr(coordinator, name, Mock())
+
+    async def execute(job):
+        return job()
+
+    coordinator.hass = Mock()
+    coordinator.hass.async_add_executor_job = AsyncMock(side_effect=execute)
+    coordinator.api.query.return_value = response
+    with pytest.raises(UpdateFailed, match="system metadata"):
+        asyncio.run(coordinator._async_update_data())
+    coordinator.api.query.assert_called_once_with("system.info")
+    coordinator.get_systemstats.assert_not_called()
+    assert coordinator.ds["system_info"] == {}
+    assert coordinator.last_updatecheck_update == datetime(1970, 1, 1)
+
+    def recovered_query(method, **kwargs):
+        if method == "system.info":
+            return {"version": "25.10.7", "physmem": 8192 * MIB}
+        if method == "update.status":
+            return {"code": "NORMAL", "status": {"new_version": None}}
+        assert method == "interface.query"
+        return []
+
+    coordinator.api.query.reset_mock()
+    coordinator.api.query.side_effect = recovered_query
+    result = asyncio.run(coordinator._async_update_data())
+    assert result["system_info"]["version"] == "25.10.7"
+    assert "cpu_usage" in result["system_info"]
+    assert "memory-free_value" in result["system_info"]
+    assert (coordinator._version_major, coordinator._version_minor) == (25, 10)
+    coordinator.get_systemstats.assert_called_once()
+    assert coordinator.api.query.call_args.args == ("update.status",)

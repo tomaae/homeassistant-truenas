@@ -123,6 +123,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         response = self.api.query("system.info")
         if not isinstance(response, dict) or "error" in response:
             _LOGGER.warning("TrueNAS %s system.info failed: %r", self.host, response)
+            if not self._version_major:
+                raise UpdateFailed("TrueNAS system metadata is not available yet")
             return
         try:
             version = (
@@ -138,6 +140,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.host,
                 response.get("version"),
             )
+            if not self._version_major:
+                raise UpdateFailed("TrueNAS system metadata has no valid version")
             return
 
         self.ds["system_info"] = parse_api(
