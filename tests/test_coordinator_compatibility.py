@@ -484,3 +484,43 @@ def test_failed_update_is_retried_on_next_poll(coordinator, version):
     assert coordinator.ds["system_info"]["update_available"] is True
     asyncio.run(coordinator._async_update_data())
     assert coordinator.api.query.call_count == 2
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        {"error": {"code": -32000, "message": "temporarily unavailable"}},
+        {},
+        {"version": "unknown"},
+        {"version": None},
+        {"version": "25"},
+    ],
+)
+def test_failed_system_info_preserves_metadata_and_api_selection(coordinator, response):
+    previous = coordinator.ds["system_info"].copy()
+    coordinator.api.query.return_value = response
+    coordinator.get_systeminfo()
+    assert coordinator.ds["system_info"] == previous
+    assert (coordinator._version_major, coordinator._version_minor) == (25, 10)
+    coordinator.api.query.return_value = []
+    coordinator.get_systemstats()
+    assert coordinator.api.query.call_args.args == ("reporting.get_data",)
+    coordinator.api.query.return_value = {
+        "code": "NORMAL",
+        "status": {"new_version": None},
+    }
+    assert coordinator.get_updatecheck() is True
+    assert coordinator.api.query.call_args.args == ("update.status",)
+
+
+def test_system_info_recovers_after_rpc_error(coordinator):
+    coordinator.api.query.return_value = {"error": {"code": -32000}}
+    coordinator.get_systeminfo()
+    coordinator.api.query.side_effect = lambda method, **kwargs: (
+        {"version": "26.0.0", "physmem": 16384 * MIB} if method == "system.info" else []
+    )
+    coordinator.get_systeminfo()
+    assert coordinator.ds["system_info"]["version"] == "26.0.0"
+    assert coordinator.ds["system_info"]["physmem"] == 16384 * MIB
+    assert (coordinator._version_major, coordinator._version_minor) == (26, 0)

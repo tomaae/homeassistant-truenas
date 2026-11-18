@@ -67,7 +67,7 @@ async def async_add_entities(
         for entity_description in descriptions:
             data = coordinator.data[entity_description.data_path]
             if not entity_description.data_reference:
-                if data.get(entity_description.data_attribute) is None:
+                if entity_description.data_attribute not in data:
                     continue
                 obj = dispatcher[entity_description.func](
                     coordinator, entity_description

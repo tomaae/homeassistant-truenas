@@ -120,9 +120,29 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     def get_systeminfo(self) -> None:
         """Get system info from TrueNAS."""
+        response = self.api.query("system.info")
+        if not isinstance(response, dict) or "error" in response:
+            _LOGGER.warning("TrueNAS %s system.info failed: %r", self.host, response)
+            return
+        try:
+            version = (
+                response["version"]
+                .removeprefix("TrueNAS-")
+                .removeprefix("SCALE-")
+                .split(".")
+            )
+            major, minor = map(int, version[:2])
+        except (KeyError, AttributeError, TypeError, ValueError):
+            _LOGGER.warning(
+                "TrueNAS %s system.info returned an invalid version: %r",
+                self.host,
+                response.get("version"),
+            )
+            return
+
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
-            source=self.api.query("system.info"),
+            source=response,
             vals=[
                 {"name": "version", "default": "unknown"},
                 {"name": "hostname", "default": "unknown"},
@@ -194,13 +214,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["system_info"]["update_jobid"] = 0
                 self.ds["system_info"]["update_state"] = "unknown"
 
-        version = (
-            self.ds["system_info"]["version"]
-            .removeprefix("TrueNAS-")
-            .removeprefix("SCALE-")
-            .split(".")
-        )
-        self._version_major, self._version_minor = map(int, version[:2])
+        self._version_major, self._version_minor = major, minor
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
