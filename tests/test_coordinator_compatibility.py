@@ -1,6 +1,8 @@
 """Reporting and update-status compatibility across TrueNAS API versions."""
 
-from unittest.mock import Mock
+import asyncio
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -68,7 +70,10 @@ def test_version_formats(coordinator, version, expected):
 def test_reporting_endpoint_and_ordered_timestamps(coordinator, version, method):
     coordinator._version_major, coordinator._version_minor = version
     coordinator.api.query.return_value = []
-    coordinator.get_systemstats()
+    now = datetime(2026, 11, 18, 12, 0, 0)
+    with patch("custom_components.truenas.coordinator.datetime") as clock:
+        clock.now.return_value = now
+        coordinator.get_systemstats()
     args, kwargs = coordinator.api.query.call_args
     assert args == (method,)
     graphs, query = kwargs["params"]
@@ -80,6 +85,8 @@ def test_reporting_endpoint_and_ordered_timestamps(coordinator, version, method)
         "memory",
     }
     assert isinstance(query["start"], int)
+    assert query["start"] == int(now.timestamp()) - 90
+    assert query["end"] == int(now.timestamp()) - 30
     assert query["end"] - query["start"] == 60
     assert query["aggregate"] is True
 
@@ -386,3 +393,94 @@ def test_available_memory_recovers_after_missing_reading(coordinator):
     coordinator.api.query.return_value = [graph("memory", available=2048 * MIB)]
     coordinator.get_systemstats()
     assert coordinator.ds["system_info"]["memory-usage_percent"] == 75
+
+
+def test_nas_upgrade_refreshes_api_selection(coordinator):
+    for version, reporting, update in (
+        (
+            "TrueNAS-SCALE-25.04.2",
+            "reporting.netdata_get_data",
+            "update.check_available",
+        ),
+        ("25.10.7", "reporting.get_data", "update.status"),
+    ):
+        coordinator.api.query.side_effect = lambda method, **kwargs: (
+            {"version": version, "physmem": 8192 * MIB}
+            if method == "system.info"
+            else []
+        )
+        coordinator.get_systeminfo()
+        coordinator.api.query.reset_mock(side_effect=True)
+        coordinator.api.query.return_value = []
+        coordinator.get_systemstats()
+        assert coordinator.api.query.call_args.args == (reporting,)
+        coordinator.api.query.return_value = (
+            {"code": "NORMAL", "status": {"new_version": None}}
+            if update == "update.status"
+            else {"status": "UNAVAILABLE"}
+        )
+        assert coordinator.get_updatecheck() is True
+        assert coordinator.api.query.call_args.args == (update,)
+
+
+@pytest.mark.parametrize(
+    "means", [{"system": 7}, {"user": 12}, {"system": None, "user": 12}, {}]
+)
+def test_partial_cpu_response_clears_previous_poll(coordinator, means):
+    coordinator.api.query.return_value = [graph("cpu", system=7, user=12, idle=81)]
+    coordinator.get_systemstats()
+    assert coordinator.ds["system_info"]["cpu_usage"] == 19
+    coordinator.api.query.return_value = [graph("cpu", **means)]
+    coordinator.get_systemstats()
+    assert coordinator.ds["system_info"]["cpu_usage"] is None
+    assert coordinator.ds["system_info"]["cpu_idle"] is None
+    assert coordinator.ds["system_info"]["cpu_system"] == means.get("system")
+    assert coordinator.ds["system_info"]["cpu_user"] == means.get("user")
+
+
+def test_failed_update_status_is_logged(coordinator, caplog):
+    coordinator.api.query.return_value = {"code": "ERROR", "status": None}
+    assert coordinator.get_updatecheck() is False
+    assert "update.status failed" in caplog.text
+    assert "ERROR" in caplog.text
+
+
+@pytest.mark.parametrize("version", [(25, 4), (25, 10)])
+def test_failed_update_is_retried_on_next_poll(coordinator, version):
+    coordinator._version_major, coordinator._version_minor = version
+    coordinator.last_updatecheck_update = datetime(1970, 1, 1)
+    for name in (
+        "get_systeminfo",
+        "get_systemstats",
+        "get_service",
+        "get_disk",
+        "get_dataset",
+        "get_pool",
+        "get_vm",
+        "get_cloudsync",
+        "get_replication",
+        "get_snapshottask",
+        "get_app",
+    ):
+        setattr(coordinator, name, Mock())
+
+    async def execute(job):
+        return job()
+
+    coordinator.hass = Mock()
+    coordinator.hass.async_add_executor_job = AsyncMock(side_effect=execute)
+    success = (
+        {"code": "NORMAL", "status": {"new_version": {"version": "next"}}}
+        if version >= (25, 10)
+        else {"status": "AVAILABLE", "version": "next"}
+    )
+    coordinator.api.query.side_effect = [None, success]
+    before = datetime.now().replace(microsecond=0)
+    asyncio.run(coordinator._async_update_data())
+    assert coordinator.last_updatecheck_update == datetime(1970, 1, 1)
+    asyncio.run(coordinator._async_update_data())
+    assert coordinator.api.query.call_count == 2
+    assert coordinator.last_updatecheck_update >= before
+    assert coordinator.ds["system_info"]["update_available"] is True
+    asyncio.run(coordinator._async_update_data())
+    assert coordinator.api.query.call_count == 2

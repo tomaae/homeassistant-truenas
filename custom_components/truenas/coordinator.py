@@ -107,8 +107,8 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
 
         delta = datetime.now().replace(microsecond=0) - self.last_updatecheck_update
         if self.api.connected() and delta.total_seconds() > 60 * 60 * 12:
-            await self.hass.async_add_executor_job(self.get_updatecheck)
-            self.last_updatecheck_update = datetime.now().replace(microsecond=0)
+            if await self.hass.async_add_executor_job(self.get_updatecheck):
+                self.last_updatecheck_update = datetime.now().replace(microsecond=0)
 
         if not self.api.connected():
             raise UpdateFailed("TrueNas Disconnected")
@@ -194,23 +194,13 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                 self.ds["system_info"]["update_jobid"] = 0
                 self.ds["system_info"]["update_state"] = "unknown"
 
-        if not self._version_major:
-            self._version_major = int(
-                self.ds["system_info"]
-                .get("version")
-                .removeprefix("TrueNAS-")
-                .removeprefix("SCALE-")
-                .split(".")[0]
-            )
-
-        if not self._version_minor:
-            self._version_minor = int(
-                self.ds["system_info"]
-                .get("version")
-                .removeprefix("TrueNAS-")
-                .removeprefix("SCALE-")
-                .split(".")[1]
-            )
+        version = (
+            self.ds["system_info"]["version"]
+            .removeprefix("TrueNAS-")
+            .removeprefix("SCALE-")
+            .split(".")
+        )
+        self._version_major, self._version_minor = map(int, version[:2])
 
         self._is_virtual = self.ds["system_info"]["system_manufacturer"] in [
             "QEMU",
@@ -268,12 +258,16 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
     # ---------------------------
     #   get_updatecheck
     # ---------------------------
-    def get_updatecheck(self) -> None:
+    def get_updatecheck(self) -> bool:
+        """Refresh update information, returning whether the check succeeded."""
         if (self._version_major, self._version_minor) >= (25, 10):
             response = self.api.query("update.status")
             if not isinstance(response, dict) or response.get("code") != "NORMAL":
                 self.ds["system_info"]["update_status"] = "unknown"
-                return
+                _LOGGER.warning(
+                    "TrueNAS %s update.status failed: %r", self.host, response
+                )
+                return False
             new_version = (response.get("status") or {}).get("new_version")
             source = {
                 "status": "AVAILABLE" if new_version else "UNAVAILABLE",
@@ -285,6 +279,12 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
             }
         else:
             source = self.api.query("update.check_available")
+            if not isinstance(source, dict) or source.get("status") not in (
+                "AVAILABLE",
+                "UNAVAILABLE",
+            ):
+                self.ds["system_info"]["update_status"] = "unknown"
+                return False
         self.ds["system_info"] = parse_api(
             data=self.ds["system_info"],
             source=source,
@@ -303,7 +303,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         )
 
         if not self.api.connected():
-            return
+            return False
 
         if (
             self.ds["system_info"]["update_version"] == "unknown"
@@ -314,6 +314,7 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
         self.ds["system_info"]["update_available"] = (
             self.ds["system_info"]["update_status"] == "AVAILABLE"
         )
+        return True
 
     # ---------------------------
     #   get_systemstats
@@ -413,15 +414,25 @@ class TrueNASCoordinator(DataUpdateCoordinator[None]):
                         round(value, 2) if value is not None else None
                     )
                 else:
-                    self._systemstats_process(
-                        ("softirq", "system", "user", "nice", "iowait", "idle"),
-                        tmp_graph[i],
-                        "cpu",
-                    )
-                    self.ds["system_info"]["cpu_usage"] = round(
-                        self.ds["system_info"]["cpu_system"]
-                        + self.ds["system_info"]["cpu_user"],
-                        2,
+                    for component in (
+                        "interrupt",
+                        "softirq",
+                        "system",
+                        "user",
+                        "nice",
+                        "iowait",
+                        "idle",
+                    ):
+                        value = means.get(component)
+                        self.ds["system_info"][f"cpu_{component}"] = (
+                            round(value, 2) if value is not None else None
+                        )
+                    system = means.get("system")
+                    user = means.get("user")
+                    self.ds["system_info"]["cpu_usage"] = (
+                        round(system + user, 2)
+                        if system is not None and user is not None
+                        else None
                     )
 
             # Interface
