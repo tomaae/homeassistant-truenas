@@ -191,9 +191,9 @@ class TrueNASEntity(CoordinatorEntity[TrueNASCoordinator], Entity):
         else:
             return DeviceInfo(
                 connections={(dev_connection, f"{dev_connection_value}")},
-                default_name=dev_group,
-                default_model=f"{self.coordinator.data['system_info']['system_product']}",
-                default_manufacturer=f"{self.coordinator.data['system_info']['system_manufacturer']}",
+                name=dev_group,
+                model=f"{self.coordinator.data['system_info']['system_product']}",
+                manufacturer=f"{self.coordinator.data['system_info']['system_manufacturer']}",
                 via_device=(
                     DOMAIN,
                     f"{self._inst}_{self.coordinator.data['system_info']['hostname']}",
